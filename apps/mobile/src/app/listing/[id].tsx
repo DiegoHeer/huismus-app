@@ -129,7 +129,7 @@ export default function ListingDetailScreen() {
       ? {
           label: t('listing.energyLabel'),
           value: listing.energyLabel,
-          valueColor: energyLabelColor(listing.energyLabel),
+          badgeColor: energyLabelColor(listing.energyLabel),
           icon: EnergyIcon,
         }
       : null,
@@ -262,7 +262,8 @@ export default function ListingDetailScreen() {
 type FactRow = {
   label: string;
   value: string;
-  valueColor?: string;
+  /** When set, the value renders as an energy-label arrow bar in this color. */
+  badgeColor?: string;
   icon: ComponentType<{ color: string; size?: number }>;
 };
 
@@ -288,16 +289,47 @@ function FactsTable({ facts, isDark }: { facts: FactRow[]; isDark: boolean }) {
             className={`w-1/2 flex-row items-center gap-3 border-neutral-200 p-3 dark:border-neutral-800 ${dividers}`}>
             <Icon color={iconColor} size={26} />
             <View className="flex-1 gap-0.5">
-              <Text
-                className="text-base font-semibold text-neutral-900 dark:text-white"
-                style={s.valueColor ? { color: s.valueColor } : undefined}>
-                {s.value}
-              </Text>
+              {s.badgeColor ? (
+                <EnergyLabelBar value={s.value} color={s.badgeColor} />
+              ) : (
+                <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                  {s.value}
+                </Text>
+              )}
               <Text className="text-xs text-neutral-500">{s.label}</Text>
             </View>
           </View>
         );
       })}
+    </View>
+  );
+}
+
+// The energy-label arrow bar mirrors the official EU label chevrons: a flat
+// left edge and a right-pointing 90° tip (both slopes at 45°), tinted by
+// rating. The tip is a border-drawn triangle, same trick as ShareIcon.
+const ENERGY_BAR_HEIGHT = 22;
+
+function EnergyLabelBar({ value, color }: { value: string; color: string }) {
+  return (
+    <View className="flex-row self-start">
+      <View
+        className="min-w-8 items-center justify-center pl-2 pr-1"
+        style={{ height: ENERGY_BAR_HEIGHT, backgroundColor: color }}>
+        <Text className="text-sm font-bold text-white">{value}</Text>
+      </View>
+      <View
+        style={{
+          width: 0,
+          height: 0,
+          borderTopWidth: ENERGY_BAR_HEIGHT / 2,
+          borderBottomWidth: ENERGY_BAR_HEIGHT / 2,
+          borderLeftWidth: ENERGY_BAR_HEIGHT / 2,
+          borderTopColor: 'transparent',
+          borderBottomColor: 'transparent',
+          borderLeftColor: color,
+        }}
+      />
     </View>
   );
 }
