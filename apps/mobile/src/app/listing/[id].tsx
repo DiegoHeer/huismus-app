@@ -4,7 +4,7 @@ import { useTranslation } from '@realty/i18n';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { openBrowserAsync } from 'expo-web-browser';
-import { useEffect } from 'react';
+import { type ComponentType, useEffect } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -20,7 +20,17 @@ import { listingWebUrl } from '@/lib/listing-share-url';
 import { toggleLike, useIsLiked } from '@/lib/likes';
 import { recordRecentView } from '@/lib/recent-views';
 import { Brand } from '@/constants/theme';
-import { HeartIcon, ShareIcon } from '../../components/icons';
+import {
+  AreaIcon,
+  BathIcon,
+  BedIcon,
+  CalendarIcon,
+  EnergyIcon,
+  HeartIcon,
+  HomeIcon,
+  RoomsIcon,
+  ShareIcon,
+} from '../../components/icons';
 import { LocationMap } from '../../components/location-map';
 // maptiler-basic GL style, with its key-gated MapTiler source/glyphs rewritten
 // to keyless OpenFreeMap endpoints. https://github.com/openmaptiles/maptiler-basic-gl-style
@@ -84,30 +94,47 @@ export default function ListingDetailScreen() {
       : t(`listing.listedAgo.${rel.unit}`, { count: rel.count })
     : null;
 
-  const stats = [
+  const stats: (FactRow | null)[] = [
     listing.buildingType
       ? {
           label: t('listing.buildingType'),
           value: t(`listing.buildingTypes.${listing.buildingType}`),
+          icon: HomeIcon,
         }
       : null,
     listing.areaSqm
-      ? { label: t('listing.areaLabel'), value: t('listing.area', { value: listing.areaSqm }) }
+      ? {
+          label: t('listing.areaLabel'),
+          value: t('listing.area', { value: listing.areaSqm }),
+          icon: AreaIcon,
+        }
       : null,
-    listing.roomCount ? { label: t('listing.rooms'), value: `${listing.roomCount}` } : null,
-    listing.bedrooms ? { label: t('listing.bedrooms'), value: `${listing.bedrooms}` } : null,
-    listing.bathrooms ? { label: t('listing.bathrooms'), value: `${listing.bathrooms}` } : null,
+    listing.roomCount
+      ? { label: t('listing.rooms'), value: `${listing.roomCount}`, icon: RoomsIcon }
+      : null,
+    listing.bedrooms
+      ? { label: t('listing.bedrooms'), value: `${listing.bedrooms}`, icon: BedIcon }
+      : null,
+    listing.bathrooms
+      ? { label: t('listing.bathrooms'), value: `${listing.bathrooms}`, icon: BathIcon }
+      : null,
     listing.constructionPeriod
-      ? { label: t('listing.constructionPeriod'), value: listing.constructionPeriod }
+      ? {
+          label: t('listing.constructionPeriod'),
+          value: listing.constructionPeriod,
+          icon: CalendarIcon,
+        }
       : null,
     listing.energyLabel
       ? {
           label: t('listing.energyLabel'),
           value: listing.energyLabel,
           valueColor: energyLabelColor(listing.energyLabel),
+          icon: EnergyIcon,
         }
       : null,
-  ].filter((s): s is { label: string; value: string; valueColor?: string } => s != null);
+  ];
+  const facts = stats.filter((s): s is FactRow => s != null);
 
   return (
     <>
@@ -161,13 +188,7 @@ export default function ListingDetailScreen() {
             <Text className="text-xs text-neutral-400 dark:text-neutral-500">{listedAgo}</Text>
           ) : null}
 
-          {stats.length ? (
-            <View className="mt-2 flex-row flex-wrap gap-x-6 gap-y-3 border-y border-neutral-200 py-3 dark:border-neutral-800">
-              {stats.map((s) => (
-                <Stat key={s.label} label={s.label} value={s.value} valueColor={s.valueColor} />
-              ))}
-            </View>
-          ) : null}
+          {facts.length ? <FactsTable facts={facts} isDark={isDark} /> : null}
 
 
           {listing.foundationRisk ? (
@@ -235,6 +256,49 @@ export default function ListingDetailScreen() {
         </View>
       </ScrollView>
     </>
+  );
+}
+
+type FactRow = {
+  label: string;
+  value: string;
+  valueColor?: string;
+  icon: ComponentType<{ color: string; size?: number }>;
+};
+
+/**
+ * The listing's key facts as a two-column table inside a rounded card, one
+ * icon + value/label cell per fact, separated by hairline dividers. An odd
+ * fact count leaves the last row's right cell empty.
+ */
+function FactsTable({ facts, isDark }: { facts: FactRow[]; isDark: boolean }) {
+  const iconColor = isDark ? Brand.blueLight : Brand.blue;
+  const lastRowStart = facts.length % 2 === 0 ? facts.length - 2 : facts.length - 1;
+  return (
+    <View className="mt-2 flex-row flex-wrap overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800">
+      {facts.map((s, i) => {
+        const Icon = s.icon;
+        const dividers = [
+          i < lastRowStart ? 'border-b' : '',
+          i % 2 === 0 && i + 1 < facts.length ? 'border-r' : '',
+        ].join(' ');
+        return (
+          <View
+            key={s.label}
+            className={`w-1/2 flex-row items-center gap-3 border-neutral-200 p-3 dark:border-neutral-800 ${dividers}`}>
+            <Icon color={iconColor} size={26} />
+            <View className="flex-1 gap-0.5">
+              <Text
+                className="text-base font-semibold text-neutral-900 dark:text-white"
+                style={s.valueColor ? { color: s.valueColor } : undefined}>
+                {s.value}
+              </Text>
+              <Text className="text-xs text-neutral-500">{s.label}</Text>
+            </View>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
