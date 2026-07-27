@@ -268,25 +268,18 @@ type FactRow = {
 };
 
 /**
- * The listing's key facts as a two-column table inside a rounded card, one
- * icon + value/label cell per fact, separated by hairline dividers. An odd
- * fact count leaves the last row's right cell empty.
+ * The listing's key facts as a borderless two-column grid, one icon +
+ * value/label cell per fact. An odd fact count leaves the last row's right
+ * cell empty.
  */
 function FactsTable({ facts, isDark }: { facts: FactRow[]; isDark: boolean }) {
   const iconColor = isDark ? Brand.blueLight : Brand.blue;
-  const lastRowStart = facts.length % 2 === 0 ? facts.length - 2 : facts.length - 1;
   return (
-    <View className="mt-2 flex-row flex-wrap overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800">
-      {facts.map((s, i) => {
+    <View className="mt-2 flex-row flex-wrap">
+      {facts.map((s) => {
         const Icon = s.icon;
-        const dividers = [
-          i < lastRowStart ? 'border-b' : '',
-          i % 2 === 0 && i + 1 < facts.length ? 'border-r' : '',
-        ].join(' ');
         return (
-          <View
-            key={s.label}
-            className={`w-1/2 flex-row items-center gap-3 border-neutral-200 p-3 dark:border-neutral-800 ${dividers}`}>
+          <View key={s.label} className="w-1/2 flex-row items-center gap-3 py-3 pr-3">
             <Icon color={iconColor} size={26} />
             <View className="flex-1 gap-0.5">
               {s.badgeColor ? (
