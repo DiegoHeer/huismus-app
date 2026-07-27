@@ -24,7 +24,7 @@ import {
   toFeatureCollection,
 } from './area-polygons';
 import { useMapStyle } from './map-style';
-import { BUILDINGS_3D_MIN_ZOOM, BUILDINGS_3D_PITCH, buildings3DPaint, DEFAULT_CENTER, priceLabel } from './map-shared';
+import { BUILDINGS_3D_MIN_ZOOM, buildings3DPaint, DEFAULT_CENTER, priceLabel } from './map-shared';
 import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { type MapOverlay } from '../lib/map-overlays';
@@ -101,15 +101,16 @@ export interface ListingMapProps {
    * basemap's buildings but below its labels. Null shows none.
    */
   overlay?: MapOverlay | null;
-  /** Extrude the basemap's buildings to their real height and tilt the camera. */
+  /**
+   * Extrude the basemap's buildings to their real height. The camera is left
+   * alone — the extrusion is drawn top-down unless the user tilts the map.
+   */
   buildings3D?: boolean;
 }
 
 /** Imperative handle for driving the camera, e.g. flying to a search result. */
 export interface ListingMapRef {
   flyTo: (target: { longitude: number; latitude: number; zoom?: number }) => void;
-  /** Tilts the camera to the given pitch (degrees) without moving it otherwise. */
-  setPitch: (pitch: number) => void;
 }
 
 /**
@@ -161,7 +162,6 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         duration: 1200,
       });
     },
-    setPitch: (pitch) => cameraRef.current?.setStop({ pitch, duration: 500 }),
   }));
 
   // Prefer framing the polygons (the map's overlay focus); fall back to the
@@ -215,13 +215,10 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         left: COMPASS_MARGIN,
       }}>
       {/* Uncontrolled initial framing only: applied once on load. Camera moves
-          are then driven solely by the imperative ref (search flyTo, and the
-          pitch tilt when 3D buildings toggle) — loading a tapped city's
-          neighborhoods or selecting an area must not move it. */}
-      <Camera
-        ref={cameraRef}
-        initialViewState={{ center, zoom: 11, pitch: buildings3D ? BUILDINGS_3D_PITCH : 0 }}
-      />
+          are then driven solely by the user's gestures and the imperative ref
+          (search flyTo) — loading a tapped city's neighborhoods, selecting an
+          area, or toggling 3D buildings must not move it. */}
+      <Camera ref={cameraRef} initialViewState={{ center, zoom: 11 }} />
       {buildings3D && (
         <Layer
           id="buildings-3d"

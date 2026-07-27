@@ -18,7 +18,7 @@ import {
   toFeatureCollection,
 } from './area-polygons';
 import { useMapStyle } from './map-style';
-import { BUILDINGS_3D_MIN_ZOOM, BUILDINGS_3D_PITCH, buildings3DPaint, DEFAULT_CENTER, priceLabel } from './map-shared';
+import { BUILDINGS_3D_MIN_ZOOM, buildings3DPaint, DEFAULT_CENTER, priceLabel } from './map-shared';
 import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { useRecentViews } from '../lib/recent-views';
@@ -163,7 +163,6 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
       }
       map.flyTo({ center: [target.longitude, target.latitude], zoom: target.zoom, duration: 1200 });
     },
-    setPitch: (pitch) => mapRef.current?.flyTo({ pitch, duration: 500 }),
   }));
 
   // Prefer framing the polygons (the map's overlay focus); fall back to the
@@ -178,7 +177,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   return (
     <Map
       ref={attachMap}
-      initialViewState={{ ...center, zoom: 11, pitch: buildings3D ? BUILDINGS_3D_PITCH : 0 }}
+      initialViewState={{ ...center, zoom: 11 }}
       mapStyle={mapStyle}
       // Swap themes with a full style reload, not a diff. Diffing races the
       // runtime-added overlay: it tries to move the overlay layer to the new
