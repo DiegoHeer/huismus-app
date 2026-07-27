@@ -11,6 +11,10 @@ const mockBack = jest.fn();
 const mockDismissAll = jest.fn();
 const mockCanGoBack = jest.fn(() => true);
 const mockUsePathname = jest.fn().mockReturnValue('/');
+// One shared navigation object, not a fresh one per call: identity is stable in
+// the real router, and effects keyed on it would otherwise re-run every render.
+// Tests reach the spy with `require('expo-router').useNavigation().setOptions`.
+const mockNavigation = { setOptions: jest.fn() };
 
 jest.mock('expo-router', () => {
   const React = require('react');
@@ -35,7 +39,7 @@ jest.mock('expo-router', () => {
     useGlobalSearchParams: jest.fn(() => ({})),
     useSegments: jest.fn(() => []),
     usePathname: mockUsePathname,
-    useNavigation: () => ({ setOptions: jest.fn() }),
+    useNavigation: () => mockNavigation,
     Link: ({ children }: { children: React.ReactNode }) => children,
     Stack: Object.assign(
       ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),

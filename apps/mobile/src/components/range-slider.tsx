@@ -20,7 +20,11 @@ interface RangeSliderProps {
   onChange: (values: number[]) => void;
   /** Optional histogram buckets drawn behind the track (e.g. availability). */
   distribution?: number[];
-  /** Fired when a thumb drag begins / ends — e.g. to suspend a parent gesture. */
+  /**
+   * Fired when a thumb drag begins / ends. Hosts must use these to suspend every
+   * enclosing gesture (scrollables, swipe-back) — on iOS nothing else stops them
+   * stealing the drag. `useSliderDragLock` packages this up.
+   */
   onDragStart?: () => void;
   onDragEnd?: () => void;
 }
@@ -101,6 +105,15 @@ export function RangeSlider({
           },
           onPanResponderRelease: () => live.current.onDragEnd?.(),
           onPanResponderTerminate: () => live.current.onDragEnd?.(),
+          // Hold the gesture once granted: never hand it to another JS responder
+          // that asks mid-drag (a parent Pressable, the onboarding pager's tap
+          // zone). Default is to release.
+          onPanResponderTerminationRequest: () => false,
+          // Android: keep the enclosing native ScrollView out of the gesture.
+          // This is the default, but spelling it out marks the asymmetry — iOS
+          // has no counterpart, so hosts must disable their own scrollables for
+          // the drag. See hooks/use-slider-drag-lock.ts.
+          onShouldBlockNativeResponder: () => true,
         });
       }),
     );
@@ -137,6 +150,7 @@ export function RangeSlider({
       )}
 
       <View
+        testID="range-slider-track"
         onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
         style={{ height: THUMB, justifyContent: 'center' }}>
         <View style={{ height: TRACK_H, borderRadius: TRACK_H / 2, backgroundColor: trackColor }} />
@@ -158,6 +172,10 @@ export function RangeSlider({
               key={i}
               {...responders[i].panHandlers}
               hitSlop={{ top: 14, bottom: 14, left: 10, right: 10 }}
+              // `accessible` is what actually exposes the thumb as one element
+              // (iOS drives isAccessibilityElement off it); the role alone is
+              // set but never surfaced.
+              accessible
               accessibilityRole="adjustable"
               accessibilityValue={{ min, max, now: v }}
               style={{

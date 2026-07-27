@@ -29,6 +29,7 @@ import {
   TextButton,
 } from '@/components/onboarding/shared';
 import { RangeSlider } from '@/components/range-slider';
+import { useSliderDragLock } from '@/hooks/use-slider-drag-lock';
 import { trackOnboardingCompleted, trackOnboardingStep } from '@/lib/analytics';
 import { cityDisplayName } from '@/lib/city-search';
 import {
@@ -155,8 +156,9 @@ export function OnboardingFlow() {
   }, [pageWidth, pageWidthAnim]);
   const progress = useMemo(() => Animated.divide(scrollX, pageWidthAnim), [scrollX, pageWidthAnim]);
 
-  // A thumb drag on the price slider must not also drag the pager sideways.
-  const [pagerEnabled, setPagerEnabled] = useState(true);
+  // A thumb drag on the price slider must not also move the pager sideways or
+  // scroll its page vertically — on iOS both scroll views would happily steal it.
+  const { dragging: sliderDragging, sliderDrag } = useSliderDragLock();
 
   const goTo = useCallback(
     (next: number) => {
@@ -397,7 +399,10 @@ export function OnboardingFlow() {
       </View>
     </OnboardingPage>,
 
-    <OnboardingPage key="filters">
+    <OnboardingPage
+      key="filters"
+      testID="onboarding-filters-body"
+      scrollEnabled={!sliderDragging}>
       <OnboardingHeader
         icon={<SlidersGlyph />}
         title={t('onboarding.filtersStep.title')}
@@ -435,13 +440,13 @@ export function OnboardingFlow() {
           }
           onDragStart={() => {
             cancelPeek();
-            setPagerEnabled(false);
+            sliderDrag.onDragStart();
             // A grab of a thumb also emits a click on web — swallow it so
             // fiddling with the slider can't tap-navigate the pager.
             lastTapAt.current = Date.now();
           }}
           onDragEnd={() => {
-            setPagerEnabled(true);
+            sliderDrag.onDragEnd();
             lastTapAt.current = Date.now();
           }}
         />
@@ -521,13 +526,14 @@ export function OnboardingFlow() {
           onLayout={(e) => setPageWidth(e.nativeEvent.layout.width)}>
           <Animated.ScrollView
             ref={scrollRef}
+            testID="onboarding-pager"
             style={{ flex: 1 }}
             horizontal
             pagingEnabled
             // A single fling stops at the adjacent page instead of skipping
             // ahead (iOS/Android; the web pendant is `webSnapStop` per cell).
             disableIntervalMomentum
-            scrollEnabled={pagerEnabled}
+            scrollEnabled={!sliderDragging}
             showsHorizontalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             scrollEventThrottle={16}

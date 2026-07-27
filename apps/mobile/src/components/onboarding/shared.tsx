@@ -23,13 +23,28 @@ export function HeroBadge({ children }: { children: ReactNode }) {
   );
 }
 
-/** Vertically scrollable page body, sized to the pager cell by the flow. */
-export function OnboardingPage({ children }: { children: ReactNode }) {
+/**
+ * Vertically scrollable page body, sized to the pager cell by the flow. Pages
+ * holding a slider pass `scrollEnabled={false}` while a thumb is being dragged —
+ * on iOS this scroll view would otherwise cancel the drag (see
+ * hooks/use-slider-drag-lock.ts).
+ */
+export function OnboardingPage({
+  children,
+  scrollEnabled,
+  testID,
+}: {
+  children: ReactNode;
+  scrollEnabled?: boolean;
+  testID?: string;
+}) {
   return (
     <ScrollView
+      testID={testID}
       // flex:1 so the body fills its (fixed-height) pager cell on web, where a
       // ScrollView with no height otherwise collapses and hides its content.
       style={{ flex: 1 }}
+      scrollEnabled={scrollEnabled}
       // flexGrow:1 lets a page whose content is shorter than the viewport
       // (e.g. the welcome page's flex-1 + justify-between wrapper) stretch to
       // fill it; pages with more content than the viewport still scroll as before.

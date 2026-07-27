@@ -2,12 +2,13 @@ import { useListingsCount } from '@realty/data';
 import { useTranslation } from '@realty/i18n';
 import type { BuildingType } from '@realty/types';
 import { useNavigation, useRouter } from 'expo-router';
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FilterSection, SelectPills, Stepper } from '@/components/filter-controls';
 import { RangeSlider } from '@/components/range-slider';
+import { useSliderDragLock } from '@/hooks/use-slider-drag-lock';
 import { deferNavigation } from '@/lib/navigation';
 import { trackFiltersApplied } from '@/lib/analytics';
 import {
@@ -63,17 +64,16 @@ export default function FiltersScreen() {
   const [draft, setDraft] = useState<Filters>(filters);
   const update = (patch: Partial<Filters>) => setDraft((d) => ({ ...d, ...patch }));
 
-  // iOS reads a left-to-right thumb drag as the screen's back-swipe (most sliders
-  // sit at their minimum, hard against the left edge). Suspend the pop gesture for
-  // the duration of any thumb drag, then restore it. Spread onto every slider.
-  const setSwipeBack = useCallback(
-    (enabled: boolean) => navigation.setOptions({ gestureEnabled: enabled }),
-    [navigation],
-  );
-  const sliderDrag = {
-    onDragStart: () => setSwipeBack(false),
-    onDragEnd: () => setSwipeBack(true),
-  };
+  // A thumb drag must not double as a screen gesture. iOS otherwise reads a
+  // vertical wobble as a scroll of the list below (its scroll view cancels the
+  // touch it's holding) and a left-to-right drag as the screen's back-swipe —
+  // most sliders sit at their minimum, hard against the left edge. So park both
+  // for the duration of the drag: `sliderDrag` is spread onto every slider,
+  // `dragging` disables the ScrollView below and the pop gesture here.
+  const { dragging, sliderDrag } = useSliderDragLock();
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: !dragging });
+  }, [navigation, dragging]);
 
   // Reset lives in the native header, mirroring the pushed settings screens.
   useLayoutEffect(() => {
@@ -142,8 +142,10 @@ export default function FiltersScreen() {
   return (
     <View className="flex-1 bg-neutral-100 dark:bg-black">
       <ScrollView
+        testID="filters-scroll"
         contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 16 }}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={!dragging}
         showsVerticalScrollIndicator={false}>
         <View className="gap-2">
           <SelectPills
