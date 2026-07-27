@@ -131,7 +131,7 @@ function FactPath({ d, color }: { d: string; color: string }) {
       d={d}
       fill="none"
       stroke={color}
-      strokeWidth={2.5}
+      strokeWidth={1.75}
       strokeLinecap="round"
       strokeLinejoin="round"
     />
