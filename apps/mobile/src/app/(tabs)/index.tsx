@@ -11,7 +11,7 @@ import { FilterPills } from '@/components/filter-pills';
 import { ListingCard } from '@/components/listing-card';
 import { ListingMap, type ListingMapRef } from '@/components/listing-map';
 import { LocationSearch, type LocationSearchRef } from '@/components/location-search';
-import { BUILDINGS_3D_PITCH, DEFAULT_CENTER } from '@/components/map-shared';
+import { DEFAULT_CENTER } from '@/components/map-shared';
 import { useEffectiveColorScheme } from '@/components/map-style';
 import { OverlayLegend } from '@/components/overlay-legend';
 import { Brand } from '@/constants/theme';
@@ -128,18 +128,9 @@ export default function MapScreen() {
   const { data: stats = [] } = useStats(selectedCity?.code, loadStats);
 
   // 3D buildings preference, set on the Map settings page (see profile.tsx).
-  // The map mounts already tilted to match it (its own Camera/initialViewState),
-  // so this effect only needs to re-tilt on a live toggle while this screen is
-  // already open — skip the mount-time run to avoid re-animating to the same pitch.
+  // Toggling it only adds/removes the extrusion layer — the camera keeps
+  // whatever pitch the user has set, so there is nothing to drive here.
   const { buildings3D } = useMapSettings();
-  const mountedPitchRef = useRef(false);
-  useEffect(() => {
-    if (!mountedPitchRef.current) {
-      mountedPitchRef.current = true;
-      return;
-    }
-    mapRef.current?.setPitch(buildings3D ? BUILDINGS_3D_PITCH : 0);
-  }, [buildings3D]);
 
   // A city chosen during the intro tour, or the first saved preferred city
   // re-queued at boot: once the city shapes are loaded, focus the map on it

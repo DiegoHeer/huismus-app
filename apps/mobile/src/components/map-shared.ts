@@ -5,17 +5,10 @@ import type { Listing } from '@realty/types';
 export const DEFAULT_CENTER = { longitude: 4.9041, latitude: 52.3676 } as const;
 
 /**
- * Camera pitch (degrees) applied while 3D buildings are enabled; 0 when off.
- * MapLibre renders pitch as visually flat at the app's default city-wide zoom
- * (~11) regardless of this value — the tilt only becomes apparent once the
- * user zooms in near `BUILDINGS_3D_MIN_ZOOM`, which is also where the
- * extrusion layer itself starts drawing. Confirmed against a bare
- * maplibre-gl-js instance, so this is a library characteristic, not a bug in
- * how the pitch is applied here.
+ * Below this zoom, individual buildings are too small for extrusion to read.
+ * Note that 3D buildings never tilt the camera: the extrusion is drawn
+ * top-down at pitch 0, and only the user's own gesture may tilt the map.
  */
-export const BUILDINGS_3D_PITCH = 45;
-
-/** Below this zoom, individual buildings are too small for extrusion to read. */
 export const BUILDINGS_3D_MIN_ZOOM = 15;
 
 /**
