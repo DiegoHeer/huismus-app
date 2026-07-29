@@ -3,9 +3,9 @@ import type { AreaPolygon, CityShape, NeighborhoodStats } from '@huismus/types';
 
 import { loadJSON, saveJSON, StorageKeys } from './storage';
 
-/** AsyncStorage key for a city's cached boundaries, e.g. `realty:areas:0518`. */
+/** AsyncStorage key for a city's cached boundaries, e.g. `huismus:areas:0518`. */
 const areasKey = (city: string) => `${StorageKeys.areas}:${city}`;
-/** AsyncStorage key for a city's cached statistics, e.g. `realty:stats:0518`. */
+/** AsyncStorage key for a city's cached statistics, e.g. `huismus:stats:0518`. */
 const statsKey = (city: string) => `${StorageKeys.stats}:${city}`;
 
 /**

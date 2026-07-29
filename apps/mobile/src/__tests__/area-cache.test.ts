@@ -52,12 +52,12 @@ describe('loadAreas', () => {
 
     expect(mockGetAreas).toHaveBeenCalledWith(DEN_HAAG);
     expect(areas).toEqual(sampleAreas);
-    const raw = await AsyncStorage.getItem(`realty:areas:${DEN_HAAG}`);
+    const raw = await AsyncStorage.getItem(`huismus:areas:${DEN_HAAG}`);
     expect(JSON.parse(raw!)).toEqual(sampleAreas);
   });
 
   it('returns the cached data without calling the API when the cache exists', async () => {
-    await AsyncStorage.setItem(`realty:areas:${DEN_HAAG}`, JSON.stringify(sampleAreas));
+    await AsyncStorage.setItem(`huismus:areas:${DEN_HAAG}`, JSON.stringify(sampleAreas));
 
     const areas = await loadAreas(DEN_HAAG);
 
@@ -73,8 +73,8 @@ describe('loadAreas', () => {
 
     expect(mockGetAreas).toHaveBeenCalledWith(DEN_HAAG);
     expect(mockGetAreas).toHaveBeenCalledWith(AMSTERDAM);
-    expect(await AsyncStorage.getItem(`realty:areas:${DEN_HAAG}`)).not.toBeNull();
-    expect(await AsyncStorage.getItem(`realty:areas:${AMSTERDAM}`)).not.toBeNull();
+    expect(await AsyncStorage.getItem(`huismus:areas:${DEN_HAAG}`)).not.toBeNull();
+    expect(await AsyncStorage.getItem(`huismus:areas:${AMSTERDAM}`)).not.toBeNull();
   });
 
   it('does not cache an empty result, so it retries next time', async () => {
@@ -83,7 +83,7 @@ describe('loadAreas', () => {
     const areas = await loadAreas(DEN_HAAG);
 
     expect(areas).toEqual([]);
-    expect(await AsyncStorage.getItem(`realty:areas:${DEN_HAAG}`)).toBeNull();
+    expect(await AsyncStorage.getItem(`huismus:areas:${DEN_HAAG}`)).toBeNull();
   });
 });
 
@@ -95,12 +95,12 @@ describe('loadStats', () => {
 
     expect(mockGetStats).toHaveBeenCalledWith(DEN_HAAG);
     expect(stats).toEqual(sampleStats);
-    const raw = await AsyncStorage.getItem(`realty:stats:${DEN_HAAG}`);
+    const raw = await AsyncStorage.getItem(`huismus:stats:${DEN_HAAG}`);
     expect(JSON.parse(raw!)).toEqual(sampleStats);
   });
 
   it('returns the cached stats without calling the API when the cache exists', async () => {
-    await AsyncStorage.setItem(`realty:stats:${DEN_HAAG}`, JSON.stringify(sampleStats));
+    await AsyncStorage.setItem(`huismus:stats:${DEN_HAAG}`, JSON.stringify(sampleStats));
 
     const stats = await loadStats(DEN_HAAG);
 
@@ -117,11 +117,11 @@ describe('loadCities', () => {
 
     expect(mockGetCities).toHaveBeenCalledTimes(1);
     expect(cities).toEqual(sampleCities);
-    expect(JSON.parse((await AsyncStorage.getItem('realty:cities'))!)).toEqual(sampleCities);
+    expect(JSON.parse((await AsyncStorage.getItem('huismus:cities'))!)).toEqual(sampleCities);
   });
 
   it('returns the cached cities without calling the API when the cache exists', async () => {
-    await AsyncStorage.setItem('realty:cities', JSON.stringify(sampleCities));
+    await AsyncStorage.setItem('huismus:cities', JSON.stringify(sampleCities));
 
     const cities = await loadCities();
 
@@ -135,6 +135,6 @@ describe('loadCities', () => {
     const cities = await loadCities();
 
     expect(cities).toEqual([]);
-    expect(await AsyncStorage.getItem('realty:cities')).toBeNull();
+    expect(await AsyncStorage.getItem('huismus:cities')).toBeNull();
   });
 });

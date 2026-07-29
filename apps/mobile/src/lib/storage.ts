@@ -4,9 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * Thin JSON wrappers around AsyncStorage. Every read/write is best-effort:
  * storage failures (quota, corruption, missing native module on web) resolve
  * to a safe default instead of throwing, so a persistence hiccup never crashes
- * the UI. All keys live under a single `realty:` namespace.
+ * the UI. All keys live under a single `huismus:` namespace.
  */
-const PREFIX = 'realty:';
+const PREFIX = 'huismus:';
 
 export const StorageKeys = {
   language: `${PREFIX}language`,
