@@ -393,7 +393,10 @@ export default function MapScreen() {
           <ListingCard
             listing={selected}
             onPress={() => router.push({ pathname: '/listing/[id]', params: { id: selected.id } })}
-            onClose={() => setSelectedId(null)}
+            // A swipe-dismissal reports back only after its exit animation, by
+            // which point the user may already have tapped another marker — so
+            // clear the selection only if it's still the card that was thrown away.
+            onClose={() => setSelectedId((cur) => (cur === selected.id ? null : cur))}
           />
         </View>
       )}

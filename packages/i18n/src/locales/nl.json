@@ -297,6 +297,7 @@
     },
     "visitRealtor": "Bekijk op {{name}}",
     "close": "Sluiten",
+    "swipeHint": "Veeg omhoog om te openen, omlaag om te sluiten",
     "like": "Aan favorieten toevoegen",
     "unlike": "Uit favorieten verwijderen",
     "share": "Delen",

@@ -297,6 +297,7 @@
     },
     "visitRealtor": "Ver em {{name}}",
     "close": "Fechar",
+    "swipeHint": "Deslize para cima para abrir, para baixo para fechar",
     "like": "Guardar nos favoritos",
     "unlike": "Remover dos favoritos",
     "share": "Partilhar",

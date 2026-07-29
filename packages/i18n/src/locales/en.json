@@ -297,6 +297,7 @@
     },
     "visitRealtor": "Visit {{name}}",
     "close": "Close",
+    "swipeHint": "Swipe up to open, swipe down to dismiss",
     "like": "Save to favorites",
     "unlike": "Remove from favorites",
     "share": "Share",
