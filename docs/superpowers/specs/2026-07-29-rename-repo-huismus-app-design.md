@@ -58,13 +58,32 @@ infrastructure identifiers. The repo is named `huismus-app` on GitHub.
 - Update the storage-namespace references in project `CLAUDE.md` docs.
 
 **Analytics**
-- `apps/mobile/.env` and `apps/mobile/.env.example`:
-  `EXPO_PUBLIC_PLAUSIBLE_DOMAIN=realty-ai-canvas` → `huismus-app`.
+- `apps/mobile/.env.example` (committed) and `apps/mobile/.env` (gitignored, local
+  runtime only): `EXPO_PUBLIC_PLAUSIBLE_DOMAIN=realty-ai-canvas` → `huismus-app`.
 - `apps/mobile/src/__tests__/analytics-client.test.ts`: sync the test fixture
   `'realty-ai-canvas'` → `'huismus-app'`.
+- `docs/plausible-analytics.md`: any `realty-ai-canvas` site-ID references → `huismus-app`.
 - ⚠️ Requires a **backend follow-up** (see below) — until the Plausible site is
   renamed, events for `huismus-app` are dropped server-side (client is
   fire-and-forget and swallows errors).
+
+**Stray committed native iOS project — delete it**
+- Repo-root `ios/` is a tracked but **stray/orphaned** Expo-prebuild artifact named
+  `realtyaicanvas`. It is NOT on any build path: `bun run ios` delegates to
+  `apps/mobile` `expo run:ios` (which uses the gitignored, regenerated
+  `apps/mobile/ios`); EAS uses `apps/mobile/eas.json`; CI runs no native iOS build.
+  The repo's own `ios-release` skill documents `apps/mobile/ios` → `Huismus` as the
+  real project and explicitly calls `realtyaicanvas` the "stale committed name".
+- It was minted `realtyaicanvas` because root `app.json` is a bundle-id-only stub
+  with no `name`, so a stray root prebuild derived the name from root
+  `package.json` `"realty-ai-canvas"` → sanitized `realtyaicanvas`.
+- **Action:** `git rm -r ios` (also verify no stray root `android/` is tracked — it
+  isn't). The real iOS project regenerates as `Huismus` automatically on the next
+  Mac `expo prebuild --clean` (the standard `ios-release` flow). No Xcode surgery,
+  nothing to hand-edit. Safe and fully verifiable on Linux (nothing consumes it;
+  Jest/typecheck/lint/web-export never touch it; recoverable from git history).
+- Renaming the root `package.json` (above) also prevents a future stray root
+  prebuild from ever minting `realtyaicanvas` again.
 
 ### Out of scope — what stays (by design)
 
@@ -74,23 +93,34 @@ infrastructure identifiers. The repo is named `huismus-app` on GitHub.
 - **Apple Services ID** `nl.realty-ai.signin` — real Apple / backend Sign-in config
   tied to the `realty-ai.nl` domain; renaming requires Apple Developer + backend
   changes. Left as-is.
-- **Cross-repo doc references**: `realty-alerts` (backend repo),
-  `realty-ai-platform` (infra repo) — they name *other* projects, not this one.
+- **Cross-repo / backend references**: `realty-alerts` (backend repo),
+  `realty-ai-platform` (infra repo), `~/.config/realty-ai/` (credential path),
+  `Realty Alerts API` (backend product name), `/realty-api` (Metro dev-proxy
+  prefix) — they name *other* projects/infra, not this app.
+- **OAuth deep-link scheme** `realtyaicanvas://auth/callback` in
+  `docs/oauth-social-login.md` — already stale vs app.json's `huismus://`.
+  Reconciling it means updating the Google/Apple OAuth console (redirect URIs), so
+  it is a **flagged follow-up**, not a code rename. Left untouched here to avoid a
+  doc that claims a scheme the provider consoles don't yet accept.
 - **`huismus-web`** — a separate repo with its own ~38 lingering `realty` refs
   (mostly the API domain). Not touched here.
 
 ## Execution order
 
 1. Isolate in a git worktree (done); copy `apps/mobile/.env` into it (done).
-2. **Commit A — npm scope rename**: package names + imports + root scripts +
-   internal deps; run `bun install`; commit the source + regenerated lockfile.
-3. **Commit B — storage/token key rename**: `storage.ts`, `secure-tokens.ts`, and
-   the storage-namespace doc references.
-4. **Commit C — analytics domain**: `.env`, `.env.example`, analytics test fixture.
+2. **Commit A — npm scope rename**: package names + imports + jest configs + root
+   scripts + internal deps; run `bun install`; commit the source + regenerated lockfile.
+3. **Commit B — storage/token key rename**: `storage.ts`, `secure-tokens.ts`,
+   `area-cache.ts` comment, the two tests that hardcode the keys
+   (`area-cache.test.ts`, `secure-tokens.test.ts`), and the storage-namespace doc
+   references (`CLAUDE.md`, `docs/backend/user-account-data-api.md`).
+4. **Commit C — analytics domain**: `.env.example`, `docs/plausible-analytics.md`,
+   analytics test fixture (and local `.env` for runtime verification, uncommitted).
 5. **Commit D — repo identity**: root `package.json` name + `docs/*` repo-name refs.
-6. Full verification (see below).
-7. Push branch, open **draft PR**. Pause for owner review.
-8. After owner sign-off + CI green + merge:
+6. **Commit E — delete stray root `ios/`**: `git rm -r ios`.
+7. Full verification (see below).
+8. Push branch, open **draft PR**. Pause for owner review.
+9. After owner sign-off + CI green + merge:
    - `gh repo rename huismus-app`
    - update the local `origin` remote URL
    - clean up the worktree + branch
@@ -127,6 +157,21 @@ All of the following must pass before the PR is marked ready:
 - Reload the app → confirm liked/recent state persists under the new keys.
 - Confirm **no** reads/writes hit the old `realty:` / `realty.*` keys.
 
+**Stray `ios/` deletion**
+- Verify nothing references the root `ios/` (grep across CI workflows, scripts,
+  `eas.json`, package scripts) and the full suite above stays green — proving
+  nothing was ever built from it.
+- The `Huismus` regeneration is verified on the Mac by the `ios-release` flow
+  (prebuild → `Huismus.app` installs with the correct name), post-merge.
+
+**Final residual sweep** (tracked files only)
+- `git ls-files | xargs grep -lI 'realty'` returns only the deliberately-retained
+  external references (Section "Out of scope"): `realty-ai.nl` domains,
+  `realty-alerts` / `realty-ai-platform` / `~/.config/realty-ai/`, `Realty Alerts`,
+  `/realty-api`, `nl.realty-ai.signin`, and the flagged `realtyaicanvas://` OAuth
+  scheme in `docs/oauth-social-login.md`. No `@realty/`, no `realty:` keys, no
+  `realty-ai-canvas` repo/Plausible refs, no committed `realtyaicanvas` native project.
+
 ## Backend / manual follow-ups (owner, after merge)
 
 1. **GitHub + local folder**
@@ -145,6 +190,22 @@ All of the following must pass before the PR is marked ready:
      "Change domain"), which preserves historical stats.
    - Verify a test event: with the app running, trigger a pageview and confirm it
      appears under the `huismus-app` site in the Plausible dashboard.
+
+3. **iOS native regeneration** (Mac — happens naturally, no manual rename)
+   - After merge, the next `ios-release` flow runs `bunx expo prebuild --platform
+     ios --clean` from `apps/mobile`, regenerating `apps/mobile/ios` as
+     `Huismus.xcworkspace` / `Huismus` with the correct display name (`Huismus`),
+     `huismus://` + Google OAuth URL schemes, entitlements, and icon — all from
+     `apps/mobile/app.json`. Nothing to hand-edit.
+   - Do NOT run `expo prebuild` from the repo root (it would read the root stub
+     config and could recreate a stray project).
+
+4. **OAuth deep-link scheme reconciliation** (Google/Apple console — separate)
+   - `apps/mobile/app.json` `scheme` is `huismus`, but the OAuth docs and possibly
+     the provider consoles still reference `realtyaicanvas://auth/callback`. Confirm
+     the Google (and Apple) authorized redirect URIs use the current
+     `huismus://`-based callback, then update `docs/oauth-social-login.md`. This is
+     external OAuth configuration, intentionally out of scope for the code rename.
 
 ## Risks & non-goals
 
