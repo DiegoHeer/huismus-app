@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@huismus/i18n": "workspace:*",
     "@huismus/types": "workspace:*"
   },
   "peerDependencies": {

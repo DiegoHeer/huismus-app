@@ -6,5 +6,6 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@huismus/types$': '<rootDir>/../types/src/index.ts',
+    '^@huismus/i18n$': '<rootDir>/../i18n/src/index.ts',
   },
 };
