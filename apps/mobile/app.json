@@ -15,8 +15,13 @@
     "ios": {
       "bundleIdentifier": "com.fastvibes.huismus",
       "associatedDomains": [
+        "applinks:huismusapp.com",
         "applinks:huismusapp.com"
-      ]
+      ],
+      "buildNumber": "276",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {

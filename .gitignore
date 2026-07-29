@@ -60,3 +60,5 @@ Thumbs.db
 # claude
 .claude/worktree
 .claude/settings.local.json
+
+ios/Pods
