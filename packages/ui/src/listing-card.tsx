@@ -1,5 +1,5 @@
-import { formatPrice } from '@realty/data';
-import type { Listing } from '@realty/types';
+import { formatPrice } from '@huismus/data';
+import type { Listing } from '@huismus/types';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, Text, View } from 'react-native';

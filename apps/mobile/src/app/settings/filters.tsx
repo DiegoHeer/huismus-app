@@ -1,6 +1,6 @@
-import { useListingsCount } from '@realty/data';
-import { useTranslation } from '@realty/i18n';
-import type { BuildingType } from '@realty/types';
+import { useListingsCount } from '@huismus/data';
+import { useTranslation } from '@huismus/i18n';
+import type { BuildingType } from '@huismus/types';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';

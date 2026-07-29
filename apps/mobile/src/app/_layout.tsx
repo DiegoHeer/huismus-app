@@ -4,8 +4,8 @@ import '@/i18n';
 // first one, so the map opens on it every boot (see lib/preferred-cities.ts).
 import '@/lib/preferred-cities';
 
-import { DataProvider } from '@realty/data';
-import { i18n, I18nextProvider, useTranslation } from '@realty/i18n';
+import { DataProvider } from '@huismus/data';
+import { i18n, I18nextProvider, useTranslation } from '@huismus/i18n';
 import { StatusBar } from 'expo-status-bar';
 import {
   DarkTheme,

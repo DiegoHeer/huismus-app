@@ -1,4 +1,4 @@
-import { useTranslation } from '@realty/i18n';
+import { useTranslation } from '@huismus/i18n';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 

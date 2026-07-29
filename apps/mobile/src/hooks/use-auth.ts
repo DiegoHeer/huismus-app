@@ -20,7 +20,7 @@ import {
   type AllauthFieldError,
   type AuthUserDto,
   type DeleteAccountErrorCode,
-} from '@realty/data';
+} from '@huismus/data';
 import { requestGoogleIdToken } from '@/lib/google-auth';
 import {
   clearPendingReset,

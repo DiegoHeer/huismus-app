@@ -1,4 +1,4 @@
-import { useTranslation } from '@realty/i18n';
+import { useTranslation } from '@huismus/i18n';
 import { Text } from 'react-native';
 
 import { InfoCard, Paragraph, SettingsContentScreen } from '@/components/settings-content';

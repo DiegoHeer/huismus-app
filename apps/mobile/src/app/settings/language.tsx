@@ -1,4 +1,4 @@
-import { supportedLanguages, useTranslation, type SupportedLanguage } from '@realty/i18n';
+import { supportedLanguages, useTranslation, type SupportedLanguage } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 
 import { SettingsOptionsScreen } from '@/components/settings-options-screen';

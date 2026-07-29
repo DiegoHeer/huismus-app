@@ -1,5 +1,5 @@
 {
-  "name": "@realty/data",
+  "name": "@huismus/data",
   "version": "0.0.0",
   "private": true,
   "main": "src/index.ts",
@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@realty/types": "workspace:*"
+    "@huismus/types": "workspace:*"
   },
   "peerDependencies": {
     "@tanstack/react-query": ">=5",

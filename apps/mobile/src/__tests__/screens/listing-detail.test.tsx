@@ -1,5 +1,5 @@
-import { DataProvider, queryClient } from '@realty/data';
-import { initI18n } from '@realty/i18n';
+import { DataProvider, queryClient } from '@huismus/data';
+import { initI18n } from '@huismus/i18n';
 import { render, waitFor } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { I18nextProvider } from 'react-i18next';

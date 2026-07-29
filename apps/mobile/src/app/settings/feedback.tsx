@@ -1,5 +1,5 @@
-import { submitFeedback, type FeedbackIn, type FeedbackPlatform } from '@realty/data';
-import { isSupportedLanguage, useTranslation } from '@realty/i18n';
+import { submitFeedback, type FeedbackIn, type FeedbackPlatform } from '@huismus/data';
+import { isSupportedLanguage, useTranslation } from '@huismus/i18n';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,

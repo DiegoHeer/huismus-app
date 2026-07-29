@@ -1,4 +1,4 @@
-import type { BuildingType, FoundationRisk, Listing, ListingStatus } from '@realty/types';
+import type { BuildingType, FoundationRisk, Listing, ListingStatus } from '@huismus/types';
 
 /**
  * Adapter for the Realty Alerts API (`GET /v1/residences`).

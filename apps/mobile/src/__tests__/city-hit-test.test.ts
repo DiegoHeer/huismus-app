@@ -1,4 +1,4 @@
-import type { CityShape } from '@realty/types';
+import type { CityShape } from '@huismus/types';
 
 import { buildCityIndex, findCityAt } from '@/lib/city-hit-test';
 

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { AreaPolygon, CityShape, NeighborhoodStats } from '@realty/types';
+import type { AreaPolygon, CityShape, NeighborhoodStats } from '@huismus/types';
 
 import { loadAreas, loadCities, loadStats } from '@/lib/area-cache';
 
@@ -7,7 +7,7 @@ import { loadAreas, loadCities, loadStats } from '@/lib/area-cache';
 const mockGetAreas = jest.fn();
 const mockGetStats = jest.fn();
 const mockGetCities = jest.fn();
-jest.mock('@realty/data', () => ({
+jest.mock('@huismus/data', () => ({
   getAreas: (city: string) => mockGetAreas(city),
   getStats: (city: string) => mockGetStats(city),
   getCities: () => mockGetCities(),

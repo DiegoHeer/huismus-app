@@ -1,4 +1,4 @@
-import { useTranslation } from '@realty/i18n';
+import { useTranslation } from '@huismus/i18n';
 import { useNavigation } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
 import {

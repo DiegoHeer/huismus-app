@@ -1,4 +1,4 @@
-import type { CityName } from '@realty/data';
+import type { CityName } from '@huismus/data';
 
 import {
   BIGGEST_CITY_CODES,

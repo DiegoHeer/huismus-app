@@ -5,6 +5,6 @@ module.exports = {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.json' }],
   },
   moduleNameMapper: {
-    '^@realty/types$': '<rootDir>/../types/src/index.ts',
+    '^@huismus/types$': '<rootDir>/../types/src/index.ts',
   },
 };

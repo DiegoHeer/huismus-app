@@ -15,16 +15,16 @@
       },
     },
     "apps/mobile": {
-      "name": "@realty/mobile",
+      "name": "@huismus/mobile",
       "version": "1.0.0",
       "dependencies": {
         "@expo/ui": "~56.0.17",
+        "@huismus/data": "workspace:*",
+        "@huismus/i18n": "workspace:*",
+        "@huismus/types": "workspace:*",
+        "@huismus/ui": "workspace:*",
         "@maplibre/maplibre-react-native": "^11.0.0",
         "@react-native-async-storage/async-storage": "2.2.0",
-        "@realty/data": "workspace:*",
-        "@realty/i18n": "workspace:*",
-        "@realty/types": "workspace:*",
-        "@realty/ui": "workspace:*",
         "@tanstack/react-query": "^5.66.0",
         "expo": "~56.0.11",
         "expo-auth-session": "~56.0.15",
@@ -67,10 +67,10 @@
       },
     },
     "packages/data": {
-      "name": "@realty/data",
+      "name": "@huismus/data",
       "version": "0.0.0",
       "dependencies": {
-        "@realty/types": "workspace:*",
+        "@huismus/types": "workspace:*",
       },
       "devDependencies": {
         "@tanstack/react-query": "^5.66.0",
@@ -88,7 +88,7 @@
       },
     },
     "packages/i18n": {
-      "name": "@realty/i18n",
+      "name": "@huismus/i18n",
       "version": "0.0.0",
       "dependencies": {
         "i18next": "^24.2.0",
@@ -107,7 +107,7 @@
       },
     },
     "packages/types": {
-      "name": "@realty/types",
+      "name": "@huismus/types",
       "version": "0.0.0",
       "devDependencies": {
         "@types/geojson": "^7946.0.16",
@@ -115,11 +115,11 @@
       },
     },
     "packages/ui": {
-      "name": "@realty/ui",
+      "name": "@huismus/ui",
       "version": "0.0.0",
       "dependencies": {
-        "@realty/data": "workspace:*",
-        "@realty/types": "workspace:*",
+        "@huismus/data": "workspace:*",
+        "@huismus/types": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^22.10.0",
@@ -409,6 +409,16 @@
 
     "@expo/xcpretty": ["@expo/xcpretty@4.4.4", "", { "dependencies": { "@babel/code-frame": "^7.20.0", "chalk": "^4.1.0", "js-yaml": "^4.1.0" }, "bin": { "excpretty": "build/cli.js" } }, "sha512-4aQzz9vgxcNXFfo/iyNgDDYfsU5XGKKxWxZopw0cVotHiW+U8IJbIxMaxsINs6bHhtkG3StKNPcOrn3eBuxKPw=="],
 
+    "@huismus/data": ["@huismus/data@workspace:packages/data"],
+
+    "@huismus/i18n": ["@huismus/i18n@workspace:packages/i18n"],
+
+    "@huismus/mobile": ["@huismus/mobile@workspace:apps/mobile"],
+
+    "@huismus/types": ["@huismus/types@workspace:packages/types"],
+
+    "@huismus/ui": ["@huismus/ui@workspace:packages/ui"],
+
     "@humanfs/core": ["@humanfs/core@0.19.2", "", { "dependencies": { "@humanfs/types": "^0.15.0" } }, "sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA=="],
 
     "@humanfs/node": ["@humanfs/node@0.16.8", "", { "dependencies": { "@humanfs/core": "^0.19.2", "@humanfs/types": "^0.15.0", "@humanwhocodes/retry": "^0.4.0" } }, "sha512-gE1eQNZ3R++kTzFUpdGlpmy8kDZD/MLyHqDwqjkVQI0JMdI1D51sy1H958PNXYkM2rAac7e5/CnIKZrHtPh3BQ=="],
@@ -582,16 +592,6 @@
     "@react-native/normalize-colors": ["@react-native/normalize-colors@0.85.3", "", {}, "sha512-hj0PScZEhIbcOvQV5yMKX3ha4XEIOy/SVE1Rrpp0beW0dpNLOgSC7KDxGewmDnIHK9YdQUXGY9eMEfShUMIaZw=="],
 
     "@react-native/virtualized-lists": ["@react-native/virtualized-lists@0.85.3", "", { "dependencies": { "invariant": "^2.2.4", "nullthrows": "^1.1.1" }, "peerDependencies": { "@types/react": "^19.2.0", "react": "*", "react-native": "0.85.3" }, "optionalPeers": ["@types/react"] }, "sha512-dsCjI//OIPEUJMyNHp4l7zNLVjCx7bcaRUceOCkU+IB17hkbtbGWvi7HjGFSzy7FJGmS/MOlcfpb72xXiy1Oig=="],
-
-    "@realty/data": ["@realty/data@workspace:packages/data"],
-
-    "@realty/i18n": ["@realty/i18n@workspace:packages/i18n"],
-
-    "@realty/mobile": ["@realty/mobile@workspace:apps/mobile"],
-
-    "@realty/types": ["@realty/types@workspace:packages/types"],
-
-    "@realty/ui": ["@realty/ui@workspace:packages/ui"],
 
     "@rtsao/scc": ["@rtsao/scc@1.1.0", "", {}, "sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g=="],
 

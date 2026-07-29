@@ -1,5 +1,5 @@
-import { DataProvider, queryClient } from '@realty/data';
-import { initI18n } from '@realty/i18n';
+import { DataProvider, queryClient } from '@huismus/data';
+import { initI18n } from '@huismus/i18n';
 import { fireEvent, render, within } from '@testing-library/react-native';
 import { I18nextProvider } from 'react-i18next';
 

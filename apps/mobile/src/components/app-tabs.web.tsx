@@ -6,7 +6,7 @@ import {
   TabTriggerSlotProps,
   TabListProps,
 } from 'expo-router/ui';
-import { useTranslation } from '@realty/i18n';
+import { useTranslation } from '@huismus/i18n';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from './themed-text';

@@ -1,4 +1,4 @@
-import type { AreaPolygon } from '@realty/types';
+import type { AreaPolygon } from '@huismus/types';
 
 import { areasCenter, FILL_OPACITY, OUTLINE_WIDTH, toFeatureCollection } from '@/components/area-polygons';
 

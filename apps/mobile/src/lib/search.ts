@@ -1,5 +1,5 @@
-import { searchResidences } from '@realty/data';
-import type { Listing } from '@realty/types';
+import { searchResidences } from '@huismus/data';
+import type { Listing } from '@huismus/types';
 
 import {
   geocode,

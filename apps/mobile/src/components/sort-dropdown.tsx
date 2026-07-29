@@ -1,4 +1,4 @@
-import type { SortOption } from '@realty/types';
+import type { SortOption } from '@huismus/types';
 import { Pressable, Text, View } from 'react-native';
 
 import { CheckIcon, ChevronDownIcon } from '@/components/icons';

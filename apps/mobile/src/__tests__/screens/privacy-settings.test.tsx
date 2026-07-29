@@ -1,4 +1,4 @@
-import { initI18n } from '@realty/i18n';
+import { initI18n } from '@huismus/i18n';
 import { fireEvent, render } from '@testing-library/react-native';
 import { I18nextProvider } from 'react-i18next';
 

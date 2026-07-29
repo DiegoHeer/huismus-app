@@ -1,4 +1,4 @@
-import type { AllauthFieldError } from '@realty/data';
+import type { AllauthFieldError } from '@huismus/data';
 
 import { mapAuthFieldErrors, resolveAuthErrorMessage } from '@/lib/auth-errors';
 

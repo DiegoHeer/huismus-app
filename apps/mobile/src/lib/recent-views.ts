@@ -1,4 +1,4 @@
-import type { Listing } from '@realty/types';
+import type { Listing } from '@huismus/types';
 
 import { createPersistedListStore } from './persisted-list-store';
 import { StorageKeys } from './storage';

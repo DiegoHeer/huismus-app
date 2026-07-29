@@ -1,20 +1,20 @@
-import { initI18n } from '@realty/i18n';
+import { initI18n } from '@huismus/i18n';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { I18nextProvider } from 'react-i18next';
 import type { ReactTestInstance } from 'react-test-renderer';
 
 import FeedbackScreen from '@/app/settings/feedback';
 
-// The screen posts through @realty/data's submitFeedback. Replace the module
+// The screen posts through @huismus/data's submitFeedback. Replace the module
 // with a plain spread of the real one so the export is a writable jest.fn (the
 // real barrel re-exports are non-configurable getters), then script its outcome
 // per test — no real network request fires. (Same approach as login.test.tsx.)
-jest.mock('@realty/data', () => ({
-  ...jest.requireActual('@realty/data'),
+jest.mock('@huismus/data', () => ({
+  ...jest.requireActual('@huismus/data'),
   submitFeedback: jest.fn(),
 }));
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { submitFeedback } = require('@realty/data') as { submitFeedback: jest.Mock };
+const { submitFeedback } = require('@huismus/data') as { submitFeedback: jest.Mock };
 
 async function renderScreen(language: 'en' | 'nl' = 'en') {
   const i18n = initI18n(language);

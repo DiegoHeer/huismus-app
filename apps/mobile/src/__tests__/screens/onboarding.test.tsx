@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { cityNameKeys, DataProvider, queryClient } from '@realty/data';
-import { initI18n } from '@realty/i18n';
+import { cityNameKeys, DataProvider, queryClient } from '@huismus/data';
+import { initI18n } from '@huismus/i18n';
 import { act, fireEvent, render, renderHook, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { I18nextProvider } from 'react-i18next';

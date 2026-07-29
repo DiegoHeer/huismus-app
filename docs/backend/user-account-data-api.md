@@ -60,7 +60,7 @@ dedupes by id, evicts beyond `limit`**:
 | Search preferences | `apps/mobile/src/lib/filters.ts` | `realty:filters` | one **`Filters`** object (see [§5](#5-search-preferences)) | 1 |
 | Notification preferences | — none — | — | the settings page is a "coming soon" placeholder (`settings/notifications.tsx`) | — |
 
-A `Listing` snapshot (`@realty/types`) is the app's render-ready projection — roughly:
+A `Listing` snapshot (`@huismus/types`) is the app's render-ready projection — roughly:
 `{ id, title, price, currency, status, bedrooms, bathrooms, areaSqm, address{…},
 location{latitude,longitude}, images[{id,url}], createdAt, … }`. The stores keep whole
 snapshots *deliberately*, so favorites/recents render instantly from disk without

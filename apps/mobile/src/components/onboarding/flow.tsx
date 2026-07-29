@@ -1,5 +1,5 @@
-import { useCityNames } from '@realty/data';
-import { useTranslation } from '@realty/i18n';
+import { useCityNames } from '@huismus/data';
+import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {

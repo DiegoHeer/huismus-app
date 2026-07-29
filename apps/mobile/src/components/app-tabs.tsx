@@ -1,4 +1,4 @@
-import { useTranslation } from '@realty/i18n';
+import { useTranslation } from '@huismus/i18n';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 import { useMapBackRoot } from '@/hooks/use-map-back-root';

@@ -1,5 +1,5 @@
-import type { CityName } from '@realty/data';
-import { useTranslation } from '@realty/i18n';
+import type { CityName } from '@huismus/data';
+import { useTranslation } from '@huismus/i18n';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 

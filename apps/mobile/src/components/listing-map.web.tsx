@@ -1,6 +1,6 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import type { AreaPolygon, Listing } from '@realty/types';
+import type { AreaPolygon, Listing } from '@huismus/types';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef } from 'react';
 import { Layer, Map, type MapRef, Marker, Source, useMap } from 'react-map-gl/maplibre';
 

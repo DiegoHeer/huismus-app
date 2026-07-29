@@ -25,7 +25,7 @@
 
 Files touched, grouped by the commit (task) that owns them:
 
-- **Task 1 — npm scope:** root `package.json` (scripts + name stays for Task 4), `apps/mobile/package.json`, `packages/{data,i18n,types,ui}/package.json`, `apps/mobile/jest.config.js`, `packages/data/jest.config.js`, all `*.ts`/`*.tsx` importing `@realty/*` (97 files), `README.md`, `docs/backend/user-account-data-api.md` (its `@realty/*` refs), regenerated `bun.lock`.
+- **Task 1 — npm scope:** root `package.json` (scripts + name stays for Task 4), `apps/mobile/package.json`, `packages/{data,i18n,types,ui}/package.json`, `apps/mobile/jest.config.js`, `packages/data/jest.config.js`, all `*.ts`/`*.tsx` importing `@huismus/*` (97 files), `README.md`, `docs/backend/user-account-data-api.md` (its `@huismus/*` refs), regenerated `bun.lock`.
 - **Task 2 — storage keys:** `apps/mobile/src/lib/storage.ts`, `apps/mobile/src/lib/secure-tokens.ts`, `apps/mobile/src/lib/area-cache.ts` (comment), `apps/mobile/src/__tests__/area-cache.test.ts`, `apps/mobile/src/__tests__/secure-tokens.test.ts`, `CLAUDE.md`, `docs/backend/user-account-data-api.md` (its `realty:` key refs).
 - **Task 3 — analytics domain:** `apps/mobile/.env.example`, `apps/mobile/.env` (local, uncommitted), `apps/mobile/src/__tests__/analytics-client.test.ts`, `docs/plausible-analytics.md`.
 - **Task 4 — repo identity:** root `package.json` (`"name"`), `docs/residences-list-detail-split.md`.
@@ -34,14 +34,14 @@ Files touched, grouped by the commit (task) that owns them:
 
 ---
 
-## Task 1: Rename npm workspace scope `@realty/*` → `@huismus/*`
+## Task 1: Rename npm workspace scope `@huismus/*` → `@huismus/*`
 
 **Files:**
-- Modify: `package.json` (scripts `bun --filter @realty/mobile …`)
+- Modify: `package.json` (scripts `bun --filter @huismus/mobile …`)
 - Modify: `apps/mobile/package.json`, `packages/data/package.json`, `packages/i18n/package.json`, `packages/types/package.json`, `packages/ui/package.json` (names + internal deps)
 - Modify: `apps/mobile/jest.config.js`, `packages/data/jest.config.js` (moduleNameMapper + transformIgnorePatterns)
-- Modify: all `*.ts`/`*.tsx` with `@realty/` imports (~97 files across `apps/mobile/src`, `packages/*/src`)
-- Modify: `README.md`, `docs/backend/user-account-data-api.md` (`@realty/*` mentions)
+- Modify: all `*.ts`/`*.tsx` with `@huismus/` imports (~97 files across `apps/mobile/src`, `packages/*/src`)
+- Modify: `README.md`, `docs/backend/user-account-data-api.md` (`@huismus/*` mentions)
 - Regenerate: `bun.lock`
 
 **Interfaces:**
@@ -59,19 +59,19 @@ Expected: both PASS. (If not, stop — the baseline is broken before any change.
 
 - [ ] **Step 2: Apply the scope rename across every tracked text file**
 
-The token `@realty/` is unambiguous, so a global literal replace is safe. Exclude the generated lockfile and the spec doc (which intentionally shows the before/after strings):
+The token `@huismus/` is unambiguous, so a global literal replace is safe. Exclude the generated lockfile and the spec doc (which intentionally shows the before/after strings):
 ```bash
 git ls-files \
   | grep -vE '(^bun\.lock$|^docs/superpowers/specs/)' \
-  | xargs grep -lI '@realty/' \
-  | xargs sed -i 's#@realty/#@huismus/#g'
+  | xargs grep -lI '@huismus/' \
+  | xargs sed -i 's#@huismus/#@huismus/#g'
 ```
 
-- [ ] **Step 3: Verify no `@realty/` remain and the new names are correct**
+- [ ] **Step 3: Verify no `@huismus/` remain and the new names are correct**
 
 Run:
 ```bash
-git ls-files | grep -vE '(^bun\.lock$|^docs/superpowers/specs/)' | xargs grep -nI '@realty/' ; echo "exit: $?"
+git ls-files | grep -vE '(^bun\.lock$|^docs/superpowers/specs/)' | xargs grep -nI '@huismus/' ; echo "exit: $?"
 grep -h '"name"' package.json apps/*/package.json packages/*/package.json
 ```
 Expected: first command prints nothing (grep exit 1 = no matches); names show `@huismus/{mobile,data,i18n,types,ui}` and root still `realty-ai-canvas` (renamed in Task 4).

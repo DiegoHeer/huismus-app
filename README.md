@@ -27,10 +27,10 @@ exporting to the web for desktop users. Bun workspaces monorepo.
 │           │   └── listing/[id].tsx   # detail screen
 │           └── components/    # listing-map.tsx (native) + listing-map.web.tsx
 ├── packages/
-│   ├── types/                 # @realty/types — shared domain types
-│   ├── data/                  # @realty/data — API client, TanStack Query hooks
-│   ├── i18n/                  # @realty/i18n  — i18next setup + locale resources
-│   └── ui/                    # @realty/ui   — cross-platform components (ListingCard)
+│   ├── types/                 # @huismus/types — shared domain types
+│   ├── data/                  # @huismus/data — API client, TanStack Query hooks
+│   ├── i18n/                  # @huismus/i18n  — i18next setup + locale resources
+│   └── ui/                    # @huismus/ui   — cross-platform components (ListingCard)
 ├── bunfig.toml                # hoisted linker (required for Expo/Metro/Babel)
 └── tsconfig.base.json
 ```
@@ -89,7 +89,7 @@ Add a language:
 1. Add `xx.json` under `packages/i18n/src/locales/` (mirror `en.json`).
 2. Register it in `packages/i18n/src/index.ts` (`resources` + `supportedLanguages`).
 
-In components: `const { t, i18n } = useTranslation()` from `@realty/i18n` (app) or
+In components: `const { t, i18n } = useTranslation()` from `@huismus/i18n` (app) or
 `react-i18next` (shared `ui` package), then `t('listings.title')`. Pass
 `i18n.language` to `formatPrice(...)` for locale-aware currency formatting.
 
@@ -106,7 +106,7 @@ EXPO_PUBLIC_API_URL=https://api-staging.realty-ai.nl
 The client (`packages/data/src/client.ts`) reads residences from
 `GET /v1/residences` and geographic data from `GET /v1/shapes/*` and
 `GET /v1/stats/*`, mapping each residence onto the `Listing` shape from
-`@realty/types`. Adjust the request paths/params there to match the contract.
+`@huismus/types`. Adjust the request paths/params there to match the contract.
 
 
 https://www.troostwijkauctions.com/l/apple-macbook-air-13-3%E2%80%9D-apple-m2-16-gb-ram-500-gb-nvme-laptop-A1-38887-4300

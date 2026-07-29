@@ -1,6 +1,6 @@
-import { useListings, useListingsCount } from '@realty/data';
-import { useTranslation } from '@realty/i18n';
-import { ListingCard } from '@realty/ui';
+import { useListings, useListingsCount } from '@huismus/data';
+import { useTranslation } from '@huismus/i18n';
+import { ListingCard } from '@huismus/ui';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';

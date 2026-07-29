@@ -13,7 +13,7 @@ module.exports = {
     '<rootDir>/../../packages/data/src/**/__tests__/**/*.test.ts?(x)',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?(-.*)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@realty/.*|nativewind|react-native-css-interop|react-native-reanimated|react-native-worklets)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?(-.*)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@huismus/.*|nativewind|react-native-css-interop|react-native-reanimated|react-native-worklets)/)',
   ],
   moduleNameMapper: {
     // CSS imports (global.css, maplibre-gl, *.module.css) have no behavior in
@@ -21,9 +21,9 @@ module.exports = {
     // `@/` alias so `@/global.css` resolves here rather than to the real file.
     '\\.css$': '<rootDir>/jest/css-stub.js',
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^@realty/types$': '<rootDir>/../../packages/types/src/index.ts',
-    '^@realty/data$': '<rootDir>/../../packages/data/src/index.ts',
-    '^@realty/i18n$': '<rootDir>/../../packages/i18n/src/index.ts',
-    '^@realty/ui$': '<rootDir>/../../packages/ui/src/index.ts',
+    '^@huismus/types$': '<rootDir>/../../packages/types/src/index.ts',
+    '^@huismus/data$': '<rootDir>/../../packages/data/src/index.ts',
+    '^@huismus/i18n$': '<rootDir>/../../packages/i18n/src/index.ts',
+    '^@huismus/ui$': '<rootDir>/../../packages/ui/src/index.ts',
   },
 };

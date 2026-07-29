@@ -2,8 +2,8 @@
    mutable by design; assigning `sharedValue.value = …` (here and inside
    worklets) is the intended API, but the React Compiler rule flags it because
    the same value is also written in an effect. */
-import { useTranslation } from '@realty/i18n';
-import type { AreaPolygon, NeighborhoodStats } from '@realty/types';
+import { useTranslation } from '@huismus/i18n';
+import type { AreaPolygon, NeighborhoodStats } from '@huismus/types';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';

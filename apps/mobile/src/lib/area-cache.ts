@@ -1,5 +1,5 @@
-import { getAreas, getCities, getStats } from '@realty/data';
-import type { AreaPolygon, CityShape, NeighborhoodStats } from '@realty/types';
+import { getAreas, getCities, getStats } from '@huismus/data';
+import type { AreaPolygon, CityShape, NeighborhoodStats } from '@huismus/types';
 
 import { loadJSON, saveJSON, StorageKeys } from './storage';
 

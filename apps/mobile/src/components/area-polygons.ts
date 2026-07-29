@@ -2,7 +2,7 @@ import type {
   DataDrivenPropertyValueSpecification,
   FilterSpecification,
 } from '@maplibre/maplibre-gl-style-spec';
-import type { AreaPolygon } from '@realty/types';
+import type { AreaPolygon } from '@huismus/types';
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from 'geojson';
 
 type AreaProps = { id: string; name?: string; color: string };

@@ -1,5 +1,5 @@
-import { useTranslation } from '@realty/i18n';
-import type { NeighborhoodStats } from '@realty/types';
+import { useTranslation } from '@huismus/i18n';
+import type { NeighborhoodStats } from '@huismus/types';
 import { Image } from 'expo-image';
 import { useColorScheme } from 'nativewind';
 import { useMemo, type ReactNode } from 'react';

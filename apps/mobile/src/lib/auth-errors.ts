@@ -1,4 +1,4 @@
-import type { AllauthFieldError } from '@realty/data';
+import type { AllauthFieldError } from '@huismus/data';
 
 /**
  * Per-field + form-level messages derived from an allauth `errors[]` array.

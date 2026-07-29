@@ -1,6 +1,6 @@
-import { formatPrice } from '@realty/data';
-import { useTranslation } from '@realty/i18n';
-import type { Listing } from '@realty/types';
+import { formatPrice } from '@huismus/data';
+import { useTranslation } from '@huismus/i18n';
+import type { Listing } from '@huismus/types';
 import { Image } from 'expo-image';
 import { Pressable, Text, View } from 'react-native';
 

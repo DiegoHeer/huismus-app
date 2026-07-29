@@ -1,5 +1,5 @@
-import { searchResidences } from '@realty/data';
-import type { Listing } from '@realty/types';
+import { searchResidences } from '@huismus/data';
+import type { Listing } from '@huismus/types';
 
 import { geocode, lookup, lookupBuurt, suggest } from '@/lib/pdok';
 import {
@@ -14,7 +14,7 @@ import {
   type SearchSuggestion,
 } from '@/lib/search';
 
-jest.mock('@realty/data', () => ({ searchResidences: jest.fn() }));
+jest.mock('@huismus/data', () => ({ searchResidences: jest.fn() }));
 jest.mock('@/lib/pdok', () => ({
   suggest: jest.fn(),
   lookup: jest.fn(),

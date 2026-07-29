@@ -1,6 +1,6 @@
-import { DataProvider, queryClient } from '@realty/data';
-import { initI18n } from '@realty/i18n';
-import type { Listing } from '@realty/types';
+import { DataProvider, queryClient } from '@huismus/data';
+import { initI18n } from '@huismus/i18n';
+import type { Listing } from '@huismus/types';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { I18nextProvider } from 'react-i18next';
 

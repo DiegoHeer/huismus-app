@@ -1,4 +1,4 @@
-import { initI18n } from '@realty/i18n';
+import { initI18n } from '@huismus/i18n';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { I18nextProvider } from 'react-i18next';

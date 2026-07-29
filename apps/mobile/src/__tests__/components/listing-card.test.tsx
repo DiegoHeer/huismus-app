@@ -1,5 +1,5 @@
-import { initI18n } from '@realty/i18n';
-import type { Listing } from '@realty/types';
+import { initI18n } from '@huismus/i18n';
+import type { Listing } from '@huismus/types';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { I18nextProvider } from 'react-i18next';
 

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { initI18n } from '@realty/i18n';
+import { initI18n } from '@huismus/i18n';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { I18nextProvider } from 'react-i18next';
@@ -13,8 +13,8 @@ import { mockCanGoBack, mockExchangeCodeAsync, mockPromptAsync } from '../../../
 // Default: AUTH_ENABLED=false so mock-mode tests work with social buttons visible.
 // Real-mode tests use jest.replaceProperty (same pattern as use-auth.test.ts) to
 // override AUTH_ENABLED on the plain module object without reloading modules.
-jest.mock('@realty/data', () => {
-  const actual = jest.requireActual('@realty/data');
+jest.mock('@huismus/data', () => {
+  const actual = jest.requireActual('@huismus/data');
   return { ...actual, AUTH_ENABLED: false };
 });
 
@@ -201,7 +201,7 @@ describe('LoginScreen', () => {
     // so updating the plain mock object is seen by the component at render time
     // without needing to reload modules (which would break React context).
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const authData = require('@realty/data');
+    const authData = require('@huismus/data');
     jest.replaceProperty(authData, 'AUTH_ENABLED', true);
 
     const { queryByTestId } = await renderScreen('en');
@@ -217,7 +217,7 @@ describe('LoginScreen', () => {
 
 describe('LoginScreen (real mode, Google configured)', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const authData = require('@realty/data');
+  const authData = require('@huismus/data');
 
   beforeEach(() => {
     // Earlier tests spy on useAuth and never restore (the file relies on spies

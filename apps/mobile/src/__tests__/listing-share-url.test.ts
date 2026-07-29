@@ -1,4 +1,4 @@
-import type { Listing } from '@realty/types';
+import type { Listing } from '@huismus/types';
 
 import { listingWebUrl } from '@/lib/listing-share-url';
 

@@ -1,4 +1,4 @@
-import { AUTH_ENABLED } from '@realty/data';
+import { AUTH_ENABLED } from '@huismus/data';
 import { useState } from 'react';
 
 import { useAuth, type AuthErrorCode } from '@/hooks/use-auth';
