@@ -152,12 +152,19 @@ jest.mock('react-native-reanimated', () => {
 // --- react-native-gesture-handler mock ---
 // Gesture builders (`Gesture.Pan()` …) run during render, so they must be
 // chainable; the view wrappers render as plain Views passing children through.
+// Each built gesture keeps the callbacks it was handed on `.handlers` and is
+// pushed onto `mockGestures`, so a test can drive a pan by calling them
+// directly (`mockGestures.at(-1).handlers.onEnd({ translationY, velocityY })`).
+// Gestures are rebuilt on every render, so tests want the last one — and should
+// empty the array in `beforeEach` to avoid reading a previous render's gesture.
+const mockGestures: { handlers: Record<string, (...args: any[]) => unknown> }[] = [];
+
 jest.mock('react-native-gesture-handler', () => {
   const React = require('react');
   const { View, ScrollView } = require('react-native');
   const makeGesture = () => {
-    const gesture: Record<string, () => unknown> = {};
-    const chain = () => gesture;
+    const handlers: Record<string, (...args: any[]) => unknown> = {};
+    const gesture: Record<string, unknown> = { handlers };
     for (const method of [
       'onStart',
       'onUpdate',
@@ -165,11 +172,19 @@ jest.mock('react-native-gesture-handler', () => {
       'onBegin',
       'onFinalize',
       'enabled',
+      'activeOffsetY',
+      'failOffsetX',
       'simultaneousWithExternalGesture',
       'requireExternalGestureToFail',
     ]) {
-      gesture[method] = chain;
+      // Record callbacks (onEnd, onUpdate, …) and ignore plain config values
+      // (activeOffsetY, …); either way keep the builder chainable.
+      gesture[method] = (arg: unknown) => {
+        if (typeof arg === 'function') handlers[method] = arg as (...args: any[]) => unknown;
+        return gesture;
+      };
     }
+    mockGestures.push(gesture as { handlers: typeof handlers });
     return gesture;
   };
   return {
@@ -239,4 +254,5 @@ export {
   mockExchangeCodeAsync,
   mockAuthRequests,
   mockUsePathname,
+  mockGestures,
 };
