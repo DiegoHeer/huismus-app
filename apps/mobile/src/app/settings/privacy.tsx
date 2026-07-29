@@ -1,4 +1,4 @@
-import { useTranslation } from '@realty/i18n';
+import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 import { Pressable, Switch, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';

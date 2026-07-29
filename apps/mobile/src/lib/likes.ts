@@ -1,4 +1,4 @@
-import type { Listing } from '@realty/types';
+import type { Listing } from '@huismus/types';
 
 import { trackListingFavorited } from './analytics/events';
 import { createPersistedListStore } from './persisted-list-store';

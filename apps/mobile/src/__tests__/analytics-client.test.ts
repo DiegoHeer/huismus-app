@@ -24,10 +24,10 @@ describe('segmentsToPattern', () => {
 
 describe('buildEventBody', () => {
   it('builds a synthetic url from the site domain and path', () => {
-    expect(buildEventBody('realty-ai-canvas', 'pageview', { path: '/listing/:id' })).toEqual({
+    expect(buildEventBody('huismus-app', 'pageview', { path: '/listing/:id' })).toEqual({
       name: 'pageview',
-      domain: 'realty-ai-canvas',
-      url: 'https://realty-ai-canvas/listing/:id',
+      domain: 'huismus-app',
+      url: 'https://huismus-app/listing/:id',
     });
   });
 

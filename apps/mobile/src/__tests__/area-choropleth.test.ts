@@ -1,4 +1,4 @@
-import type { AreaPolygon, NeighborhoodStats } from '@realty/types';
+import type { AreaPolygon, NeighborhoodStats } from '@huismus/types';
 
 import {
   colorAreasByStat,

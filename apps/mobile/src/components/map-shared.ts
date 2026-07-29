@@ -1,5 +1,5 @@
 import type { FillExtrusionLayerSpecification } from '@maplibre/maplibre-gl-style-spec';
-import type { Listing } from '@realty/types';
+import type { Listing } from '@huismus/types';
 
 /** Fallback map centre (Amsterdam) when there are no polygons or listings to frame. */
 export const DEFAULT_CENTER = { longitude: 4.9041, latitude: 52.3676 } as const;

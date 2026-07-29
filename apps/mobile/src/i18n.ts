@@ -1,4 +1,4 @@
-import { defaultLanguage, i18n, initI18n, isSupportedLanguage } from '@realty/i18n';
+import { defaultLanguage, i18n, initI18n, isSupportedLanguage } from '@huismus/i18n';
 import { getLocales } from 'expo-localization';
 
 import { loadJSON, saveJSON, StorageKeys } from './lib/storage';

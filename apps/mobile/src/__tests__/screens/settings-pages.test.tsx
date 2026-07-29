@@ -1,4 +1,4 @@
-import { initI18n } from '@realty/i18n';
+import { initI18n } from '@huismus/i18n';
 import { render } from '@testing-library/react-native';
 import { type ReactElement } from 'react';
 import { I18nextProvider } from 'react-i18next';

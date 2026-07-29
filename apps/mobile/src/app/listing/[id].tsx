@@ -1,6 +1,6 @@
 import type { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
-import { formatPrice, relativeTimeSince, useListing } from '@realty/data';
-import { useTranslation } from '@realty/i18n';
+import { formatPrice, relativeTimeSince, useListing } from '@huismus/data';
+import { useTranslation } from '@huismus/i18n';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { openBrowserAsync } from 'expo-web-browser';

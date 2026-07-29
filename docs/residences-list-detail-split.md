@@ -166,7 +166,7 @@ which can disagree with the denormalized value the backend sorts/filters on).
 
 ---
 
-## Frontend changes (`realty-ai-canvas`)
+## Frontend changes (`huismus-app`)
 
 ### 1. Types — `packages/types/src/index.ts`
 
@@ -275,7 +275,7 @@ network call instead of a second full-list fetch — strictly less traffic).
 
 1. Backend PR in `realty-alerts` (breaking): slim list + new detail endpoint +
    test updates. Merge → auto-deploy to staging.
-2. Frontend PR in `realty-ai-canvas`: types split, client rewrite, consumer
+2. Frontend PR in `huismus-app`: types split, client rewrite, consumer
    retypes, test/stub updates. Verify against staging, then merge.
 
 ## Verification

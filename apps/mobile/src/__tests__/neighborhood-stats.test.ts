@@ -1,4 +1,4 @@
-import type { NeighborhoodStats } from '@realty/types';
+import type { NeighborhoodStats } from '@huismus/types';
 
 import { deriveNeighborhoodStats, normalizeStats, RAW_FIELDS } from '@/lib/neighborhood-stats';
 

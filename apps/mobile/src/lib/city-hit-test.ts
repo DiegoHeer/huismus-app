@@ -1,4 +1,4 @@
-import type { CityShape } from '@realty/types';
+import type { CityShape } from '@huismus/types';
 import type { Position } from 'geojson';
 
 /** Axis-aligned bounds in WGS84 degrees: [minLng, minLat, maxLng, maxLat]. */

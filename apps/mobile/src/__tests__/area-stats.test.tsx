@@ -1,5 +1,5 @@
-import { initI18n } from '@realty/i18n';
-import type { NeighborhoodStats } from '@realty/types';
+import { initI18n } from '@huismus/i18n';
+import type { NeighborhoodStats } from '@huismus/types';
 import { render } from '@testing-library/react-native';
 import { I18nextProvider } from 'react-i18next';
 

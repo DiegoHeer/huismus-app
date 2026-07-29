@@ -1,4 +1,4 @@
-import type { NeighborhoodStats } from '@realty/types';
+import type { NeighborhoodStats } from '@huismus/types';
 
 /**
  * Maps a party's full name (as returned by the API's `election_stats.parties`)

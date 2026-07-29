@@ -1,5 +1,5 @@
-import { useAreas, useCities, useListings, useStats } from '@realty/data';
-import type { AreaPolygon, Listing } from '@realty/types';
+import { useAreas, useCities, useListings, useStats } from '@huismus/data';
+import type { AreaPolygon, Listing } from '@huismus/types';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';

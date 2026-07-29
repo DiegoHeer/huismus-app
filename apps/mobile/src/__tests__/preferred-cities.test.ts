@@ -59,7 +59,7 @@ describe('preferred cities store', () => {
     expect(setMapFocus).not.toHaveBeenCalled();
   });
 
-  it('persists a new preference under the realty namespace', async () => {
+  it('persists a new preference under the huismus namespace', async () => {
     const { mod, AsyncStorage, StorageKeys } = await boot();
 
     mod.setPreferredCities([GRONINGEN]);

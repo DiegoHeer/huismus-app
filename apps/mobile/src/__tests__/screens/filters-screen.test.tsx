@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-import { DataProvider, queryClient } from '@realty/data';
-import { initI18n } from '@realty/i18n';
+import { DataProvider, queryClient } from '@huismus/data';
+import { initI18n } from '@huismus/i18n';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { I18nextProvider } from 'react-i18next';
 import type { ReactTestInstance } from 'react-test-renderer';

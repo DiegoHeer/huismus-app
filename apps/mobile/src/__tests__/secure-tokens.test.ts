@@ -21,7 +21,7 @@ describe('secure-tokens', () => {
 
   it('returns null (never throws) on malformed storage', async () => {
     const SecureStore = require('expo-secure-store');
-    await SecureStore.setItemAsync('realty.tokens', 'not-json');
+    await SecureStore.setItemAsync('huismus.tokens', 'not-json');
     expect(await loadTokens()).toBeNull();
   });
 });
@@ -47,7 +47,7 @@ describe('secure-tokens (web fallback)', () => {
     await saveTokens({ accessToken: 'AT', refreshToken: 'RT' });
 
     expect(await loadTokens()).toEqual({ accessToken: 'AT', refreshToken: 'RT' });
-    expect(await AsyncStorage.getItem('realty.tokens')).not.toBeNull();
+    expect(await AsyncStorage.getItem('huismus.tokens')).not.toBeNull();
     expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
   });
 
@@ -55,6 +55,6 @@ describe('secure-tokens (web fallback)', () => {
     await saveTokens({ accessToken: 'AT', refreshToken: 'RT' });
     await clearTokens();
     expect(await loadTokens()).toBeNull();
-    expect(await AsyncStorage.getItem('realty.tokens')).toBeNull();
+    expect(await AsyncStorage.getItem('huismus.tokens')).toBeNull();
   });
 });

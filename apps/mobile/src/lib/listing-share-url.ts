@@ -1,5 +1,5 @@
-import { defaultLanguage, isSupportedLanguage } from '@realty/i18n';
-import type { Listing } from '@realty/types';
+import { defaultLanguage, isSupportedLanguage } from '@huismus/i18n';
+import type { Listing } from '@huismus/types';
 
 import { WEB_BASE_URL } from '@/constants/app';
 

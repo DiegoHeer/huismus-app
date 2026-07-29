@@ -48,19 +48,19 @@ Everything is **additive** under `/v1` and gated on the existing JWT auth. Compa
 ### Client (this repo) — the shapes being mirrored
 
 All four data kinds are device-local AsyncStorage, wrapped in
-`apps/mobile/src/lib/storage.ts` (`realty:` namespace). The two lists share one
+`apps/mobile/src/lib/storage.ts` (`huismus:` namespace). The two lists share one
 abstraction, `createPersistedListStore({ key, limit, idOf })`
 (`apps/mobile/src/lib/persisted-list-store.ts`): an MRU list — **add moves to front,
 dedupes by id, evicts beyond `limit`**:
 
 | Data | Store | Key | Shape | Cap |
 |---|---|---|---|---|
-| Favorites | `apps/mobile/src/lib/likes.ts` | `realty:likes` | array of full **`Listing` snapshots**, newest-liked first | 200 |
-| Recently viewed | `apps/mobile/src/lib/recent-views.ts` | `realty:recent-views` | array of full **`Listing` snapshots**, newest-viewed first | 12 |
-| Search preferences | `apps/mobile/src/lib/filters.ts` | `realty:filters` | one **`Filters`** object (see [§5](#5-search-preferences)) | 1 |
+| Favorites | `apps/mobile/src/lib/likes.ts` | `huismus:likes` | array of full **`Listing` snapshots**, newest-liked first | 200 |
+| Recently viewed | `apps/mobile/src/lib/recent-views.ts` | `huismus:recent-views` | array of full **`Listing` snapshots**, newest-viewed first | 12 |
+| Search preferences | `apps/mobile/src/lib/filters.ts` | `huismus:filters` | one **`Filters`** object (see [§5](#5-search-preferences)) | 1 |
 | Notification preferences | — none — | — | the settings page is a "coming soon" placeholder (`settings/notifications.tsx`) | — |
 
-A `Listing` snapshot (`@realty/types`) is the app's render-ready projection — roughly:
+A `Listing` snapshot (`@huismus/types`) is the app's render-ready projection — roughly:
 `{ id, title, price, currency, status, bedrooms, bathrooms, areaSqm, address{…},
 location{latitude,longitude}, images[{id,url}], createdAt, … }`. The stores keep whole
 snapshots *deliberately*, so favorites/recents render instantly from disk without
@@ -271,7 +271,7 @@ class FavoriteItemOut(Schema):
 
 - **GET returns the whole store, newest-liked first — no pagination.** The collection is
   capped at 200 by construction, and the client consumes it as a replica
-  (`items.map(i => i.listing)` *is* the new local `realty:likes` array), so the
+  (`items.map(i => i.listing)` *is* the new local `huismus:likes` array), so the
   `{items,total,limit,offset,has_more}` envelope from `/v1/residences` is deliberately
   not used here — pagination on a bounded replica only complicates the sync loop.
 - **PUT** upserts by `(user, listing_id)`: refreshes `snapshot` and `liked_at`
@@ -321,7 +321,7 @@ PUT /v1/me/preferences/search   → 200 (same shape, post-merge)
   `propertyTypes[]`, `minBedrooms`, `minBathrooms`, `minAreaSqm`, `maxAreaSqm`,
   `energyLabels[]`, `minBuildYear`, `sort` — plus a client-written `"version": 1`.
 
-> Recent *searches* (`realty:recent-searches`, geocoder results) stay device-local for
+> Recent *searches* (`huismus:recent-searches`, geocoder results) stay device-local for
 > now — they're a UX convenience keyed to PDOK geocoding, not account data. When product
 > wants cross-device parity, they slot straight into this pattern (they're another
 > `createPersistedListStore`, cap 8).
@@ -334,7 +334,7 @@ The moment a user signs in (fresh signup **or** returning login on a device with
 anonymous data), the client merges up, then adopts server state. Because the wire format
 is the local format, "merge up" literally means posting the stored arrays:
 
-1. `POST /v1/me/favorites/merge` with the whole `realty:likes` array (each entry the
+1. `POST /v1/me/favorites/merge` with the whole `huismus:likes` array (each entry the
    local `Listing` object, plus its timestamp — see the client note in [§12](#12-client-wiring-our-side-fyi)):
 
    ```json
@@ -352,8 +352,8 @@ is the local format, "merge up" literally means posting the stored arrays:
    older (or default), adopt the server's; else `PUT` the local one. The LWW contract in
    §5 makes the order safe either way.
 4. Client replaces each local store with the merge response
-   (`items.map(i => i.listing)`) — the arrays drop into `realty:likes` /
-   `realty:recent-views` unchanged.
+   (`items.map(i => i.listing)`) — the arrays drop into `huismus:likes` /
+   `huismus:recent-views` unchanged.
 
 Merge endpoints are **idempotent** — a crash mid-merge is fixed by re-running the whole
 sequence. One merge round-trip per store, not one request per item (a 200-favorite merge
@@ -442,7 +442,7 @@ ninja's automatic **422** with field detail for malformed bodies/params, plus:
   rows are exactly that set; no schema change needed.
 - No data leaves the account scope: every query is `request.user`-filtered; there is no
   admin-facing aggregate here in v1 (add opt-in analytics later if wanted, honoring
-  `realty:analytics-opt-out`).
+  `huismus:analytics-opt-out`).
 
 ---
 
@@ -507,7 +507,7 @@ curl -X PUT -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" 
        "createdAt":"2026-06-01T00:00:00.000Z"}}' \
   https://api-staging.realty-ai.nl/v1/me/favorites/4211
 
-# Whole favorites store, newest first (drops straight into realty:likes)
+# Whole favorites store, newest first (drops straight into huismus:likes)
 curl -H "Authorization: Bearer $JWT" https://api-staging.realty-ai.nl/v1/me/favorites
 # → {"items":[{"listing":{"id":"4211",…},"liked_at":"2026-07-11T09:12:00Z"}],"total":1}
 

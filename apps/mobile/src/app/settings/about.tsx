@@ -1,4 +1,4 @@
-import { useTranslation } from '@realty/i18n';
+import { useTranslation } from '@huismus/i18n';
 import { Text, View } from 'react-native';
 
 import { APP_VERSION } from '@/constants/app';

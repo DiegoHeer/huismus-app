@@ -1,4 +1,4 @@
-import type { BuildingType, ListingQuery, SortOption } from '@realty/types';
+import type { BuildingType, ListingQuery, SortOption } from '@huismus/types';
 import { useSyncExternalStore } from 'react';
 
 import { loadJSON, saveJSON, StorageKeys } from './storage';

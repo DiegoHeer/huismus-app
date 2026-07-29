@@ -47,22 +47,22 @@ export interface StoredTokens {
   refreshToken: string;
 }
 
-// SecureStore keys must be alphanumeric + ".-_"; the `realty:` colon prefix
+// SecureStore keys must be alphanumeric + ".-_"; the `huismus:` colon prefix
 // used by AsyncStorage isn't valid here, so use a dot.
-const TOKENS_KEY = 'realty.tokens';
+const TOKENS_KEY = 'huismus.tokens';
 
 // The allauth session token handed back by signup while email verification is
 // pending. It's the only handle for completing verification, so persist it —
 // reading the emailed code usually means backgrounding the app, and an OS
 // eviction would otherwise lose it and dead-end the verify screen.
-const PENDING_SESSION_KEY = 'realty.pending_session';
+const PENDING_SESSION_KEY = 'huismus.pending_session';
 
 // The allauth session token handed back by `password/request` while a reset is
 // pending. Persisted for the same reason as the verify token: reading the
 // emailed reset code usually means backgrounding the app, and an OS eviction
 // would otherwise lose it and dead-end the reset screen. Kept separate from the
 // verify token so a reset in progress never collides with a signup verification.
-const PENDING_RESET_KEY = 'realty.pending_reset';
+const PENDING_RESET_KEY = 'huismus.pending_reset';
 
 export async function loadTokens(): Promise<StoredTokens | null> {
   try {

@@ -1,4 +1,4 @@
-import { useTranslation } from '@realty/i18n';
+import { useTranslation } from '@huismus/i18n';
 import { ScrollView, Text, View } from 'react-native';
 
 import type { MapOverlay } from '@/lib/map-overlays';

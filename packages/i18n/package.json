@@ -1,5 +1,5 @@
 {
-  "name": "@realty/i18n",
+  "name": "@huismus/i18n",
   "version": "0.0.0",
   "private": true,
   "main": "src/index.ts",

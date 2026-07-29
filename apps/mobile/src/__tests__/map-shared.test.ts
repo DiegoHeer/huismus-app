@@ -1,4 +1,4 @@
-import type { Listing } from '@realty/types';
+import type { Listing } from '@huismus/types';
 
 import { priceLabel } from '@/components/map-shared';
 

@@ -1,4 +1,4 @@
-import { defaultLanguage, initI18n } from '@realty/i18n';
+import { defaultLanguage, initI18n } from '@huismus/i18n';
 
 import { activeLanguage } from '../language';
 

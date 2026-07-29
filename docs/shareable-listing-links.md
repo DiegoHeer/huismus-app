@@ -44,7 +44,7 @@ shape — see `listingWebUrl` below.
   case), `tests/test_residence_detail.py`, `tests/test_residence_list.py`
   (including the `test_item_shape_is_slim` field-shape contract test).
 
-### Mobile (`realty-ai-canvas`, branch `feat/shareable-listing-link`, pushed)
+### Mobile (`huismus-app`, branch `feat/shareable-listing-link`, pushed)
 
 - **`packages/types`** — `Listing.slug?: string`.
 - **`packages/data/src/residences.ts`** — maps the API's `slug` (`null` → `undefined`)

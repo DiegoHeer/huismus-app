@@ -1,4 +1,4 @@
-import { useTranslation } from '@realty/i18n';
+import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 
 import { SettingsOptionsScreen } from '@/components/settings-options-screen';

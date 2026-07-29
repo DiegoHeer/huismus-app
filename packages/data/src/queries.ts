@@ -1,4 +1,4 @@
-import type { AreaPolygon, CityShape, ListingQuery, NeighborhoodStats } from '@realty/types';
+import type { AreaPolygon, CityShape, ListingQuery, NeighborhoodStats } from '@huismus/types';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 
 import {

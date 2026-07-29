@@ -12,11 +12,11 @@ import {
   mockPromptAsync,
 } from '../../test-setup';
 
-// Client ids ('' by default) come from @realty/data; the file-level mock makes
+// Client ids ('' by default) come from @huismus/data; the file-level mock makes
 // them plain writable properties so jest.replaceProperty works (the real
 // module's re-exports compile to non-configurable getters).
-jest.mock('@realty/data', () => {
-  const actual = jest.requireActual('@realty/data');
+jest.mock('@huismus/data', () => {
+  const actual = jest.requireActual('@huismus/data');
   return {
     ...actual,
     GOOGLE_WEB_CLIENT_ID: '',
@@ -32,7 +32,7 @@ import {
 } from '@/lib/google-auth';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const authData = require('@realty/data');
+const authData = require('@huismus/data');
 
 const ANDROID_CLIENT_ID = '1234-android.apps.googleusercontent.com';
 const IOS_CLIENT_ID = '1234-ios.apps.googleusercontent.com';

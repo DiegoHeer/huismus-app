@@ -5,7 +5,7 @@ import type {
   Listing,
   ListingQuery,
   NeighborhoodStats,
-} from '@realty/types';
+} from '@huismus/types';
 
 import { API_BASE, API_URL, API_VERSION } from './env';
 import { activeLanguage } from './language';
@@ -398,7 +398,7 @@ export interface FeedbackIn {
   /**
    * UI language code the app is running in (e.g. `en`). Left as a free string so
    * new languages flow through without changing this type — the app's supported
-   * set is the single source of truth in `@realty/i18n`.
+   * set is the single source of truth in `@huismus/i18n`.
    */
   locale?: string | null;
 }

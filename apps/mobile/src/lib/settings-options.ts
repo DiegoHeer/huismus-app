@@ -1,4 +1,4 @@
-import { supportedLanguages, type SupportedLanguage } from '@realty/i18n';
+import { supportedLanguages, type SupportedLanguage } from '@huismus/i18n';
 
 import type { Appearance } from './appearance';
 

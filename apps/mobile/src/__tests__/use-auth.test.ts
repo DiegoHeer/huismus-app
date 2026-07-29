@@ -17,8 +17,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { StorageKeys } from '@/lib/storage';
 
 // Default: AUTH_ENABLED=false so mock-mode tests work with the standard imports.
-jest.mock('@realty/data', () => {
-  const actual = jest.requireActual('@realty/data');
+jest.mock('@huismus/data', () => {
+  const actual = jest.requireActual('@huismus/data');
   return { ...actual, AUTH_ENABLED: false };
 });
 
@@ -121,11 +121,11 @@ describe('use-auth (real mode)', () => {
 
   it('login persists tokens and exposes the user name', async () => {
     await jest.isolateModulesAsync(async () => {
-      // In this isolated registry, @realty/data is loaded fresh via the file-level
+      // In this isolated registry, @huismus/data is loaded fresh via the file-level
       // mock factory (AUTH_ENABLED: false). We override AUTH_ENABLED directly on
       // the module object so use-auth's live property access sees true.
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       jest.spyOn(authData, 'login').mockResolvedValue({
         user: { id: 1, email: 'ada@example.com', name: 'Ada Lovelace' },
@@ -145,7 +145,7 @@ describe('use-auth (real mode)', () => {
   it('google sign-in trades the id_token for a session and persists it', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const googleAuth = require('@/lib/google-auth');
@@ -175,7 +175,7 @@ describe('use-auth (real mode)', () => {
   it('google sign-in maps a closed browser sheet to oauth_cancelled without calling the backend', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const googleAuth = require('@/lib/google-auth');
@@ -195,7 +195,7 @@ describe('use-auth (real mode)', () => {
   it('google sign-in surfaces oauth_failed for a failed round-trip and a rejected token', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const googleAuth = require('@/lib/google-auth');
@@ -221,7 +221,7 @@ describe('use-auth (real mode)', () => {
   it('register returns verifyPending and does not establish a session', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       jest.spyOn(authData, 'signup').mockResolvedValue({
         kind: 'verifyPending',
@@ -240,7 +240,7 @@ describe('use-auth (real mode)', () => {
   it('register surfaces the email_taken code from a coded AuthError', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       jest
         .spyOn(authData, 'signup')
@@ -258,7 +258,7 @@ describe('use-auth (real mode)', () => {
   it('login surfaces the invalid_credentials code from a coded AuthError', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       jest
         .spyOn(authData, 'login')
@@ -275,7 +275,7 @@ describe('use-auth (real mode)', () => {
   it('login surfaces the structured field errors carried by a coded AuthError', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       const fieldErrors = [
         {
@@ -301,7 +301,7 @@ describe('use-auth (real mode)', () => {
   it('login collapses an unexpected (non-coded) failure to the generic code', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       jest.spyOn(authData, 'login').mockRejectedValue(new Error('network down'));
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -316,7 +316,7 @@ describe('use-auth (real mode)', () => {
   it('hydrate-expired: getSession rejects → refresh succeeds → user populated and tokens rotated', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
 
       // Seed keychain tokens so realHydrate proceeds past the early-return.
@@ -360,7 +360,7 @@ describe('use-auth (real mode)', () => {
   it('hydrate-expired: getSession rejects and refresh rejects → session torn down', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
 
       // Seed keychain tokens.
@@ -390,7 +390,7 @@ describe('use-auth (real mode)', () => {
   it('signOut clears user, tokens and calls queryClient.clear', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
 
       jest.spyOn(authData, 'login').mockResolvedValue({
@@ -418,7 +418,7 @@ describe('use-auth (real mode)', () => {
   it('register persists the pending session token for cross-restart verification', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       jest.spyOn(authData, 'signup').mockResolvedValue({ kind: 'verifyPending', sessionToken: 'ST-123' });
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -436,7 +436,7 @@ describe('use-auth (real mode)', () => {
   it('verify recovers the pending session token from storage after eviction', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
 
       // Simulate a process restart: token persisted previously, in-memory state empty.
@@ -463,7 +463,7 @@ describe('use-auth (real mode)', () => {
   it('requestPasswordReset persists the pending reset token', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       jest.spyOn(authData, 'requestPasswordReset').mockResolvedValue({ sessionToken: 'RST-1' });
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -483,7 +483,7 @@ describe('use-auth (real mode)', () => {
   it('resetPassword recovers the token + email, resets, then signs in with the new password', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
 
       // Simulate a process restart: token + email persisted previously (during the
@@ -526,7 +526,7 @@ describe('use-auth (real mode)', () => {
   it('resetPassword fails if the post-reset sign-in fails', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
 
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -550,7 +550,7 @@ describe('use-auth (real mode)', () => {
   it('resetPassword returns generic when there is no pending reset token', async () => {
     await jest.isolateModulesAsync(async () => {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const authData = require('@realty/data');
+      const authData = require('@huismus/data');
       Object.defineProperty(authData, 'AUTH_ENABLED', { value: true, configurable: true });
       const resetSpy = jest.spyOn(authData, 'resetPassword');
       // eslint-disable-next-line @typescript-eslint/no-require-imports

@@ -1,4 +1,4 @@
-import type { AreaPolygon, Listing } from '@realty/types';
+import type { AreaPolygon, Listing } from '@huismus/types';
 import {
   Camera,
   type CameraRef,
