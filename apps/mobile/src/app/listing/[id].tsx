@@ -4,7 +4,7 @@ import { useTranslation } from '@realty/i18n';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { openBrowserAsync } from 'expo-web-browser';
-import { useEffect } from 'react';
+import { type ComponentType, useEffect } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -20,7 +20,17 @@ import { listingWebUrl } from '@/lib/listing-share-url';
 import { toggleLike, useIsLiked } from '@/lib/likes';
 import { recordRecentView } from '@/lib/recent-views';
 import { Brand } from '@/constants/theme';
-import { HeartIcon, ShareIcon } from '../../components/icons';
+import {
+  AreaIcon,
+  BathIcon,
+  BedIcon,
+  CalendarIcon,
+  EnergyIcon,
+  HeartIcon,
+  HomeIcon,
+  RoomsIcon,
+  ShareIcon,
+} from '../../components/icons';
 import { LocationMap } from '../../components/location-map';
 // maptiler-basic GL style, with its key-gated MapTiler source/glyphs rewritten
 // to keyless OpenFreeMap endpoints. https://github.com/openmaptiles/maptiler-basic-gl-style
@@ -84,30 +94,47 @@ export default function ListingDetailScreen() {
       : t(`listing.listedAgo.${rel.unit}`, { count: rel.count })
     : null;
 
-  const stats = [
+  const stats: (FactRow | null)[] = [
     listing.buildingType
       ? {
           label: t('listing.buildingType'),
           value: t(`listing.buildingTypes.${listing.buildingType}`),
+          icon: HomeIcon,
         }
       : null,
     listing.areaSqm
-      ? { label: t('listing.areaLabel'), value: t('listing.area', { value: listing.areaSqm }) }
+      ? {
+          label: t('listing.areaLabel'),
+          value: t('listing.area', { value: listing.areaSqm }),
+          icon: AreaIcon,
+        }
       : null,
-    listing.roomCount ? { label: t('listing.rooms'), value: `${listing.roomCount}` } : null,
-    listing.bedrooms ? { label: t('listing.bedrooms'), value: `${listing.bedrooms}` } : null,
-    listing.bathrooms ? { label: t('listing.bathrooms'), value: `${listing.bathrooms}` } : null,
+    listing.roomCount
+      ? { label: t('listing.rooms'), value: `${listing.roomCount}`, icon: RoomsIcon }
+      : null,
+    listing.bedrooms
+      ? { label: t('listing.bedrooms'), value: `${listing.bedrooms}`, icon: BedIcon }
+      : null,
+    listing.bathrooms
+      ? { label: t('listing.bathrooms'), value: `${listing.bathrooms}`, icon: BathIcon }
+      : null,
     listing.constructionPeriod
-      ? { label: t('listing.constructionPeriod'), value: listing.constructionPeriod }
+      ? {
+          label: t('listing.constructionPeriod'),
+          value: listing.constructionPeriod,
+          icon: CalendarIcon,
+        }
       : null,
     listing.energyLabel
       ? {
           label: t('listing.energyLabel'),
           value: listing.energyLabel,
-          valueColor: energyLabelColor(listing.energyLabel),
+          badgeColor: energyLabelColor(listing.energyLabel),
+          icon: EnergyIcon,
         }
       : null,
-  ].filter((s): s is { label: string; value: string; valueColor?: string } => s != null);
+  ];
+  const facts = stats.filter((s): s is FactRow => s != null);
 
   return (
     <>
@@ -161,13 +188,7 @@ export default function ListingDetailScreen() {
             <Text className="text-xs text-neutral-400 dark:text-neutral-500">{listedAgo}</Text>
           ) : null}
 
-          {stats.length ? (
-            <View className="mt-2 flex-row flex-wrap gap-x-6 gap-y-3 border-y border-neutral-200 py-3 dark:border-neutral-800">
-              {stats.map((s) => (
-                <Stat key={s.label} label={s.label} value={s.value} valueColor={s.valueColor} />
-              ))}
-            </View>
-          ) : null}
+          {facts.length ? <FactsTable facts={facts} isDark={isDark} /> : null}
 
 
           {listing.foundationRisk ? (
@@ -235,6 +256,74 @@ export default function ListingDetailScreen() {
         </View>
       </ScrollView>
     </>
+  );
+}
+
+type FactRow = {
+  label: string;
+  value: string;
+  /** When set, the value renders as an energy-label arrow bar in this color. */
+  badgeColor?: string;
+  icon: ComponentType<{ color: string; size?: number }>;
+};
+
+/**
+ * The listing's key facts as a borderless two-column grid, one icon +
+ * value/label cell per fact. An odd fact count leaves the last row's right
+ * cell empty.
+ */
+function FactsTable({ facts, isDark }: { facts: FactRow[]; isDark: boolean }) {
+  const iconColor = isDark ? Brand.blueLight : Brand.blue;
+  return (
+    <View className="mt-2 flex-row flex-wrap">
+      {facts.map((s) => {
+        const Icon = s.icon;
+        return (
+          <View key={s.label} className="w-1/2 flex-row items-center gap-3 py-3 pr-3">
+            <Icon color={iconColor} size={26} />
+            <View className="flex-1 gap-0.5">
+              {s.badgeColor ? (
+                <EnergyLabelBar value={s.value} color={s.badgeColor} />
+              ) : (
+                <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                  {s.value}
+                </Text>
+              )}
+              <Text className="text-xs text-neutral-500">{s.label}</Text>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+// The energy-label arrow bar mirrors the official EU label chevrons: a flat
+// left edge and a right-pointing 90° tip (both slopes at 45°), tinted by
+// rating. The tip is a border-drawn triangle, same trick as ShareIcon.
+const ENERGY_BAR_HEIGHT = 22;
+
+function EnergyLabelBar({ value, color }: { value: string; color: string }) {
+  return (
+    <View className="flex-row self-start">
+      <View
+        className="min-w-8 items-center justify-center pl-2 pr-1"
+        style={{ height: ENERGY_BAR_HEIGHT, backgroundColor: color }}>
+        <Text className="text-sm font-bold text-white">{value}</Text>
+      </View>
+      <View
+        style={{
+          width: 0,
+          height: 0,
+          borderTopWidth: ENERGY_BAR_HEIGHT / 2,
+          borderBottomWidth: ENERGY_BAR_HEIGHT / 2,
+          borderLeftWidth: ENERGY_BAR_HEIGHT / 2,
+          borderTopColor: 'transparent',
+          borderBottomColor: 'transparent',
+          borderLeftColor: color,
+        }}
+      />
+    </View>
   );
 }
 
