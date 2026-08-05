@@ -229,42 +229,33 @@ function SentimentPicker({
   const idleIcon = dark ? '#a3a3a3' : '#737373';
 
   return (
-    <View className="gap-1.5">
-      <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-        {t('feedback.sentimentLabel')}
-      </Text>
-      <View
-        accessibilityRole="radiogroup"
-        accessibilityLabel={t('feedback.sentimentLabel')}
-        className="flex-row gap-2">
-        {SENTIMENT_OPTIONS.map(({ value: option, icon: Icon, labelKey }) => {
-          const selected = value === option;
-          return (
-            <Pressable
-              key={option}
-              testID={`feedback-sentiment-${option}`}
-              onPress={() => onChange(option)}
-              disabled={disabled}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected, disabled }}
-              className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl border py-3 ${
-                selected
-                  ? 'border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-950'
-                  : 'border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900'
-              } ${disabled ? 'opacity-50' : 'active:opacity-80'}`}>
-              <Icon color={selected ? activeIcon : idleIcon} />
-              <Text
-                className={`text-sm font-medium ${
-                  selected
-                    ? 'text-blue-700 dark:text-blue-300'
-                    : 'text-neutral-700 dark:text-neutral-300'
-                }`}>
-                {t(labelKey)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+    // No visible heading — the glyphs carry the meaning. `sentimentLabel` stays
+    // on as the group's accessible name so screen readers still announce what
+    // the three pills are for.
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={t('feedback.sentimentLabel')}
+      className="flex-row gap-2">
+      {SENTIMENT_OPTIONS.map(({ value: option, icon: Icon, labelKey }) => {
+        const selected = value === option;
+        return (
+          <Pressable
+            key={option}
+            testID={`feedback-sentiment-${option}`}
+            onPress={() => onChange(option)}
+            disabled={disabled}
+            accessibilityRole="radio"
+            accessibilityLabel={t(labelKey)}
+            accessibilityState={{ checked: selected, disabled }}
+            className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl border py-3 ${
+              selected
+                ? 'border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-950'
+                : 'border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900'
+            } ${disabled ? 'opacity-50' : 'active:opacity-80'}`}>
+            <Icon color={selected ? activeIcon : idleIcon} />
+          </Pressable>
+        );
+      })}
     </View>
   );
 }

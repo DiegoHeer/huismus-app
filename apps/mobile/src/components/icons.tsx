@@ -231,7 +231,7 @@ export function EnergyIcon({ color, size = 24 }: FactIconProps) {
 type SentimentIconProps = { color: string; size?: number };
 
 /** A raised thumb — "this was good". */
-export function ThumbsUpIcon({ color, size = 20 }: SentimentIconProps) {
+export function ThumbsUpIcon({ color, size = 22 }: SentimentIconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <FactPath
@@ -244,7 +244,7 @@ export function ThumbsUpIcon({ color, size = 20 }: SentimentIconProps) {
 }
 
 /** A level-mouthed face — "this was neither good nor bad". */
-export function NeutralFaceIcon({ color, size = 20 }: SentimentIconProps) {
+export function NeutralFaceIcon({ color, size = 22 }: SentimentIconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <FactPath d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z" color={color} />
@@ -255,7 +255,7 @@ export function NeutralFaceIcon({ color, size = 20 }: SentimentIconProps) {
 }
 
 /** An inverted thumb — "this was bad". */
-export function ThumbsDownIcon({ color, size = 20 }: SentimentIconProps) {
+export function ThumbsDownIcon({ color, size = 22 }: SentimentIconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <FactPath
