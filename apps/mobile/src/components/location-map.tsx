@@ -49,7 +49,7 @@ export function LocationMap({
       compass={false}>
       <Camera center={[longitude, latitude]} zoom={zoom} />
       <Marker id="object" lngLat={[longitude, latitude]}>
-        <View style={styles.pin} />
+        <View style={[styles.pin, { backgroundColor: brand.accent }]} />
       </Marker>
     </Map>
   );

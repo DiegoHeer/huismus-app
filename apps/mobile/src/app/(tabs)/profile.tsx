@@ -7,10 +7,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { useAuth, type AuthUser } from '@/hooks/use-auth';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppearance } from '@/lib/appearance';
 import { resetOnboarding } from '@/lib/onboarding';
 import { activeLanguage, APPEARANCE_OPTIONS, LANGUAGE_LABELS } from '@/lib/settings-options';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 interface IconProps {
   size?: number;
@@ -137,10 +137,10 @@ function TrashIcon({ size, color }: IconProps) {
 }
 
 export default function ProfileScreen() {
+  const brand = useBrand();
   const { t } = useTranslation();
   const { user, isAuthenticated, signOut } = useAuth();
   const router = useRouter();
-  const scheme = useColorScheme();
 
   // Signing out is destructive (it drops back to the guest state), so confirm
   // instead of acting on the first tap. react-native-web's Alert.alert is a
@@ -196,7 +196,7 @@ export default function ProfileScreen() {
             onPress={() => router.push('/settings/delete-account')}
             accessibilityRole="button"
             className="flex-row items-center justify-center gap-2 rounded-2xl bg-card py-3 shadow-sm active:opacity-70">
-            <TrashIcon size={18} color={scheme === 'dark' ? '#f87171' : '#dc2626'} />
+            <TrashIcon size={18} color={brand.text} />
             <Text className="text-base font-semibold text-accent-text">
               {t('profile.deleteAccount')}
             </Text>
@@ -357,9 +357,8 @@ function MenuRow({
   label: string;
   onPress?: () => void;
 }) {
-  const scheme = useColorScheme();
-  // Match the row label: neutral-900 in light, white in dark.
-  const iconColor = scheme === 'dark' ? '#ffffff' : '#171717';
+  // Match the row label.
+  const iconColor = useTheme().text;
   return (
     <Pressable
       onPress={onPress}

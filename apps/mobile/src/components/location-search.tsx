@@ -14,10 +14,10 @@ import {
 } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { useEffectiveColorScheme } from '@/components/map-style';
 import { useFadingText } from '@/components/use-fading-text';
 import { trackSearch, type SearchMethod } from '@/lib/analytics';
 import { useRecentSearches } from '@/lib/recent-searches';
+import { useTheme } from '@/hooks/use-theme';
 import {
   resolvePick,
   resolveTyped,
@@ -355,9 +355,9 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
   // driven by the effective theme. `filterColor` strokes the glyph and the
   // count; `filterPillBg` fills the pill and each knob's ring centre, so the
   // rings read as cut-outs in the pill.
-  const scheme = useEffectiveColorScheme();
-  const filterColor = scheme === 'dark' ? '#ffffff' : '#171717';
-  const filterPillBg = scheme === 'dark' ? '#404040' : '#e5e5e5';
+  const theme = useTheme();
+  const filterColor = theme.text;
+  const filterPillBg = theme.surface;
   // The visible placeholder is an overlay <Text> (a native placeholder can't
   // animate): when the hint changes — the map screen swaps in the selected
   // city's name — the old text fades out, holds, and the new one fades in.
@@ -573,7 +573,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
               pointerEvents="none">
               <Text
                 className="text-xl text-base"
-                style={{ color: '#9ca3af' }}
+                style={{ color: theme.textSecondary }}
                 numberOfLines={1}>
                 {displayedPlaceholder}
               </Text>

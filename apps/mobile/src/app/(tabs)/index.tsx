@@ -14,6 +14,7 @@ import { LocationSearch, type LocationSearchRef } from '@/components/location-se
 import { DEFAULT_CENTER } from '@/components/map-shared';
 import { useEffectiveColorScheme } from '@/components/map-style';
 import { OverlayLegend } from '@/components/overlay-legend';
+import { Brand } from '@/constants/theme';
 import { useBrand } from '@/hooks/use-theme';
 import { trackOverlayEnabled } from '@/lib/analytics';
 import { loadAreas, loadCities, loadStats } from '@/lib/area-cache';
@@ -154,7 +155,10 @@ export default function MapScreen() {
     setSelectedCity({ code: city.code, name: pendingFocus.name, geometry: city.geometry });
     setSelectedAreaId(null);
     setSelectedId(null);
-    const center = areasCenter([{ id: city.code, color: brand.accent, geometry: city.geometry }]);
+    // `color` is never painted here — areasCenter only reads geometry.
+    const center = areasCenter([
+      { id: city.code, color: Brand.light.accent, geometry: city.geometry },
+    ]);
     if (center) mapRef.current?.flyTo({ ...center, zoom: 11 });
   }, [pendingFocus, cities]);
   /* eslint-enable react-hooks/set-state-in-effect */

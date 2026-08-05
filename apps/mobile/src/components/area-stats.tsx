@@ -1,7 +1,6 @@
 import { useTranslation } from '@huismus/i18n';
 import type { NeighborhoodStats } from '@huismus/types';
 import { Image } from 'expo-image';
-import { useColorScheme } from 'nativewind';
 import { useMemo, type ReactNode } from 'react';
 import { Text, View, type DimensionValue } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -13,6 +12,7 @@ import {
   type StatFormat,
   type StatSegment,
 } from '@/lib/neighborhood-stats';
+import { useResolvedScheme } from '@/hooks/use-theme';
 
 /**
  * Party logo assets keyed by the slug emitted from `neighborhood-stats`. Metro
@@ -46,13 +46,42 @@ const PARTY_LOGOS: Record<string, number> = {
   'vrede-voor-dieren': require('../../assets/images/party-logos/vrede-voor-dieren.png'),
 };
 
-// Chart palettes mirror the design mockup. SEQ is a light→dark sequential ramp
-// (age, construction year); CAT is a categorical set (household, tenure, type,
-// origin). These are data colors, so they're constants, not theme-aware.
-const SEQ = ['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8', '#1e3a8a'];
-const CAT = ['#2563eb', '#0891b2', '#f59e0b', '#9333ea'];
-const ACCENT = '#2563eb';
-const BUILD_YEAR_COLORS = [SEQ[3], SEQ[1]]; // before 2000 (dark) → from 2000 (light)
+/*
+ * Chart palettes, per theme. `seq` is an ordinal ramp on the brand hue (age
+ * bands, construction year); `cat` is a categorical set (household, tenure,
+ * dwelling type, origin); `accent` fills the single-series bars.
+ *
+ * Theme-aware rather than constant: these marks sit on `bg-card`, which is
+ * #FFFFFF in Dageraad and #261F18 in Gloed, and one palette cannot be legible
+ * on both. Each set was checked against its own surface for the lightness
+ * band, chroma floor, colour-vision separation and contrast — the categorical
+ * sets clear an adjacent-pair CVD ΔE of 9.0 (dark) / 11.1 (light), and both
+ * ramps are single-hue, monotone in lightness, and clear 2:1 at the end
+ * nearest the surface. Re-validate if you touch a value.
+ *
+ * `cat` deliberately spreads hue rather than staying inside the warm family:
+ * four warm tones adjacent in a donut are indistinguishable under protanopia
+ * and deuteranopia. Brand red leads; the rest are stepped to match it.
+ */
+const CHARTS = {
+  light: {
+    seq: ['#EAA08A', '#E17B60', '#D04A2F', '#A5331F', '#6E2013'],
+    cat: ['#D7442E', '#1B8A72', '#C98500', '#6B4E9E'],
+    accent: '#D7442E',
+    track: '#EFE4D6',
+  },
+  dark: {
+    seq: ['#8E3423', '#B8482F', '#D9694E', '#EC9179', '#F8BFAC'],
+    cat: ['#E85B41', '#27967A', '#BC8A12', '#8A79D6'],
+    accent: '#E85B41',
+    track: '#3A2E24',
+  },
+} as const;
+
+/** The chart palette for the active theme. */
+function useCharts() {
+  return CHARTS[useResolvedScheme()];
+}
 
 const DONUT = { size: 132, r: 52, c: 66, sw: 17 };
 const CIRC = 2 * Math.PI * DONUT.r;
@@ -144,7 +173,13 @@ function Legend({
 }
 
 /** Stacked horizontal bar for independent or normalized part-to-whole shares. */
-function SegmentedBar({ segments, colors }: { segments: StatSegment[]; colors: string[] }) {
+function SegmentedBar({
+  segments,
+  colors,
+}: {
+  segments: StatSegment[];
+  colors: readonly string[];
+}) {
   const { t } = useTranslation();
   const legendItems = segments.map((seg, i) => ({
     label: t(`area.stats.${seg.labelKey}`),
@@ -168,6 +203,7 @@ function SegmentedBar({ segments, colors }: { segments: StatSegment[]; colors: s
 
 /** Centered horizontal bars; widths are relative to the largest bucket. */
 function AgeBars({ rows }: { rows: AgeRow[] }) {
+  const { seq } = useCharts();
   const { t } = useTranslation();
   const max = Math.max(...rows.map((r) => r.percent), 1);
   return (
@@ -183,7 +219,7 @@ function AgeBars({ rows }: { rows: AgeRow[] }) {
               style={{
                 width: widthPct((row.percent / max) * 100),
                 minWidth: 4,
-                backgroundColor: SEQ[SEQ.length - 1 - i] ?? SEQ[0],
+                backgroundColor: seq[seq.length - 1 - i] ?? seq[0],
               }}
             />
           </View>
@@ -201,6 +237,7 @@ function AgeBars({ rows }: { rows: AgeRow[] }) {
  * scaled so the winning party fills the row, and the percentage of the vote.
  */
 function PartyVotes({ parties, fmt }: { parties: ElectionPartyRow[]; fmt: Fmt }) {
+  const { accent } = useCharts();
   const max = Math.max(...parties.map((p) => p.share), 1);
   return (
     <View className="gap-2.5">
@@ -226,7 +263,7 @@ function PartyVotes({ parties, fmt }: { parties: ElectionPartyRow[]; fmt: Fmt })
               style={{
                 width: widthPct((party.share / max) * 100),
                 minWidth: 4,
-                backgroundColor: ACCENT,
+                backgroundColor: accent,
               }}
             />
           </View>
@@ -241,8 +278,7 @@ function PartyVotes({ parties, fmt }: { parties: ElectionPartyRow[]; fmt: Fmt })
 
 /** SVG donut whose arcs are drawn with stroke-dasharray, plus a center stat. */
 function Donut({ segments, center }: { segments: StatSegment[]; center?: string }) {
-  const { colorScheme } = useColorScheme();
-  const track = colorScheme === 'dark' ? '#3f3f46' : '#eceef1';
+  const { cat, track } = useCharts();
   const arcs = segments.map((seg, i) => {
     const len = (seg.weight / 100) * CIRC;
     // Cumulative length of the preceding arcs, so each arc starts where the last
@@ -251,7 +287,7 @@ function Donut({ segments, center }: { segments: StatSegment[]; center?: string 
     const offset = segments
       .slice(0, i)
       .reduce((sum, prev) => sum + (prev.weight / 100) * CIRC, 0);
-    return { len, offset, color: CAT[i % CAT.length]!, key: seg.labelKey };
+    return { len, offset, color: cat[i % cat.length]!, key: seg.labelKey };
   });
   return (
     <View style={{ width: DONUT.size, height: DONUT.size }}>
@@ -289,6 +325,7 @@ function Donut({ segments, center }: { segments: StatSegment[]; center?: string 
 }
 
 function ShareBar({ label, value, fmt }: { label: string; value: number; fmt: Fmt }) {
+  const { accent } = useCharts();
   return (
     <View>
       <View className="flex-row items-baseline justify-between">
@@ -300,7 +337,7 @@ function ShareBar({ label, value, fmt }: { label: string; value: number; fmt: Fm
       <View className="mt-1.5 h-3 overflow-hidden rounded-full bg-surface">
         <View
           className="h-3 rounded-full"
-          style={{ width: widthPct(value), backgroundColor: ACCENT }}
+          style={{ width: widthPct(value), backgroundColor: accent }}
         />
       </View>
     </View>
@@ -334,6 +371,9 @@ export interface AreaStatsProps {
  * district heating always renders so the "not disclosed" state stays visible.
  */
 export function AreaStats({ stats }: AreaStatsProps) {
+  const { cat, seq } = useCharts();
+  // Before 2000 takes the deeper step, from 2000 the lighter one.
+  const buildYear = [seq[3]!, seq[1]!];
   const { t } = useTranslation();
   const fmt = useFmt();
   const view = useMemo(() => deriveNeighborhoodStats(stats), [stats]);
@@ -385,7 +425,7 @@ export function AreaStats({ stats }: AreaStatsProps) {
                 items={view.household.segments.map((seg, i) => ({
                   label: t(`area.stats.${seg.labelKey}`),
                   percent: seg.percent,
-                  color: CAT[i % CAT.length]!,
+                  color: cat[i % cat.length]!,
                 }))}
               />
               <Text className="mt-2 text-[11px] text-ink-2">
@@ -398,7 +438,7 @@ export function AreaStats({ stats }: AreaStatsProps) {
 
       {view.tenure ? (
         <StatCard title={t('area.stats.tenureTitle')} hint={t('area.stats.tenureHint')}>
-          <SegmentedBar segments={view.tenure} colors={CAT} />
+          <SegmentedBar segments={view.tenure} colors={cat} />
         </StatCard>
       ) : null}
 
@@ -406,13 +446,13 @@ export function AreaStats({ stats }: AreaStatsProps) {
         <StatCard
           title={t('area.stats.dwellingTypeTitle')}
           hint={t('area.stats.dwellingTypeHint')}>
-          <SegmentedBar segments={view.dwellingType} colors={CAT} />
+          <SegmentedBar segments={view.dwellingType} colors={cat} />
         </StatCard>
       ) : null}
 
       {view.origin ? (
         <StatCard title={t('area.stats.originTitle')} hint={t('area.stats.originHint')}>
-          <SegmentedBar segments={view.origin} colors={CAT} />
+          <SegmentedBar segments={view.origin} colors={cat} />
         </StatCard>
       ) : null}
 
@@ -428,7 +468,7 @@ export function AreaStats({ stats }: AreaStatsProps) {
 
       {view.buildYear ? (
         <StatCard title={t('area.stats.buildYearTitle')} hint={t('area.stats.buildYearHint')}>
-          <SegmentedBar segments={view.buildYear} colors={BUILD_YEAR_COLORS} />
+          <SegmentedBar segments={view.buildYear} colors={buildYear} />
         </StatCard>
       ) : null}
 

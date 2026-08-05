@@ -4,13 +4,11 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
 import { SelectPills } from '@/components/filter-controls';
-import { useEffectiveColorScheme } from '@/components/map-style';
 import { BuildingsGlyph, OnboardingHeader, OnboardingPage } from '@/components/onboarding/shared';
 import { biggestCities, cityDisplayName, searchCities } from '@/lib/city-search';
+import { useTheme } from '@/hooks/use-theme';
 
 /** Neutral placeholder grey that reads on both light and dark inputs. */
-const PLACEHOLDER_COLOR = '#9ca3af';
-
 /**
  * Tour step 4: pick the cities to search in. Shows the ten largest cities as
  * multi-select pills by default; typing in the search field fuzzy-matches the
@@ -30,7 +28,7 @@ export function CitiesPage({
   onToggle: (code: string) => void;
 }) {
   const { t } = useTranslation();
-  const isDark = useEffectiveColorScheme() === 'dark';
+  const theme = useTheme();
   const [query, setQuery] = useState('');
 
   const selected = useMemo(() => new Set(selectedCodes), [selectedCodes]);
@@ -69,7 +67,7 @@ export function CitiesPage({
           value={query}
           onChangeText={setQuery}
           placeholder={t('onboarding.cities.searchPlaceholder')}
-          placeholderTextColor={PLACEHOLDER_COLOR}
+          placeholderTextColor={theme.textSecondary}
           autoCapitalize="words"
           autoCorrect={false}
           returnKeyType="search"
@@ -133,7 +131,7 @@ export function CitiesPage({
       )}
 
       {selectedCodes.length > 0 ? (
-        <Text className="text-center text-sm text-ink-2" style={{ color: isDark ? '#a1a1aa' : '#6b7280' }}>
+        <Text className="text-center text-sm text-ink-2">
           {t('onboarding.cities.selectedCount', { count: selectedCodes.length })}
         </Text>
       ) : null}

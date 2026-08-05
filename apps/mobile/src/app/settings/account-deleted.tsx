@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useBrand } from '@/hooks/use-theme';
 
 const STROKE = { strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
@@ -28,13 +28,13 @@ function CheckCircleIcon({ size = 44, color }: { size?: number; color: string })
 export default function AccountDeletedScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const scheme = useColorScheme();
+  const brand = useBrand();
 
   return (
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
       <View className="flex-1 items-center justify-center gap-5 px-8">
         <View className="h-20 w-20 items-center justify-center rounded-full bg-success/15">
-          <CheckCircleIcon size={44} color={scheme === 'dark' ? '#4ade80' : '#16a34a'} />
+          <CheckCircleIcon size={44} color={brand.success} />
         </View>
         <Text className="text-center text-2xl font-bold text-ink">
           {t('deleteAccountPage.successTitle')}

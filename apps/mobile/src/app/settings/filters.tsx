@@ -11,6 +11,7 @@ import { RangeSlider } from '@/components/range-slider';
 import { useSliderDragLock } from '@/hooks/use-slider-drag-lock';
 import { deferNavigation } from '@/lib/navigation';
 import { trackFiltersApplied } from '@/lib/analytics';
+import { useBrand } from '@/hooks/use-theme';
 import {
   AREA_DOMAIN,
   BUILDING_TYPES,
@@ -54,6 +55,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
  * drives both the map's visible listings and the search bar's count badge.
  */
 export default function FiltersScreen() {
+  const brand = useBrand();
   const { t } = useTranslation();
   const router = useRouter();
   const navigation = useNavigation();
@@ -80,13 +82,13 @@ export default function FiltersScreen() {
     navigation.setOptions({
       headerRight: () => (
         <Pressable onPress={() => setDraft(DEFAULT_FILTERS)} hitSlop={8} accessibilityRole="button">
-          <Text style={{ color: '#2563eb' }} className="text-base font-semibold">
+          <Text style={{ color: brand.text }} className="text-base font-semibold">
             {t('filtersPage.reset')}
           </Text>
         </Pressable>
       ),
     });
-  }, [navigation, t]);
+  }, [navigation, t, brand.text]);
 
   // "Show N homes" reflects the true server-side match count for the staged
   // draft. Debounce so dragging a slider doesn't fire a request per frame; the

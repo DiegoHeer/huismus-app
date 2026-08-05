@@ -15,11 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { useAuth } from '@/hooks/use-auth';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useTheme } from '@/hooks/use-theme';
-
-/** Placeholder grey that reads on both light and dark inputs (neutral-400). */
-const PLACEHOLDER_COLOR = '#9ca3af';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 const STROKE = { strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
@@ -77,7 +73,8 @@ const ERROR_KEY: Record<string, string> = {
 export default function DeleteAccountScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const scheme = useColorScheme();
+  const theme = useTheme();
+  const brand = useBrand();
   const { user, deleteAccount, signInWithGoogle } = useAuth();
 
   const [password, setPassword] = useState('');
@@ -161,7 +158,7 @@ export default function DeleteAccountScreen() {
           showsVerticalScrollIndicator={false}>
           {/* Warning sign in the middle of the page. */}
           <View className="mt-4 h-20 w-20 items-center justify-center rounded-full bg-accent/10">
-            <AlertTriangleIcon size={44} color={scheme === 'dark' ? '#f87171' : '#dc2626'} />
+            <AlertTriangleIcon size={44} color={brand.accent} />
           </View>
 
           <Text className="text-center text-2xl font-bold text-ink">
@@ -187,7 +184,7 @@ export default function DeleteAccountScreen() {
                 autoComplete="current-password"
                 editable={!working}
                 placeholder={t('deleteAccountPage.passwordPlaceholder')}
-                placeholderTextColor={PLACEHOLDER_COLOR}
+                placeholderTextColor={theme.textSecondary}
                 accessibilityLabel={t('deleteAccountPage.passwordLabel')}
                 className="rounded-xl border border-border bg-card px-4 py-3 text-base text-ink"
               />

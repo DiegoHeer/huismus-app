@@ -4,8 +4,7 @@ import { Pressable, Switch, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { InfoCard, Paragraph, SettingsContentScreen } from '@/components/settings-content';
-import { useBrand } from '@/hooks/use-theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 import { useAnalyticsOptOut } from '@/lib/analytics';
 
 /** Document/paper icon for the full-legal-text links below — mirrors profile.tsx's icon style. */
@@ -32,12 +31,12 @@ function PaperIcon({ color }: { color: string }) {
  * The last card lets the user opt out of that anonymous usage measurement.
  */
 export default function PrivacySettingsScreen() {
+  const theme = useTheme();
   const { t } = useTranslation();
   const brand = useBrand();
   const { optedOut, setOptedOut } = useAnalyticsOptOut();
   const router = useRouter();
-  const scheme = useColorScheme();
-  const iconColor = scheme === 'dark' ? '#ffffff' : '#171717';
+  const iconColor = theme.text;
 
   return (
     <SettingsContentScreen>

@@ -15,9 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { APP_VERSION } from '@/constants/app';
-
-/** Placeholder grey that reads on both light and dark inputs (neutral-400). */
-const PLACEHOLDER_COLOR = '#9ca3af';
+import { useTheme } from '@/hooks/use-theme';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -61,6 +59,7 @@ function CheckIcon({ color }: { color: string }) {
  * auth screens (see `components/auth-ui.tsx`).
  */
 export default function FeedbackScreen() {
+  const theme = useTheme();
   const { t, i18n } = useTranslation();
   const [text, setText] = useState('');
   const [status, setStatus] = useState<Status>('idle');
@@ -118,7 +117,7 @@ export default function FeedbackScreen() {
               autoFocus
               editable={status !== 'sending'}
               placeholder={t('feedback.placeholder')}
-              placeholderTextColor={PLACEHOLDER_COLOR}
+              placeholderTextColor={theme.textSecondary}
               accessibilityLabel={t('feedback.label')}
               style={{ minHeight: 160, textAlignVertical: 'top' }}
               className="rounded-xl border border-border bg-card px-4 py-3 text-base text-ink"

@@ -11,7 +11,6 @@ import {
   ScrollView,
   Share,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 
@@ -19,7 +18,7 @@ import { trackOutboundLink, withUtmParams } from '@/lib/analytics';
 import { listingWebUrl } from '@/lib/listing-share-url';
 import { toggleLike, useIsLiked } from '@/lib/likes';
 import { recordRecentView } from '@/lib/recent-views';
-import { useBrand } from '@/hooks/use-theme';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 import {
   AreaIcon,
   BathIcon,
@@ -37,11 +36,11 @@ import { LocationMap } from '../../components/location-map';
 import maptilerBasicStyle from '../../components/maptiler-basic-style.json';
 
 export default function ListingDetailScreen() {
+  const theme = useTheme();
   const brand = useBrand();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: listing, isLoading, isError } = useListing(id);
   const { t, i18n } = useTranslation();
-  const scheme = useColorScheme();
   const liked = useIsLiked(id);
 
   // Snapshot the listing as recently viewed once it loads. Re-runs (and so
@@ -70,8 +69,7 @@ export default function ListingDetailScreen() {
 
   const cover = listing.images[0];
 
-  const isDark = scheme === 'dark';
-  const headerTint = isDark ? '#f5f5f5' : '#404040';
+  const headerTint = theme.textSecondary;
 
   // Native share sheet with the public web link for this listing. `url` is
   // honoured by iOS; Android only reads `message`, so the link is included in

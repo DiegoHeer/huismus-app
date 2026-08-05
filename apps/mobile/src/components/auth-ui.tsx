@@ -15,9 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { type AuthErrorCode } from '@/hooks/use-auth';
-
-/** Placeholder grey that reads on both light and dark inputs (neutral-400). */
-const PLACEHOLDER_COLOR = '#9ca3af';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 /**
  * i18n key for an auth failure code. The screens render `t(authErrorKey(code))`
@@ -111,11 +109,12 @@ export function AuthField({
   error,
   ...inputProps
 }: { label: string; error?: string } & TextInputProps) {
+  const theme = useTheme();
   return (
     <View className="gap-1.5">
       <Text className="text-sm font-medium text-ink-2">{label}</Text>
       <TextInput
-        placeholderTextColor={PLACEHOLDER_COLOR}
+        placeholderTextColor={theme.textSecondary}
         accessibilityLabel={label}
         className={`rounded-xl border bg-card px-4 py-3 text-base text-ink ${
           error ? 'border-accent' : 'border-border'
@@ -156,13 +155,14 @@ export function PrimaryButton({
  * carries the meaning.
  */
 export function SuccessBadge() {
+  const brand = useBrand();
   return (
     <View accessible={false} className="items-center py-2">
       <View className="h-20 w-20 items-center justify-center rounded-full bg-success/15">
         <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
           <Path
             d="M20 6 9 17l-5-5"
-            stroke="#16a34a"
+            stroke={brand.success}
             strokeWidth={2.5}
             strokeLinecap="round"
             strokeLinejoin="round"
