@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import { View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -5,6 +6,9 @@ import Svg, { Path } from 'react-native-svg';
  * Hand-drawn glyphs that render identically on iOS, Android and web without an
  * icon-font dependency.
  */
+
+/** The signature every glyph below shares, for callers that pass one around. */
+export type Icon = (props: { color: string; size?: number }) => ReactElement;
 
 /**
  * A heart glyph used for the "save"/favorite affordance. `filled` toggles the
@@ -263,6 +267,89 @@ export function ThumbsDownIcon({ color, size = 22 }: SentimentIconProps) {
         color={color}
       />
       <FactPath d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" color={color} />
+    </Svg>
+  );
+}
+
+/**
+ * Appearance-mode glyphs (see `lib/settings-options.ts`), shown both on the
+ * profile row and in the appearance picker. Stroked at weight 2 to match the
+ * other settings icons rather than the lighter listing-fact glyphs above.
+ */
+type ModeIconProps = { color: string; size?: number };
+
+/** Shared stroke attributes for the settings-weight glyphs below. */
+function ModePath({ d, color, fill = 'none' }: { d: string; color: string; fill?: string }) {
+  return (
+    <Path
+      d={d}
+      fill={fill}
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  );
+}
+
+/** A desktop screen on a stand — "follow the system setting". */
+export function MonitorIcon({ color, size = 22 }: ModeIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <ModePath
+        d="M20 3H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1z"
+        color={color}
+      />
+      <ModePath d="M8 21h8M12 17v4" color={color} />
+    </Svg>
+  );
+}
+
+/** A rayed sun — the light theme. */
+export function SunIcon({ color, size = 22 }: ModeIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <ModePath d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" color={color} />
+      <ModePath
+        d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41"
+        color={color}
+      />
+    </Svg>
+  );
+}
+
+/** A crescent moon — the dark theme. */
+export function MoonIcon({ color, size = 22 }: ModeIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <ModePath d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" color={color} />
+    </Svg>
+  );
+}
+
+/**
+ * A circle with one half painted — the "contrast" glyph standing for the
+ * appearance setting itself, distinct from the three modes it selects between.
+ */
+export function ContrastIcon({ color, size = 22 }: ModeIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <ModePath d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" color={color} />
+      <ModePath d="M12 4a8 8 0 0 1 0 16z" color={color} fill={color} />
+    </Svg>
+  );
+}
+
+/** A globe with a meridian and the equator — the app language. */
+export function GlobeIcon({ color, size = 22 }: ModeIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <ModePath d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" color={color} />
+      <ModePath d="M2 12h20" color={color} />
+      <ModePath
+        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+        color={color}
+      />
     </Svg>
   );
 }
