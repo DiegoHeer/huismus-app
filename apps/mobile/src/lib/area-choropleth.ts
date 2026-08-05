@@ -9,9 +9,9 @@ import { RAW_FIELDS } from './neighborhood-stats';
  * areas at a time (e.g. Den Haag `0518`), so the comparison set is just the
  * areas passed in — the min→max is taken across them.
  *
- * Light theme: few inhabitants → almost-white blue, many → dark blue, so the
+ * Light theme: few inhabitants → pale warm tint, many → deep brand red, so the
  * busier neighborhoods read as "heavier" on the light basemap. Dark theme
- * inverts the lightness (few → deep near-background blue, many → bright blue) so
+ * inverts the lightness (few → deep near-background red, many → bright coral) so
  * the busier areas still stand out against a dark map. Swapping the statistic
  * later is a one-liner: pass a different {@link AreaStatSelector}.
  */
@@ -19,25 +19,30 @@ import { RAW_FIELDS } from './neighborhood-stats';
 export type ChoroplethScheme = 'light' | 'dark';
 
 /**
- * Sequential blue ramps, ordered low→high value. The light ramp runs
- * almost-white → dark blue (Tailwind blue-50…blue-900); the dark ramp runs deep
- * → bright (blue-950…blue-200) so "more" is always the more prominent end on
- * its basemap. Stops are sampled continuously, so the gradient is smooth.
+ * Sequential ramps on the brand hue, ordered low→high value. The light ramp runs
+ * pale warm tint → deep red; the dark ramp runs deep → bright coral, so "more"
+ * is always the more prominent end on its own basemap. Stops are sampled
+ * continuously, so the gradient is smooth.
+ *
+ * This is a continuous encoding, not a set of discrete tiers, so the pale end is
+ * allowed to recede toward the basemap — "near zero" reading as "nearly nothing"
+ * is the point. (The discrete ramps in components/area-stats.tsx are held to a
+ * stricter floor for exactly that reason.)
  */
-const RAMP_LIGHT = ['#eff6ff', '#bfdbfe', '#60a5fa', '#2563eb', '#1e3a8a'];
-const RAMP_DARK = ['#172554', '#1e40af', '#2563eb', '#60a5fa', '#bfdbfe'];
+const RAMP_LIGHT = ['#fbeae2', '#f3c6b2', '#e58c6e', '#ce4c30', '#8a2a19'];
+const RAMP_DARK = ['#3b160e', '#7a2a1a', '#c0402a', '#e8785e', '#f6c0ac'];
 
 /** Neutral fill for neighborhoods whose statistic CBS suppressed (no data). */
-const NO_DATA_LIGHT = '#cbd5e1';
-const NO_DATA_DARK = '#475569';
+const NO_DATA_LIGHT = '#dbcfc0';
+const NO_DATA_DARK = '#4a3d31';
 
 /**
  * One consistent, legible outline for every overlay — the fill alone encodes
  * the value, so the boundary stays visible even where the fill is near-white
  * (light theme) or near-background (dark theme).
  */
-const OUTLINE_LIGHT = '#1e3a8a';
-const OUTLINE_DARK = '#bfdbfe';
+const OUTLINE_LIGHT = '#8a2a19';
+const OUTLINE_DARK = '#f6c0ac';
 
 /** Outline color for the area overlays, matching the active basemap theme. */
 export function outlineColorFor(scheme: ChoroplethScheme): string {

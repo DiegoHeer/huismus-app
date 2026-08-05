@@ -1,9 +1,12 @@
 import type { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
+import { useMemo } from 'react';
 
 import { useResolvedScheme } from '@/hooks/use-theme';
+import { useMapSettings, type BasemapFamily } from '@/lib/map-settings';
 
 import darkStyle from './dark-style.json';
 import lightStyle from './positron-style.json';
+import { warmBasemap } from './warm-basemap';
 
 // Light: OpenMapTiles Positron, vendored to `positron-style.json` from
 // OpenFreeMap (its sources/sprite/glyphs are already keyless) and recolored —
@@ -39,6 +42,18 @@ const POLYGONS_BEFORE = 'building';
 const OVERLAY_BEFORE_LIGHT = 'waterway_line_label';
 const OVERLAY_BEFORE_DARK = 'highway_name_other';
 
+// Liberty — the detailed OpenMapTiles style huismus-web's landing map uses
+// (src/islands/TeaserMap.tsx). Referenced by URL rather than vendored, so the
+// app and the site can never drift apart on it; its tiles already come from
+// OpenFreeMap, so this adds no new host. Keyless and production-permitted.
+//
+// Liberty is a light style and OpenFreeMap ships no dark counterpart that
+// resembles it (its dark siblings are dark-matter and fiord, which look nothing
+// alike), so this family stays light in both themes — picking it is a deliberate
+// "I want the detailed map" choice. Both `beforeId` anchors below exist in it:
+// `building` at index 83 and `waterway_line_label` at 88, in that order.
+const MAP_STYLE_LIBERTY = 'https://tiles.openfreemap.org/styles/liberty';
+
 export interface MapStyleConfig {
   /** Style URL (light) or inline spec (dark) to pass to the Map's `mapStyle`. */
   mapStyle: string | StyleSpecification;
@@ -58,13 +73,41 @@ export interface MapStyleConfig {
 export const useEffectiveColorScheme = useResolvedScheme;
 
 /**
- * The basemap matching the app's effective theme. Dark theme → brightened
- * dark-matter, light → positron. Also returns the resolved `scheme` so the
- * overlay layers can match it without re-deriving the theme.
+ * Resolve a basemap family + theme to a concrete style.
+ *
+ * A family is a light/dark *pair*, not a single style: the appearance setting
+ * still picks the variant within it, so a dark app never opens onto a blinding
+ * light map. Liberty is the documented exception — see MAP_STYLE_LIBERTY.
+ *
+ * Split out of the hook so it can be exercised directly in tests.
+ */
+export function basemapFor(family: BasemapFamily, scheme: 'light' | 'dark'): MapStyleConfig {
+  const base = scheme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
+  const overlayBeforeId = scheme === 'dark' ? OVERLAY_BEFORE_DARK : OVERLAY_BEFORE_LIGHT;
+  const shared = { polygonsBeforeId: POLYGONS_BEFORE, scheme };
+
+  if (family === 'liberty') {
+    // Always the light spec's anchors — Liberty is light in both themes, and
+    // OVERLAY_BEFORE_DARK ('highway_name_other') does not exist in it, which
+    // would throw when the overlay layers are inserted.
+    return { ...shared, mapStyle: MAP_STYLE_LIBERTY, overlayBeforeId: OVERLAY_BEFORE_LIGHT };
+  }
+  if (family === 'warm') {
+    return { ...shared, mapStyle: warmBasemap(base, scheme), overlayBeforeId };
+  }
+  return { ...shared, mapStyle: base, overlayBeforeId };
+}
+
+/**
+ * The basemap for the chosen family (Settings → Map) at the app's effective
+ * theme. Also returns the resolved `scheme` so the overlay layers can match it
+ * without re-deriving the theme.
  */
 export function useMapStyle(): MapStyleConfig {
   const scheme = useEffectiveColorScheme();
-  const mapStyle = scheme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
-  const overlayBeforeId = scheme === 'dark' ? OVERLAY_BEFORE_DARK : OVERLAY_BEFORE_LIGHT;
-  return { mapStyle, polygonsBeforeId: POLYGONS_BEFORE, overlayBeforeId, scheme };
+  const { basemap } = useMapSettings();
+  // The warm variants are rebuilt from the vendored spec on every call, so
+  // memoise: MapLibre diffs `mapStyle` by identity, and a fresh object each
+  // render would tear down and re-create every layer on the map.
+  return useMemo(() => basemapFor(basemap, scheme), [basemap, scheme]);
 }

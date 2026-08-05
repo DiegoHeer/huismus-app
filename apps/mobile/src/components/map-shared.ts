@@ -19,7 +19,9 @@ export const BUILDINGS_3D_MIN_ZOOM = 15;
  */
 export function buildings3DPaint(scheme: 'light' | 'dark'): FillExtrusionLayerSpecification['paint'] {
   return {
-    'fill-extrusion-color': scheme === 'dark' ? '#52525b' : '#d4d4d8',
+    // A step up from the warm basemap's flat `building` fill, so the extrusion
+    // reads as the same buildings lifted rather than as a different layer.
+    'fill-extrusion-color': scheme === 'dark' ? '#4A3B2C' : '#E0D2BE',
     'fill-extrusion-height': ['get', 'render_height'],
     'fill-extrusion-base': ['get', 'render_min_height'],
     'fill-extrusion-opacity': 0.85,
