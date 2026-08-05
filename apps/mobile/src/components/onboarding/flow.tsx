@@ -32,6 +32,7 @@ import { useSliderDragLock } from '@/hooks/use-slider-drag-lock';
 import { trackOnboardingCompleted, trackOnboardingStep } from '@/lib/analytics';
 import { cityDisplayName } from '@/lib/city-search';
 import { useFilters, type ListingMode } from '@/lib/filters';
+import { openLegalDocument } from '@/lib/legal-links';
 import { setMapFocus } from '@/lib/map-focus';
 import { useOnboarding } from '@/lib/onboarding';
 import { getPreferredCities, setPreferredCities } from '@/lib/preferred-cities';
@@ -70,7 +71,7 @@ const webSnapStopMarker =
  * Skipping (or finishing) marks the tour done so it never auto-shows again.
  */
 export function OnboardingFlow() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { lastPage, setOnboardingPage, completeOnboarding } = useOnboarding();
   const { filters, setFilters } = useFilters();
@@ -339,8 +340,8 @@ export function OnboardingFlow() {
         <LegalLinksRow
           privacyLabel={t('onboarding.privacyLink')}
           termsLabel={t('onboarding.termsLink')}
-          onPrivacyPress={() => router.push('/settings/legal/privacy-policy')}
-          onTermsPress={() => router.push('/settings/legal/terms-of-use')}
+          onPrivacyPress={() => openLegalDocument('privacy-policy', i18n.language)}
+          onTermsPress={() => openLegalDocument('terms-of-use', i18n.language)}
         />
       </View>
     </OnboardingPage>,

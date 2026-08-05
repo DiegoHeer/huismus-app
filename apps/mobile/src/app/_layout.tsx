@@ -126,14 +126,6 @@ export default function RootLayout() {
                 options={{ headerShown: true, title: t('profile.privacy') }}
               />
               <Stack.Screen
-                name="settings/legal/privacy-policy"
-                options={{ headerShown: true, title: t('privacyPolicyPage.title') }}
-              />
-              <Stack.Screen
-                name="settings/legal/terms-of-use"
-                options={{ headerShown: true, title: t('termsOfUsePage.title') }}
-              />
-              <Stack.Screen
                 name="settings/help"
                 options={{ headerShown: true, title: t('profile.help') }}
               />

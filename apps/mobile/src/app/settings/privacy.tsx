@@ -1,5 +1,4 @@
 import { useTranslation } from '@huismus/i18n';
-import { useRouter } from 'expo-router';
 import { Pressable, Switch, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -7,6 +6,7 @@ import { InfoCard, Paragraph, SettingsContentScreen } from '@/components/setting
 import { Brand } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAnalyticsOptOut } from '@/lib/analytics';
+import { openLegalDocument } from '@/lib/legal-links';
 
 /** Document/paper icon for the full-legal-text links below — mirrors profile.tsx's icon style. */
 function PaperIcon({ color }: { color: string }) {
@@ -29,12 +29,12 @@ function PaperIcon({ color }: { color: string }) {
  * Privacy & security page (pushed from the profile screen). Static copy that
  * spells out the zero-data stance: no user data collected, only anonymous
  * in-app usage measured, and search/preferences never collected or resold.
- * The last card lets the user opt out of that anonymous usage measurement.
+ * The last card lets the user opt out of that anonymous usage measurement, and
+ * links out to the full legal documents on the website.
  */
 export default function PrivacySettingsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { optedOut, setOptedOut } = useAnalyticsOptOut();
-  const router = useRouter();
   const scheme = useColorScheme();
   const iconColor = scheme === 'dark' ? '#ffffff' : '#171717';
 
@@ -69,25 +69,25 @@ export default function PrivacySettingsScreen() {
 
       <InfoCard>
         <Pressable
-          onPress={() => router.push('/settings/legal/privacy-policy')}
-          accessibilityRole="button"
+          onPress={() => openLegalDocument('privacy-policy', i18n.language)}
+          accessibilityRole="link"
           className="flex-row items-center justify-between active:opacity-60">
           <View className="flex-row items-center gap-3">
             <PaperIcon color={iconColor} />
             <Text className="text-lg text-neutral-900 dark:text-white">
-              {t('privacyPolicyPage.title')}
+              {t('legal.privacyPolicy')}
             </Text>
           </View>
           <Text className="text-xl text-neutral-400">›</Text>
         </Pressable>
         <Pressable
-          onPress={() => router.push('/settings/legal/terms-of-use')}
-          accessibilityRole="button"
+          onPress={() => openLegalDocument('terms-of-use', i18n.language)}
+          accessibilityRole="link"
           className="flex-row items-center justify-between border-t border-neutral-100 pt-3 active:opacity-60 dark:border-neutral-800">
           <View className="flex-row items-center gap-3">
             <PaperIcon color={iconColor} />
             <Text className="text-lg text-neutral-900 dark:text-white">
-              {t('termsOfUsePage.title')}
+              {t('legal.termsOfUse')}
             </Text>
           </View>
           <Text className="text-xl text-neutral-400">›</Text>

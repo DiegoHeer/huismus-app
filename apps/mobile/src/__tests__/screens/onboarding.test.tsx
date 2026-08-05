@@ -14,6 +14,7 @@ import { clearMapFocus, useMapFocus } from '@/lib/map-focus';
 import { resetOnboarding, useOnboarding } from '@/lib/onboarding';
 import { getPreferredCities, setPreferredCities } from '@/lib/preferred-cities';
 
+import { mockOpenBrowserAsync } from '../../../test-setup';
 import { measureTrack, responderEvent } from '../support/slider-gestures';
 
 async function renderScreen(language: 'en' | 'nl' = 'en') {
@@ -164,6 +165,20 @@ describe('OnboardingScreen', () => {
 
     await tap(getByTestId('onboarding-log-in'));
     expect(router.push).toHaveBeenCalledWith('/auth/login');
+  });
+
+  it('opens the hosted legal documents from the welcome page footer', async () => {
+    const { getByText } = await renderScreen('en');
+
+    await tap(getByText('Privacy'));
+    expect(mockOpenBrowserAsync).toHaveBeenLastCalledWith(
+      'https://huismusapp.com/en/privacy-policy/',
+    );
+
+    await tap(getByText('Terms'));
+    expect(mockOpenBrowserAsync).toHaveBeenLastCalledWith(
+      'https://huismusapp.com/en/terms-of-use/',
+    );
   });
 
   it('finishing saves the preferred cities, focuses the map and marks the tour done', async () => {
