@@ -104,4 +104,114 @@ describe('FeedbackScreen', () => {
     expect(await findByText('Feedback verzonden')).toBeOnTheScreen();
     expect(submitFeedback).toHaveBeenCalledWith(expect.objectContaining({ locale: 'nl' }));
   });
+
+  describe('character limit', () => {
+    it('caps the field at 512 characters', async () => {
+      const { getByPlaceholderText } = await renderScreen('en');
+
+      expect(getByPlaceholderText('Share your thoughts…').props.maxLength).toBe(512);
+    });
+
+    it('stays silent about the limit until it is reached', async () => {
+      const { getByPlaceholderText, queryByText } = await renderScreen('en');
+      const input = getByPlaceholderText('Share your thoughts…');
+
+      await typeInto(input, 'a'.repeat(511));
+      expect(queryByText("You've reached the 512-character limit.")).toBeNull();
+
+      await typeInto(input, 'a'.repeat(512));
+      expect(queryByText("You've reached the 512-character limit.")).toBeOnTheScreen();
+
+      // Deleting back under the cap hides it again.
+      await typeInto(input, 'a'.repeat(400));
+      expect(queryByText("You've reached the 512-character limit.")).toBeNull();
+    });
+  });
+
+  describe('sentiment', () => {
+    it('submits without a marker when no sentiment is picked', async () => {
+      submitFeedback.mockResolvedValue({ id: 4, created_at: '2026-07-11T00:00:00Z' });
+      const { getByTestId, getByPlaceholderText, findByText } = await renderScreen('en');
+
+      await typeInto(getByPlaceholderText('Share your thoughts…'), 'No opinion either way');
+      await tap(getByTestId('feedback-submit'));
+
+      expect(await findByText('Feedback sent')).toBeOnTheScreen();
+      expect(submitFeedback).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'No opinion either way' }),
+      );
+    });
+
+    it.each([
+      ['positive', ':thumbsup:'],
+      ['neutral', ':neutral_face:'],
+      ['negative', ':thumbsdown:'],
+    ])('prefixes the message with the %s marker', async (option, marker) => {
+      submitFeedback.mockResolvedValue({ id: 5, created_at: '2026-07-11T00:00:00Z' });
+      const { getByTestId, getByPlaceholderText, findByText } = await renderScreen('en');
+
+      await typeInto(getByPlaceholderText('Share your thoughts…'), '  Worth saying  ');
+      await tap(getByTestId(`feedback-sentiment-${option}`));
+      await tap(getByTestId('feedback-submit'));
+
+      expect(await findByText('Feedback sent')).toBeOnTheScreen();
+      expect(submitFeedback).toHaveBeenCalledWith(
+        expect.objectContaining({ message: `${marker}\n\nWorth saying` }),
+      );
+    });
+
+    it('keeps exactly one pill checked, like a radio group', async () => {
+      const { getByTestId } = await renderScreen('en');
+      const positive = getByTestId('feedback-sentiment-positive');
+      const negative = getByTestId('feedback-sentiment-negative');
+
+      expect(positive.props.accessibilityState.checked).toBe(false);
+      expect(negative.props.accessibilityState.checked).toBe(false);
+
+      await tap(positive);
+      expect(positive.props.accessibilityState.checked).toBe(true);
+
+      await tap(negative);
+      expect(positive.props.accessibilityState.checked).toBe(false);
+      expect(negative.props.accessibilityState.checked).toBe(true);
+
+      // Re-tapping the checked pill keeps it checked — radios don't clear.
+      await tap(negative);
+      expect(negative.props.accessibilityState.checked).toBe(true);
+    });
+
+    it('clears the pick along with the text after a successful send', async () => {
+      submitFeedback.mockResolvedValue({ id: 6, created_at: '2026-07-11T00:00:00Z' });
+      const { getByTestId, getByPlaceholderText, findByText } = await renderScreen('en');
+
+      await typeInto(getByPlaceholderText('Share your thoughts…'), 'Great');
+      await tap(getByTestId('feedback-sentiment-positive'));
+      await tap(getByTestId('feedback-submit'));
+
+      expect(await findByText('Feedback sent')).toBeOnTheScreen();
+      expect(getByTestId('feedback-sentiment-positive').props.accessibilityState.checked).toBe(
+        false,
+      );
+    });
+
+    it('keeps the pick for a retry when the send fails', async () => {
+      submitFeedback
+        .mockRejectedValueOnce(new Error('offline'))
+        .mockResolvedValueOnce({ id: 7, created_at: '2026-07-11T00:00:00Z' });
+      const { getByTestId, getByPlaceholderText, findByText } = await renderScreen('en');
+
+      await typeInto(getByPlaceholderText('Share your thoughts…'), 'Broken');
+      await tap(getByTestId('feedback-sentiment-negative'));
+      await tap(getByTestId('feedback-submit'));
+
+      expect(await findByText("Couldn't send your feedback. Please try again.")).toBeOnTheScreen();
+      expect(getByTestId('feedback-sentiment-negative').props.accessibilityState.checked).toBe(true);
+
+      await tap(getByTestId('feedback-submit'));
+      await waitFor(() => expect(submitFeedback).toHaveBeenCalledTimes(2));
+      expect(submitFeedback).toHaveBeenLastCalledWith(
+        expect.objectContaining({ message: ':thumbsdown:\n\nBroken' }),
+      );
+    });
+  });
 });

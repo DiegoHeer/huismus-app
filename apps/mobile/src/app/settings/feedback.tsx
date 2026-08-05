@@ -9,17 +9,53 @@ import {
   ScrollView,
   Text,
   TextInput,
+  useColorScheme,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { NeutralFaceIcon, ThumbsDownIcon, ThumbsUpIcon } from '@/components/icons';
 import { APP_VERSION } from '@/constants/app';
 
 /** Placeholder grey that reads on both light and dark inputs (neutral-400). */
 const PLACEHOLDER_COLOR = '#9ca3af';
 
+/**
+ * Hard cap on the message. Purely a client-side courtesy — `POST /v1/feedback`
+ * imposes no length of its own — so it's enforced on what the user types and the
+ * sentiment marker below is added on top of it.
+ */
+const MAX_MESSAGE_LENGTH = 512;
+
 type Status = 'idle' | 'sending' | 'sent' | 'error';
+
+type Sentiment = 'positive' | 'neutral' | 'negative';
+
+/**
+ * The backend has no sentiment field yet, so the pick rides along as an emoji
+ * shortcode on the first line of the message — readable as-is and rendered by
+ * the Slack/GitHub-style shortcode set wherever feedback is triaged. Swap these
+ * for a real request field once the API grows one.
+ */
+const SENTIMENT_MARKER: Record<Sentiment, string> = {
+  positive: ':thumbsup:',
+  neutral: ':neutral_face:',
+  negative: ':thumbsdown:',
+};
+
+/** Left-to-right order of the pills. `as const` keeps the `t()` keys literal. */
+const SENTIMENT_OPTIONS = [
+  { value: 'positive', icon: ThumbsUpIcon, labelKey: 'feedback.sentimentPositive' },
+  { value: 'neutral', icon: NeutralFaceIcon, labelKey: 'feedback.sentimentNeutral' },
+  { value: 'negative', icon: ThumbsDownIcon, labelKey: 'feedback.sentimentNegative' },
+] as const;
+
+/** Prefix the message with the sentiment marker, when one was picked. */
+function composeMessage(text: string, sentiment: Sentiment | null): string {
+  const message = text.trim();
+  return sentiment ? `${SENTIMENT_MARKER[sentiment]}\n\n${message}` : message;
+}
 
 /**
  * Optional device/app context sent alongside the message for triage. `Platform.OS`
@@ -54,7 +90,8 @@ function CheckIcon({ color }: { color: string }) {
 
 /**
  * Feedback screen (pushed from the profile Support section). A multiline field
- * plus a submit button that POSTs to `/v1/feedback` (see `submitFeedback`). The
+ * capped at {@link MAX_MESSAGE_LENGTH}, an optional sentiment picker, and a
+ * submit button that POSTs to `/v1/feedback` (see `submitFeedback`). The
  * button moves idle → sending → sent in place and we stay on the screen (the
  * field clears) so more can be sent; a failed send surfaces an inline error and
  * keeps the text so it can be retried. Mirrors the keyboard-aware layout of the
@@ -63,6 +100,7 @@ function CheckIcon({ color }: { color: string }) {
 export default function FeedbackScreen() {
   const { t, i18n } = useTranslation();
   const [text, setText] = useState('');
+  const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [status, setStatus] = useState<Status>('idle');
 
   // Guards the post-await state updates from landing after the screen unmounts
@@ -76,16 +114,29 @@ export default function FeedbackScreen() {
 
   // Retryable from the initial idle state and after a failed send.
   const canSubmit = (status === 'idle' || status === 'error') && text.trim().length > 0;
+  const atLimit = text.length >= MAX_MESSAGE_LENGTH;
+
+  /**
+   * Editing after a terminal state returns the button to idle, clearing a shown
+   * "sent" confirmation or error message.
+   */
+  function clearTerminalStatus() {
+    if (status === 'sent' || status === 'error') setStatus('idle');
+  }
 
   async function submit() {
     if (!canSubmit) return;
     setStatus('sending');
     try {
-      await submitFeedback({ message: text.trim(), ...feedbackContext(i18n.language) });
+      await submitFeedback({
+        message: composeMessage(text, sentiment),
+        ...feedbackContext(i18n.language),
+      });
       if (!mounted.current) return;
       // Leave the button on its "sent" confirmation; typing again resets it.
       setStatus('sent');
       setText('');
+      setSentiment(null);
     } catch {
       if (mounted.current) setStatus('error');
     }
@@ -110,20 +161,36 @@ export default function FeedbackScreen() {
               value={text}
               onChangeText={(next) => {
                 setText(next);
-                // Typing after a terminal state returns the button to idle,
-                // clearing a shown "sent" confirmation or error message.
-                if (status === 'sent' || status === 'error') setStatus('idle');
+                clearTerminalStatus();
               }}
               multiline
               autoFocus
               editable={status !== 'sending'}
+              maxLength={MAX_MESSAGE_LENGTH}
               placeholder={t('feedback.placeholder')}
               placeholderTextColor={PLACEHOLDER_COLOR}
               accessibilityLabel={t('feedback.label')}
               style={{ minHeight: 160, textAlignVertical: 'top' }}
               className="rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
             />
+            {/* No running counter — the cap only becomes visible once it bites. */}
+            {atLimit ? (
+              <Text
+                accessibilityLiveRegion="polite"
+                className="text-sm text-neutral-500 dark:text-neutral-400">
+                {t('feedback.limitReached', { max: MAX_MESSAGE_LENGTH })}
+              </Text>
+            ) : null}
           </View>
+
+          <SentimentPicker
+            value={sentiment}
+            disabled={status === 'sending'}
+            onChange={(next) => {
+              setSentiment(next);
+              clearTerminalStatus();
+            }}
+          />
 
           <SubmitButton status={status} disabled={!canSubmit} onPress={submit} />
 
@@ -137,6 +204,68 @@ export default function FeedbackScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+/**
+ * Three pills under the message field, side by side, behaving as a radio group:
+ * exactly one can be active and — like a radio — re-tapping the active one keeps
+ * it. Nothing is picked by default and a sentiment is never required to send, so
+ * a marker only ever reaches the message when the user deliberately chose one.
+ */
+function SentimentPicker({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: Sentiment | null;
+  disabled: boolean;
+  onChange: (next: Sentiment) => void;
+}) {
+  const { t } = useTranslation();
+  const scheme = useColorScheme();
+  const dark = scheme === 'dark';
+  const activeIcon = dark ? '#60a5fa' : '#2563eb';
+  const idleIcon = dark ? '#a3a3a3' : '#737373';
+
+  return (
+    <View className="gap-1.5">
+      <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        {t('feedback.sentimentLabel')}
+      </Text>
+      <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel={t('feedback.sentimentLabel')}
+        className="flex-row gap-2">
+        {SENTIMENT_OPTIONS.map(({ value: option, icon: Icon, labelKey }) => {
+          const selected = value === option;
+          return (
+            <Pressable
+              key={option}
+              testID={`feedback-sentiment-${option}`}
+              onPress={() => onChange(option)}
+              disabled={disabled}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected, disabled }}
+              className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl border py-3 ${
+                selected
+                  ? 'border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-950'
+                  : 'border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900'
+              } ${disabled ? 'opacity-50' : 'active:opacity-80'}`}>
+              <Icon color={selected ? activeIcon : idleIcon} />
+              <Text
+                className={`text-sm font-medium ${
+                  selected
+                    ? 'text-blue-700 dark:text-blue-300'
+                    : 'text-neutral-700 dark:text-neutral-300'
+                }`}>
+                {t(labelKey)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 

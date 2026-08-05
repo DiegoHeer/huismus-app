@@ -221,3 +221,48 @@ export function EnergyIcon({ color, size = 24 }: FactIconProps) {
     </Svg>
   );
 }
+
+/**
+ * Sentiment glyphs for the feedback form's picker. All three are outlined at the
+ * same weight as the fact icons above — the picked option is marked by its pill,
+ * not by filling the glyph, because a solid circle would swallow the neutral
+ * face's own features.
+ */
+type SentimentIconProps = { color: string; size?: number };
+
+/** A raised thumb — "this was good". */
+export function ThumbsUpIcon({ color, size = 20 }: SentimentIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <FactPath
+        d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"
+        color={color}
+      />
+      <FactPath d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" color={color} />
+    </Svg>
+  );
+}
+
+/** A level-mouthed face — "this was neither good nor bad". */
+export function NeutralFaceIcon({ color, size = 20 }: SentimentIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <FactPath d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z" color={color} />
+      <FactPath d="M8 15h8" color={color} />
+      <FactPath d="M9 9h.01M15 9h.01" color={color} />
+    </Svg>
+  );
+}
+
+/** An inverted thumb — "this was bad". */
+export function ThumbsDownIcon({ color, size = 20 }: SentimentIconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <FactPath
+        d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z"
+        color={color}
+      />
+      <FactPath d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" color={color} />
+    </Svg>
+  );
+}
