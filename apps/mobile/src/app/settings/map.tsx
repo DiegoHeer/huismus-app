@@ -1,5 +1,6 @@
 import { useTranslation } from '@huismus/i18n';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
+import { Text } from '../../components/text';
 
 import { CheckIcon } from '@/components/icons';
 import { InfoCard, SettingsContentScreen } from '@/components/settings-content';

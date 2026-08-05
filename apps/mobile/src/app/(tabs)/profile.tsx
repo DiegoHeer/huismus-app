@@ -2,7 +2,8 @@ import { useTranslation } from '@huismus/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { type ReactElement, type ReactNode } from 'react';
-import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
+import { DisplayText, Text } from '../../components/text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -163,9 +164,9 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-bg">
       <View className="px-4 pb-2 pt-2">
-        <Text className="text-2xl font-bold text-ink">
+        <DisplayText className=" text-2xl font-bold text-ink">
           {t('profile.title')}
-        </Text>
+        </DisplayText>
         <Text className="text-sm text-ink-2">{t('profile.subtitle')}</Text>
       </View>
 

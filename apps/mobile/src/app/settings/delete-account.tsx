@@ -1,16 +1,8 @@
 import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { DisplayText, Text, TextInput } from '../../components/text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -161,9 +153,9 @@ export default function DeleteAccountScreen() {
             <AlertTriangleIcon size={44} color={brand.accent} />
           </View>
 
-          <Text className="text-center text-2xl font-bold text-ink">
+          <DisplayText className="text-center text-2xl font-bold text-ink">
             {t('deleteAccountPage.title')}
-          </Text>
+          </DisplayText>
           <Text className="text-center text-base leading-6 text-ink-2">
             {t('deleteAccountPage.warning')}
           </Text>

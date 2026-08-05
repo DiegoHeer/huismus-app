@@ -1,5 +1,6 @@
 import { useTranslation } from '@huismus/i18n';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from './text';
 
 import type { MapOverlay } from '@/lib/map-overlays';
 

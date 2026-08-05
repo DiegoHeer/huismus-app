@@ -1,5 +1,6 @@
 import { useTranslation } from '@huismus/i18n';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from './text';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useBrand, useTheme } from '@/hooks/use-theme';

@@ -2,7 +2,8 @@ import { useTranslation } from '@huismus/i18n';
 import type { NeighborhoodStats } from '@huismus/types';
 import { Image } from 'expo-image';
 import { useMemo, type ReactNode } from 'react';
-import { Text, View, type DimensionValue } from 'react-native';
+import { View, type DimensionValue } from 'react-native';
+import { DisplayText, Text } from './text';
 import Svg, { Circle } from 'react-native-svg';
 
 import {
@@ -133,7 +134,7 @@ function TileBox({ label, value }: { label: string; value: string }) {
         className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">
         {label}
       </Text>
-      <Text className="mt-1 text-2xl font-bold text-ink">{value}</Text>
+      <DisplayText className="mt-1 text-2xl font-bold text-ink">{value}</DisplayText>
     </View>
   );
 }
@@ -317,7 +318,7 @@ function Donut({ segments, center }: { segments: StatSegment[]; center?: string 
       </Svg>
       {center ? (
         <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
-          <Text className="text-2xl font-bold text-ink">{center}</Text>
+          <DisplayText className="text-2xl font-bold text-ink">{center}</DisplayText>
         </View>
       ) : null}
     </View>
@@ -516,9 +517,9 @@ export function AreaStats({ stats }: AreaStatsProps) {
         title={t('area.stats.districtHeatingTitle')}
         hint={t('area.stats.districtHeatingHint')}>
         {view.districtHeating != null ? (
-          <Text className="text-2xl font-bold text-ink">
+          <DisplayText className="text-2xl font-bold text-ink">
             {`${Math.round(view.districtHeating)}%`}
-          </Text>
+          </DisplayText>
         ) : (
           <MissingState />
         )}

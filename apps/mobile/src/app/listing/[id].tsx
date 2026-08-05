@@ -4,14 +4,8 @@ import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { openBrowserAsync } from 'expo-web-browser';
 import { type ComponentType, useEffect } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Share,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Share, View } from 'react-native';
+import { DisplayText, Text } from '../../components/text';
 
 import { trackOutboundLink, withUtmParams } from '@/lib/analytics';
 import { listingWebUrl } from '@/lib/listing-share-url';
@@ -167,9 +161,9 @@ export default function ListingDetailScreen() {
         )}
         <View className="gap-3 p-4">
           <View className="flex-row items-center justify-between">
-            <Text className="text-3xl font-bold text-ink">
+            <DisplayText className=" text-3xl font-bold text-ink">
               {formatPrice(listing.price, listing.currency, i18n.language)}
-            </Text>
+            </DisplayText>
             <Text className="text-sm font-medium uppercase text-accent-text">
               {t(`listing.status.${listing.status}`)}
             </Text>

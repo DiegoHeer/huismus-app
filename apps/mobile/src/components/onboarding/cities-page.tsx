@@ -1,7 +1,8 @@
 import type { CityName } from '@huismus/data';
 import { useTranslation } from '@huismus/i18n';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
+import { Text, TextInput } from '../text';
 
 import { SelectPills } from '@/components/filter-controls';
 import { BuildingsGlyph, OnboardingHeader, OnboardingPage } from '@/components/onboarding/shared';

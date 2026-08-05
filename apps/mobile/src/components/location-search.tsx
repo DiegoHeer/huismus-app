@@ -6,12 +6,12 @@ import {
   Keyboard,
   Pressable,
   StyleSheet,
-  Text,
-  TextInput,
   View,
   type NativeSyntheticEvent,
+  type TextInput as RNTextInput,
   type TextInputSubmitEditingEventData,
 } from 'react-native';
+import { Text, TextInput } from './text';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useFadingText } from '@/components/use-fading-text';
@@ -376,7 +376,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
   // managed — we deliberately don't hide on blur so a recent stays tappable.
   const [focused, setFocused] = useState(false);
 
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<RNTextInput>(null);
   // Abort an in-flight resolve (submit / suggestion pick) if a newer one starts.
   const inFlight = useRef<AbortController | null>(null);
   // Separate controller + timer for the debounced suggest stream.

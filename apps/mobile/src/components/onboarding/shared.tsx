@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
-import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, View } from 'react-native';
+import { DisplayText, Text } from '../text';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { useBrand, useTheme } from '@/hooks/use-theme';
@@ -100,9 +101,9 @@ export function OnboardingHeader({
     <View className="items-center gap-4 pt-2">
       <HeroBadge>{icon}</HeroBadge>
       <View className="gap-2">
-        <Text className="text-center text-2xl font-bold text-ink">
+        <DisplayText className="text-center text-2xl font-bold text-ink">
           {title}
-        </Text>
+        </DisplayText>
         <Text className="text-center text-base leading-6 text-ink-2">
           {subtitle}
         </Text>

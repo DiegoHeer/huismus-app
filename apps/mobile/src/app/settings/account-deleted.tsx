@@ -1,6 +1,7 @@
 import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { DisplayText, Text } from '../../components/text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -36,9 +37,9 @@ export default function AccountDeletedScreen() {
         <View className="h-20 w-20 items-center justify-center rounded-full bg-success/15">
           <CheckCircleIcon size={44} color={brand.success} />
         </View>
-        <Text className="text-center text-2xl font-bold text-ink">
+        <DisplayText className="text-center text-2xl font-bold text-ink">
           {t('deleteAccountPage.successTitle')}
-        </Text>
+        </DisplayText>
         <Text className="text-center text-base leading-6 text-ink-2">
           {t('deleteAccountPage.successSubtitle')}
         </Text>

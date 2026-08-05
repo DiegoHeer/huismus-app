@@ -1,6 +1,7 @@
 import { useTranslation } from '@huismus/i18n';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Text } from './text';
 import Animated, {
   Easing,
   useAnimatedStyle,

@@ -3,7 +3,8 @@ import { useTranslation } from '@huismus/i18n';
 import type { BuildingType } from '@huismus/types';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '../../components/text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FilterSection, SelectPills, Stepper } from '@/components/filter-controls';

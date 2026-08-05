@@ -5,7 +5,8 @@
 import { useTranslation } from '@huismus/i18n';
 import type { AreaPolygon, NeighborhoodStats } from '@huismus/types';
 import { useEffect, useRef } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { DisplayText } from './text';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -198,11 +199,11 @@ export function AreaSheet({ area, stats, municipality, legend, onClose }: AreaSh
                   paddingHorizontal: 20,
                   paddingBottom: insets.bottom + 48,
                 }}>
-                <Text
-                  className="text-2xl font-bold text-ink"
+                <DisplayText
+                  className=" text-2xl font-bold text-ink"
                   numberOfLines={1}>
                   {title}
-                </Text>
+                </DisplayText>
                 <AreaStats stats={stats} />
               </Animated.ScrollView>
             </GestureDetector>

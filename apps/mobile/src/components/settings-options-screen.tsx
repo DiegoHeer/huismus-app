@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from './text';
 import Svg, { Path } from 'react-native-svg';
 
 import { useBrand } from '@/hooks/use-theme';

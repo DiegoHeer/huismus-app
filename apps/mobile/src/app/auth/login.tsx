@@ -1,7 +1,8 @@
 import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '../../components/text';
 
 import {
   authErrorKey,

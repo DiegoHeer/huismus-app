@@ -1,6 +1,7 @@
 import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
+import { Text } from '../../components/text';
 import Svg, { Path } from 'react-native-svg';
 
 import { InfoCard, Paragraph, SettingsContentScreen } from '@/components/settings-content';
