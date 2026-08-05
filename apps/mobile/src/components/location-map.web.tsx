@@ -4,7 +4,7 @@ import type { StyleSpecification } from 'maplibre-gl';
 import { Map, Marker } from 'react-map-gl/maplibre';
 
 import type { LocationMapProps } from './location-map';
-import { MAP_STYLE_LIGHT } from './map-style';
+import { useMapStyle } from './map-style';
 import { useBrand } from '@/hooks/use-theme';
 
 /** Web static preview map via react-map-gl. Selected by Metro on web. */
@@ -12,14 +12,16 @@ export function LocationMap({
   latitude,
   longitude,
   zoom = 14,
-  mapStyle = MAP_STYLE_LIGHT,
+  mapStyle,
   interactive = false,
 }: LocationMapProps) {
   const brand = useBrand();
+  const { mapStyle: appBasemap } = useMapStyle();
+  const style = mapStyle ?? appBasemap;
   return (
     <Map
       initialViewState={{ longitude, latitude, zoom }}
-      mapStyle={mapStyle as string | StyleSpecification}
+      mapStyle={style as string | StyleSpecification}
       style={{ width: '100%', height: '100%' }}
       interactive={interactive}
       attributionControl={false}>

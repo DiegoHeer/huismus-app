@@ -1,4 +1,3 @@
-import type { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
 import { formatPrice, relativeTimeSince, useListing } from '@huismus/data';
 import { useTranslation } from '@huismus/i18n';
 import { Image } from 'expo-image';
@@ -31,9 +30,6 @@ import {
   ShareIcon,
 } from '../../components/icons';
 import { LocationMap } from '../../components/location-map';
-// maptiler-basic GL style, with its key-gated MapTiler source/glyphs rewritten
-// to keyless OpenFreeMap endpoints. https://github.com/openmaptiles/maptiler-basic-gl-style
-import maptilerBasicStyle from '../../components/maptiler-basic-style.json';
 
 export default function ListingDetailScreen() {
   const theme = useTheme();
@@ -248,7 +244,6 @@ export default function ListingDetailScreen() {
             <LocationMap
               latitude={listing.location.latitude}
               longitude={listing.location.longitude}
-              mapStyle={maptilerBasicStyle as unknown as StyleSpecification}
               interactive
             />
           </View>

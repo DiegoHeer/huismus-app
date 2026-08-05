@@ -2,7 +2,7 @@ import type { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
 import { Camera, Map, Marker } from '@maplibre/maplibre-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { MAP_STYLE_LIGHT } from './map-style';
+import { useMapStyle } from './map-style';
 import { useBrand } from '@/hooks/use-theme';
 
 export interface LocationMapProps {
@@ -10,7 +10,11 @@ export interface LocationMapProps {
   longitude: number;
   /** Closer is more "where exactly"; the default frames the street. */
   zoom?: number;
-  /** MapLibre style URL or inline style spec. Defaults to OpenFreeMap Positron. */
+  /**
+   * MapLibre style URL or inline style spec. Defaults to whatever the map tab is
+   * drawing — the basemap family chosen in Settings → Map, at the app's theme —
+   * so a listing's preview is never a different-looking map from the main one.
+   */
   mapStyle?: string | StyleSpecification;
   /** Allow pan/zoom gestures. Off by default so it reads as a static thumbnail. */
   interactive?: boolean;
@@ -25,14 +29,16 @@ export function LocationMap({
   latitude,
   longitude,
   zoom = 14,
-  mapStyle = MAP_STYLE_LIGHT,
+  mapStyle,
   interactive = false,
 }: LocationMapProps) {
   const brand = useBrand();
+  const { mapStyle: appBasemap } = useMapStyle();
+  const style = mapStyle ?? appBasemap;
   return (
     <Map
       style={StyleSheet.absoluteFill}
-      mapStyle={mapStyle}
+      mapStyle={style}
       // Render into a TextureView, not the default GLSurfaceView. A SurfaceView
       // punches a separate window through the view tree: it ignores the parent's
       // rounded corners / overflow clipping and composites poorly inside a
