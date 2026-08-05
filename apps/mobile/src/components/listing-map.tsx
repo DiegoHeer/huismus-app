@@ -29,7 +29,7 @@ import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { type MapOverlay } from '../lib/map-overlays';
 import { useRecentViews } from '../lib/recent-views';
-import { Brand } from '../constants/theme';
+import { useBrand } from '@/hooks/use-theme';
 
 // The search bar overlays the top of the map, so park the compass in the
 // bottom-left corner instead — clear of both the search field and the listing
@@ -133,6 +133,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   },
   ref,
 ) {
+  const brand = useBrand();
   const cameraRef = useRef<CameraRef>(null);
   // A flyTo can arrive before the native map has finished loading — the
   // boot-time preferred-city focus fires as soon as the cached city shapes
@@ -319,12 +320,18 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
               onSelect?.(listing.id);
             }}>
             <View style={styles.markerWrap}>
-              <View style={[styles.marker, viewed && styles.markerViewed]}>
+              <View style={[styles.marker, { backgroundColor: brand.accent }, viewed && styles.markerViewed]}>
                 <Text style={styles.markerText} numberOfLines={1}>
                   {priceLabel(listing)}
                 </Text>
               </View>
-              <View style={[styles.markerArrow, viewed && styles.markerArrowViewed]} />
+              <View
+                style={[
+                  styles.markerArrow,
+                  { borderTopColor: brand.accent },
+                  viewed && styles.markerViewed,
+                ]}
+              />
             </View>
           </Marker>
         );
@@ -340,7 +347,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   marker: {
-    backgroundColor: Brand.blue,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
@@ -348,7 +354,7 @@ const styles = StyleSheet.create({
     borderColor: '#ffffff',
   },
   markerViewed: {
-    backgroundColor: Brand.blueLight,
+    opacity: 0.55,
   },
   // Downward triangle tail that turns the bubble into a pin. Pulled up 1px so it
   // tucks under the bubble's white border, leaving no seam between the two.
@@ -361,10 +367,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 6,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: Brand.blue,
-  },
-  markerArrowViewed: {
-    borderTopColor: Brand.blueLight,
   },
   markerText: {
     color: '#ffffff',

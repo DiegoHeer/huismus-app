@@ -1,8 +1,8 @@
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { Brand } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useBrand } from '@/hooks/use-theme';
+
 
 export interface SettingsOption {
   /** Stable identity, used for selection comparison and as the React key. */
@@ -33,14 +33,13 @@ export function SettingsOptionsScreen({
   selectedKey: string;
   onSelect: (key: string) => void;
 }) {
-  const scheme = useColorScheme();
-  // Accent matching the app's `text-blue-600 dark:text-blue-400` convention.
-  const checkColor = scheme === 'dark' ? Brand.blueLight : Brand.blue;
+  // Matches the app's `text-accent-text` convention.
+  const checkColor = useBrand().accent;
 
   return (
-    <View className="flex-1 bg-neutral-100 dark:bg-black">
+    <View className="flex-1 bg-bg">
       <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
-        <View className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-neutral-900">
+        <View className="overflow-hidden rounded-2xl bg-card shadow-sm">
           {options.map((option, index) => {
             const selected = option.key === selectedKey;
             return (
@@ -50,9 +49,9 @@ export function SettingsOptionsScreen({
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 className={`flex-row items-center justify-between px-4 py-4 active:opacity-60 ${
-                  index > 0 ? 'border-t border-neutral-100 dark:border-neutral-800' : ''
+                  index > 0 ? 'border-t border-border' : ''
                 }`}>
-                <Text className="text-lg text-neutral-900 dark:text-white">{option.label}</Text>
+                <Text className="text-lg text-ink">{option.label}</Text>
                 {selected ? <CheckIcon color={checkColor} /> : null}
               </Pressable>
             );

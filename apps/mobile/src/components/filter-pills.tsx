@@ -2,8 +2,7 @@ import { useTranslation } from '@huismus/i18n';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { useEffectiveColorScheme } from '@/components/map-style';
-import { Brand } from '@/constants/theme';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 import { MAP_OVERLAYS, type OverlayId } from '@/lib/map-overlays';
 
 // Dummy filter categories for now — labels live in i18n under `filters.*`.
@@ -277,9 +276,10 @@ interface FilterPillsProps {
  */
 export function FilterPills({ selected, onToggle, activeOverlay, onToggleOverlay }: FilterPillsProps = {}) {
   const { t } = useTranslation();
-  const isDark = useEffectiveColorScheme() === 'dark';
-  const inactiveBg = isDark ? '#262626' : '#ffffff';
-  const inactiveFg = isDark ? '#ffffff' : '#171717';
+  const theme = useTheme();
+  const brand = useBrand();
+  const inactiveBg = theme.card;
+  const inactiveFg = theme.text;
   return (
     <ScrollView
       horizontal
@@ -297,9 +297,9 @@ export function FilterPills({ selected, onToggle, activeOverlay, onToggleOverlay
         const active = selected?.has(key) ?? false;
         // Active pills invert: dark fill + light content (and the reverse in
         // dark mode). Set inline so the fill never depends on an uncompiled
-        // class (a plain `bg-neutral-900` isn't in the generated stylesheet).
-        const pillBg = active ? (isDark ? '#ffffff' : '#171717') : inactiveBg;
-        const fg = active ? (isDark ? '#171717' : '#ffffff') : inactiveFg;
+        // class (a plain `bg-card` isn't in the generated stylesheet).
+        const pillBg = active ? theme.text : inactiveBg;
+        const fg = active ? theme.background : inactiveFg;
         return (
           <Pressable
             key={key}
@@ -316,11 +316,11 @@ export function FilterPills({ selected, onToggle, activeOverlay, onToggleOverlay
         );
       })}
       {/* Hairline divider separating listing filters from map layers. */}
-      <View className="my-1.5 w-px self-stretch bg-neutral-400/60 dark:bg-neutral-500/60" />
+      <View className="my-1.5 w-px self-stretch bg-ink-2/60" />
       {MAP_OVERLAYS.map(({ id }) => {
         const Icon = OVERLAY_ICONS[id];
         const active = activeOverlay === id;
-        const pillBg = active ? Brand.blue : inactiveBg;
+        const pillBg = active ? brand.accent : inactiveBg;
         const fg = active ? '#ffffff' : inactiveFg;
         return (
           <Pressable

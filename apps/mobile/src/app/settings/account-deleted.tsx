@@ -31,15 +31,15 @@ export default function AccountDeletedScreen() {
   const scheme = useColorScheme();
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-neutral-100 dark:bg-black">
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
       <View className="flex-1 items-center justify-center gap-5 px-8">
-        <View className="h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-950">
+        <View className="h-20 w-20 items-center justify-center rounded-full bg-success/15">
           <CheckCircleIcon size={44} color={scheme === 'dark' ? '#4ade80' : '#16a34a'} />
         </View>
-        <Text className="text-center text-2xl font-bold text-neutral-900 dark:text-white">
+        <Text className="text-center text-2xl font-bold text-ink">
           {t('deleteAccountPage.successTitle')}
         </Text>
-        <Text className="text-center text-base leading-6 text-neutral-500">
+        <Text className="text-center text-base leading-6 text-ink-2">
           {t('deleteAccountPage.successSubtitle')}
         </Text>
       </View>
@@ -49,7 +49,7 @@ export default function AccountDeletedScreen() {
           testID="account-deleted-continue"
           onPress={() => router.replace('/')}
           accessibilityRole="button"
-          className="items-center rounded-full bg-blue-600 py-4 active:opacity-80">
+          className="items-center rounded-full bg-accent py-4 active:opacity-80">
           <Text className="text-base font-semibold text-white">
             {t('deleteAccountPage.successCta')}
           </Text>

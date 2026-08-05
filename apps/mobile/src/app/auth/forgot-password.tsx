@@ -79,7 +79,7 @@ export default function ForgotPasswordScreen() {
           returnKeyType="go"
         />
         {formError ? (
-          <Text className="text-sm text-red-600 dark:text-red-400">{formError}</Text>
+          <Text className="text-sm text-accent-text">{formError}</Text>
         ) : null}
         <PrimaryButton
           label={submitting ? t('auth.submitting') : t('auth.sendResetCode')}

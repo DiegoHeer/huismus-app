@@ -182,11 +182,11 @@ export function AreaSheet({ area, stats, municipality, legend, onClose }: AreaSh
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.sheet, { height: screenH }, sheetStyle]}>
           <View
-            className="flex-1 overflow-hidden rounded-t-3xl bg-neutral-50 dark:bg-neutral-900"
+            className="flex-1 overflow-hidden rounded-t-3xl bg-surface"
             style={styles.shadow}>
             {/* Drag notch — the affordance for pulling the sheet up/down. */}
             <View className="items-center pb-2 pt-3">
-              <View className="h-1.5 w-10 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+              <View className="h-1.5 w-10 rounded-full bg-border" />
             </View>
             <GestureDetector gesture={nativeScroll}>
               <Animated.ScrollView
@@ -199,7 +199,7 @@ export function AreaSheet({ area, stats, municipality, legend, onClose }: AreaSh
                   paddingBottom: insets.bottom + 48,
                 }}>
                 <Text
-                  className="text-2xl font-bold text-neutral-900 dark:text-white"
+                  className="text-2xl font-bold text-ink"
                   numberOfLines={1}>
                   {title}
                 </Text>

@@ -124,7 +124,7 @@ export function ListingCard({ listing, onPress, onClose }: ListingCardProps) {
     // styling stays on the plain View inside it, same split as the area sheet.
     <GestureDetector gesture={pan}>
       <Animated.View style={dragStyle}>
-        <View className="overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-neutral-900">
+        <View className="overflow-hidden rounded-2xl bg-card shadow-lg">
           {/* Card body: tapping anywhere here opens the full listing. The action
               buttons below are rendered as siblings (overlaid) rather than nested
               inside this Pressable — on web a Pressable becomes a <button>, and a
@@ -146,29 +146,29 @@ export function ListingCard({ listing, onPress, onClose }: ListingCardProps) {
                   draggable={false}
                 />
               ) : (
-                <View className="h-[180px] w-full bg-neutral-200 dark:bg-neutral-800" />
+                <View className="h-[180px] w-full bg-surface" />
               )}
             </View>
 
             <View className="gap-0.5 p-3">
               <View className="flex-row items-center justify-between gap-2">
-                <Text className="flex-1 text-base font-semibold text-neutral-900 dark:text-white" numberOfLines={1}>
+                <Text className="flex-1 text-base font-semibold text-ink" numberOfLines={1}>
                   {listing.title}
                 </Text>
-                <Text className="text-xs font-medium uppercase text-blue-600 dark:text-blue-400">
+                <Text className="text-xs font-medium uppercase text-accent-text">
                   {t(`listing.status.${listing.status}`)}
                 </Text>
               </View>
 
-              <Text className="text-sm text-neutral-500" numberOfLines={1}>
+              <Text className="text-sm text-ink-2" numberOfLines={1}>
                 {listing.address.line1}, {listing.address.postalCode} {listing.address.city}
               </Text>
 
               {facts.length ? (
-                <Text className="text-sm text-neutral-500">{facts.join('  ·  ')}</Text>
+                <Text className="text-sm text-ink-2">{facts.join('  ·  ')}</Text>
               ) : null}
 
-              <Text className="mt-0.5 text-base font-bold text-neutral-900 dark:text-white">
+              <Text className="mt-0.5 text-base font-bold text-ink">
                 {formatPrice(listing.price, listing.currency, i18n.language)}
               </Text>
             </View>
@@ -184,7 +184,7 @@ export function ListingCard({ listing, onPress, onClose }: ListingCardProps) {
               accessibilityLabel={t('listing.close')}
               hitSlop={8}
               className="h-11 w-11 items-center justify-center rounded-full bg-white shadow active:opacity-70">
-              <Text className="text-2xl leading-none text-neutral-700">×</Text>
+              <Text className="text-2xl leading-none text-ink-2">×</Text>
             </Pressable>
           </View>
         </View>

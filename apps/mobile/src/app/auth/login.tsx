@@ -128,13 +128,13 @@ export default function LoginScreen() {
             accessibilityRole="link"
             hitSlop={8}
             className="active:opacity-60">
-            <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+            <Text className="text-sm font-semibold text-accent-text">
               {t('auth.forgotLink')}
             </Text>
           </Pressable>
         </View>
         {formError ? (
-          <Text className="text-sm text-red-600 dark:text-red-400">{formError}</Text>
+          <Text className="text-sm text-accent-text">{formError}</Text>
         ) : null}
         <PrimaryButton
           label={submitting ? t('auth.submitting') : t('auth.logInCta')}

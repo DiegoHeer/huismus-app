@@ -2,7 +2,7 @@ import { useTranslation } from '@huismus/i18n';
 import { Switch, Text, View } from 'react-native';
 
 import { InfoCard, SettingsContentScreen } from '@/components/settings-content';
-import { Brand } from '@/constants/theme';
+import { useBrand } from '@/hooks/use-theme';
 import { useMapSettings } from '@/lib/map-settings';
 
 /**
@@ -12,6 +12,7 @@ import { useMapSettings } from '@/lib/map-settings';
  */
 export default function MapSettingsScreen() {
   const { t } = useTranslation();
+  const brand = useBrand();
   const { buildings3D, setBuildings3D } = useMapSettings();
 
   return (
@@ -19,17 +20,17 @@ export default function MapSettingsScreen() {
       <InfoCard>
         <View className="flex-row items-center justify-between gap-3">
           <View className="flex-1">
-            <Text className="text-lg text-neutral-900 dark:text-white">
+            <Text className="text-lg text-ink">
               {t('mapSettingsPage.buildings3D')}
             </Text>
-            <Text className="text-sm text-neutral-500">
+            <Text className="text-sm text-ink-2">
               {t('mapSettingsPage.buildings3DDescription')}
             </Text>
           </View>
           <Switch
             value={buildings3D}
             onValueChange={setBuildings3D}
-            trackColor={{ true: Brand.blue }}
+            trackColor={{ true: brand.accent }}
           />
         </View>
       </InfoCard>

@@ -5,7 +5,7 @@ import { Map, Marker } from 'react-map-gl/maplibre';
 
 import type { LocationMapProps } from './location-map';
 import { MAP_STYLE_LIGHT } from './map-style';
-import { Brand } from '../constants/theme';
+import { useBrand } from '@/hooks/use-theme';
 
 /** Web static preview map via react-map-gl. Selected by Metro on web. */
 export function LocationMap({
@@ -15,6 +15,7 @@ export function LocationMap({
   mapStyle = MAP_STYLE_LIGHT,
   interactive = false,
 }: LocationMapProps) {
+  const brand = useBrand();
   return (
     <Map
       initialViewState={{ longitude, latitude, zoom }}
@@ -28,7 +29,7 @@ export function LocationMap({
             width: 16,
             height: 16,
             borderRadius: 999,
-            background: Brand.blue,
+            background: brand.accent,
             border: '2px solid #fff',
           }}
         />

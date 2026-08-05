@@ -61,9 +61,9 @@ export function CitiesPage({
       />
 
       <View
-        className="flex-row items-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 dark:border-neutral-700 dark:bg-neutral-900"
+        className="flex-row items-center gap-2 rounded-xl border border-border bg-card px-4"
         style={{ paddingVertical: 2 }}>
-        <Text className="text-base text-neutral-400">⌕</Text>
+        <Text className="text-base text-ink-2">⌕</Text>
         <TextInput
           testID="city-search-input"
           value={query}
@@ -74,11 +74,11 @@ export function CitiesPage({
           autoCorrect={false}
           returnKeyType="search"
           accessibilityLabel={t('onboarding.cities.searchPlaceholder')}
-          className="flex-1 py-3 text-base text-neutral-900 dark:text-white"
+          className="flex-1 py-3 text-base text-ink"
         />
         {query.length > 0 ? (
           <Pressable onPress={() => setQuery('')} hitSlop={8} accessibilityLabel="clear">
-            <Text className="px-1 text-lg text-neutral-400">✕</Text>
+            <Text className="px-1 text-lg text-ink-2">✕</Text>
           </Pressable>
         ) : null}
       </View>
@@ -88,7 +88,7 @@ export function CitiesPage({
       ) : searching ? (
         <View className="gap-1">
           {results.length === 0 ? (
-            <Text className="py-3 text-base text-neutral-500">
+            <Text className="py-3 text-base text-ink-2">
               {t('onboarding.cities.noResults')}
             </Text>
           ) : (
@@ -108,12 +108,12 @@ export function CitiesPage({
                   <Text
                     className={
                       isSelected
-                        ? 'text-base font-semibold text-blue-600 dark:text-blue-400'
-                        : 'text-base text-neutral-900 dark:text-white'
+                        ? 'text-base font-semibold text-accent-text'
+                        : 'text-base text-ink'
                     }>
                     {cityDisplayName(city)}
                   </Text>
-                  {isSelected ? <Text className="text-base text-blue-600">✓</Text> : null}
+                  {isSelected ? <Text className="text-base text-accent-text">✓</Text> : null}
                 </Pressable>
               );
             })
@@ -121,7 +121,7 @@ export function CitiesPage({
         </View>
       ) : (
         <View className="gap-3">
-          <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <Text className="text-xs font-semibold uppercase tracking-wide text-ink-2">
             {t('onboarding.cities.popular')}
           </Text>
           <SelectPills
@@ -133,7 +133,7 @@ export function CitiesPage({
       )}
 
       {selectedCodes.length > 0 ? (
-        <Text className="text-center text-sm text-neutral-500" style={{ color: isDark ? '#a1a1aa' : '#6b7280' }}>
+        <Text className="text-center text-sm text-ink-2" style={{ color: isDark ? '#a1a1aa' : '#6b7280' }}>
           {t('onboarding.cities.selectedCount', { count: selectedCodes.length })}
         </Text>
       ) : null}

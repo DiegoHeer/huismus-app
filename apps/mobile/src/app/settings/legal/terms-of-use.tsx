@@ -28,7 +28,7 @@ export default function TermsOfUseScreen() {
 
   return (
     <SettingsContentScreen>
-      <Text className="px-1 text-sm text-neutral-500">{t('termsOfUsePage.lastUpdated')}</Text>
+      <Text className="px-1 text-sm text-ink-2">{t('termsOfUsePage.lastUpdated')}</Text>
 
       <InfoCard>
         <Paragraph>{t('termsOfUsePage.intro')}</Paragraph>

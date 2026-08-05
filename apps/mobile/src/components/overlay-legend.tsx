@@ -15,9 +15,9 @@ export function OverlayLegend({ overlay, zoom }: { overlay: MapOverlay; zoom: nu
   const { t } = useTranslation();
   const belowZoomFloor = overlay.visibleFromZoom != null && zoom < overlay.visibleFromZoom;
   return (
-    <View className="mt-2 self-center overflow-hidden rounded-2xl bg-white shadow-md shadow-black/20 dark:bg-neutral-800">
+    <View className="mt-2 self-center overflow-hidden rounded-2xl bg-card shadow-md shadow-black/20">
       {belowZoomFloor ? (
-        <Text className="px-4 py-2 text-xs font-medium text-neutral-600 dark:text-neutral-300">
+        <Text className="px-4 py-2 text-xs font-medium text-ink-2">
           {t('layers.zoomHint')}
         </Text>
       ) : (
@@ -28,16 +28,16 @@ export function OverlayLegend({ overlay, zoom }: { overlay: MapOverlay; zoom: nu
           {overlay.legend.map((entry) => (
             <View key={entry.label} className="flex-row items-center gap-1.5">
               <View
-                className="h-3 w-3 rounded-sm border border-black/20 dark:border-white/30"
+                className="h-3 w-3 rounded-sm border border-ink/20"
                 style={{ backgroundColor: entry.color }}
               />
-              <Text className="text-xs font-medium text-neutral-900 dark:text-white">
+              <Text className="text-xs font-medium text-ink">
                 {entry.i18n ? t(`layers.legend.${entry.label}`) : entry.label}
               </Text>
             </View>
           ))}
           {overlay.unit && (
-            <Text className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+            <Text className="text-xs font-medium text-ink-2">
               {overlay.unit}
             </Text>
           )}

@@ -161,12 +161,12 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-neutral-100 dark:bg-black">
+    <SafeAreaView edges={['top']} className="flex-1 bg-bg">
       <View className="px-4 pb-2 pt-2">
-        <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+        <Text className="text-2xl font-bold text-ink">
           {t('profile.title')}
         </Text>
-        <Text className="text-sm text-neutral-500">{t('profile.subtitle')}</Text>
+        <Text className="text-sm text-ink-2">{t('profile.subtitle')}</Text>
       </View>
 
       <ScrollView
@@ -184,8 +184,8 @@ export default function ProfileScreen() {
           <Pressable
             onPress={confirmSignOut}
             accessibilityRole="button"
-            className="items-center rounded-2xl bg-white py-3 shadow-sm active:opacity-70 dark:bg-neutral-900">
-            <Text className="text-base font-semibold text-red-600 dark:text-red-400">
+            className="items-center rounded-2xl bg-card py-3 shadow-sm active:opacity-70">
+            <Text className="text-base font-semibold text-accent-text">
               {t('profile.signOut')}
             </Text>
           </Pressable>
@@ -195,9 +195,9 @@ export default function ProfileScreen() {
           <Pressable
             onPress={() => router.push('/settings/delete-account')}
             accessibilityRole="button"
-            className="flex-row items-center justify-center gap-2 rounded-2xl bg-white py-3 shadow-sm active:opacity-70 dark:bg-neutral-900">
+            className="flex-row items-center justify-center gap-2 rounded-2xl bg-card py-3 shadow-sm active:opacity-70">
             <TrashIcon size={18} color={scheme === 'dark' ? '#f87171' : '#dc2626'} />
-            <Text className="text-base font-semibold text-red-600 dark:text-red-400">
+            <Text className="text-base font-semibold text-accent-text">
               {t('profile.deleteAccount')}
             </Text>
           </Pressable>
@@ -209,11 +209,11 @@ export default function ProfileScreen() {
 
 function IdentityCard({ user }: { user: AuthUser }) {
   return (
-    <View className="flex-row items-center gap-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
+    <View className="flex-row items-center gap-3 rounded-2xl bg-card p-4 shadow-sm">
       <Avatar user={user} />
       <View className="flex-1">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">{user.name}</Text>
-        <Text numberOfLines={1} className="text-sm text-neutral-500">
+        <Text className="text-lg font-semibold text-ink">{user.name}</Text>
+        <Text numberOfLines={1} className="text-sm text-ink-2">
           {user.email}
         </Text>
       </View>
@@ -225,23 +225,23 @@ function GuestCard() {
   const { t } = useTranslation();
   const router = useRouter();
   return (
-    <View className="gap-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
+    <View className="gap-3 rounded-2xl bg-card p-4 shadow-sm">
+      <Text className="text-lg font-semibold text-ink">
         {t('profile.guestTitle')}
       </Text>
-      <Text className="text-sm text-neutral-500">{t('profile.guestSubtitle')}</Text>
+      <Text className="text-sm text-ink-2">{t('profile.guestSubtitle')}</Text>
       <View className="mt-1 flex-row gap-3">
         <Pressable
           onPress={() => router.push('/auth/login')}
           accessibilityRole="button"
-          className="flex-1 items-center rounded-xl bg-blue-600 py-3 active:opacity-80">
+          className="flex-1 items-center rounded-xl bg-accent py-3 active:opacity-80">
           <Text className="text-base font-semibold text-white">{t('profile.logIn')}</Text>
         </Pressable>
         <Pressable
           onPress={() => router.push('/auth/register')}
           accessibilityRole="button"
-          className="flex-1 items-center rounded-xl border border-neutral-300 py-3 active:opacity-60 dark:border-neutral-700">
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+          className="flex-1 items-center rounded-xl border border-border py-3 active:opacity-60">
+          <Text className="text-base font-semibold text-ink">
             {t('profile.register')}
           </Text>
         </Pressable>
@@ -254,8 +254,8 @@ function PreferencesCard() {
   const { t } = useTranslation();
 
   return (
-    <View className="gap-4 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+    <View className="gap-4 rounded-2xl bg-card p-4 shadow-sm">
+      <Text className="text-xs font-semibold uppercase tracking-wide text-ink-2">
         {t('profile.preferences')}
       </Text>
 
@@ -273,8 +273,8 @@ function AccountCard() {
   const router = useRouter();
 
   return (
-    <View className="gap-4 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+    <View className="gap-4 rounded-2xl bg-card p-4 shadow-sm">
+      <Text className="text-xs font-semibold uppercase tracking-wide text-ink-2">
         {t('profile.account')}
       </Text>
 
@@ -313,8 +313,8 @@ function SupportCard() {
   }
 
   return (
-    <View className="gap-4 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+    <View className="gap-4 rounded-2xl bg-card p-4 shadow-sm">
+      <Text className="text-xs font-semibold uppercase tracking-wide text-ink-2">
         {t('profile.support')}
       </Text>
 
@@ -367,9 +367,9 @@ function MenuRow({
       className="flex-row items-center justify-between py-3 active:opacity-60">
       <View className="flex-row items-center gap-3">
         <Icon color={iconColor} />
-        <Text className="text-lg text-neutral-900 dark:text-white">{label}</Text>
+        <Text className="text-lg text-ink">{label}</Text>
       </View>
-      <Text className="text-xl text-neutral-400">›</Text>
+      <Text className="text-xl text-ink-2">›</Text>
     </Pressable>
   );
 }
@@ -387,10 +387,10 @@ function LanguageField() {
       onPress={() => router.push('/settings/language')}
       accessibilityRole="button"
       className="flex-row items-center justify-between py-3 active:opacity-60">
-      <Text className="text-lg text-neutral-900 dark:text-white">{t('profile.language')}</Text>
+      <Text className="text-lg text-ink">{t('profile.language')}</Text>
       <View className="flex-row items-center gap-1.5">
-        <Text className="text-lg text-neutral-500">{LANGUAGE_LABELS[activeLanguage(i18n)]}</Text>
-        <Text className="text-xl text-neutral-400">›</Text>
+        <Text className="text-lg text-ink-2">{LANGUAGE_LABELS[activeLanguage(i18n)]}</Text>
+        <Text className="text-xl text-ink-2">›</Text>
       </View>
     </Pressable>
   );
@@ -412,10 +412,10 @@ function AppearanceField() {
       onPress={() => router.push('/settings/appearance')}
       accessibilityRole="button"
       className="flex-row items-center justify-between py-3 active:opacity-60">
-      <Text className="text-lg text-neutral-900 dark:text-white">{t('profile.appearance')}</Text>
+      <Text className="text-lg text-ink">{t('profile.appearance')}</Text>
       <View className="flex-row items-center gap-1.5">
-        <Text className="text-lg text-neutral-500">{`${active.emoji} ${t(active.labelKey)}`}</Text>
-        <Text className="text-xl text-neutral-400">›</Text>
+        <Text className="text-lg text-ink-2">{`${active.emoji} ${t(active.labelKey)}`}</Text>
+        <Text className="text-xl text-ink-2">›</Text>
       </View>
     </Pressable>
   );
@@ -441,8 +441,8 @@ function Avatar({ user }: { user: AuthUser }) {
   }
 
   return (
-    <View className="h-14 w-14 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-      <Text className="text-lg font-semibold text-blue-700 dark:text-blue-200">{initials}</Text>
+    <View className="h-14 w-14 items-center justify-center rounded-full bg-accent/15">
+      <Text className="text-lg font-semibold text-accent-text">{initials}</Text>
     </View>
   );
 }

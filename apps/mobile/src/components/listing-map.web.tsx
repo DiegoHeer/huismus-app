@@ -22,7 +22,7 @@ import { BUILDINGS_3D_MIN_ZOOM, buildings3DPaint, DEFAULT_CENTER, priceLabel } f
 import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { useRecentViews } from '../lib/recent-views';
-import { Brand } from '../constants/theme';
+import { useBrand } from '@/hooks/use-theme';
 
 /**
  * The tapped city's outline, pulsing in opacity while its neighborhoods load
@@ -130,6 +130,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   },
   ref,
 ) {
+  const brand = useBrand();
   const mapRef = useRef<MapRef | null>(null);
   const { mapStyle, polygonsBeforeId, overlayBeforeId, scheme } = useMapStyle();
   const { recentViews } = useRecentViews();
@@ -287,7 +288,8 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
               }}>
               <div
                 style={{
-                  background: viewed ? Brand.blueLight : Brand.blue,
+                  background: brand.accent,
+                  opacity: viewed ? 0.55 : 1,
                   color: '#fff',
                   fontSize: 12,
                   fontWeight: 700,
@@ -307,7 +309,8 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
                   marginTop: -1,
                   borderLeft: '5px solid transparent',
                   borderRight: '5px solid transparent',
-                  borderTop: `6px solid ${viewed ? Brand.blueLight : Brand.blue}`,
+                  borderTop: `6px solid ${brand.accent}`,
+                  opacity: viewed ? 0.55 : 1,
                 }}
               />
             </div>

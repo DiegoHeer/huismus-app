@@ -92,7 +92,7 @@ export default function FeedbackScreen() {
   }
 
   return (
-    <SafeAreaView edges={['bottom']} className="flex-1 bg-neutral-100 dark:bg-black">
+    <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -100,10 +100,10 @@ export default function FeedbackScreen() {
           contentContainerStyle={{ padding: 16, gap: 16 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          <Text className="text-base text-neutral-500">{t('feedback.subtitle')}</Text>
+          <Text className="text-base text-ink-2">{t('feedback.subtitle')}</Text>
 
           <View className="gap-1.5">
-            <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            <Text className="text-sm font-medium text-ink-2">
               {t('feedback.label')}
             </Text>
             <TextInput
@@ -121,7 +121,7 @@ export default function FeedbackScreen() {
               placeholderTextColor={PLACEHOLDER_COLOR}
               accessibilityLabel={t('feedback.label')}
               style={{ minHeight: 160, textAlignVertical: 'top' }}
-              className="rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+              className="rounded-xl border border-border bg-card px-4 py-3 text-base text-ink"
             />
           </View>
 
@@ -130,7 +130,7 @@ export default function FeedbackScreen() {
           {status === 'error' ? (
             <Text
               accessibilityRole="alert"
-              className="text-center text-sm text-red-600 dark:text-red-400">
+              className="text-center text-sm text-accent-text">
               {t('feedback.error')}
             </Text>
           ) : null}
@@ -161,7 +161,7 @@ function SubmitButton({
       <View
         accessibilityRole="button"
         accessibilityState={{ disabled: true }}
-        className="flex-row items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5">
+        className="flex-row items-center justify-center gap-2 rounded-xl bg-success py-3.5">
         <CheckIcon color="#ffffff" />
         <Text className="text-base font-semibold text-white">{t('feedback.sent')}</Text>
       </View>
@@ -177,7 +177,7 @@ function SubmitButton({
       disabled={disabled || sending}
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || sending, busy: sending }}
-      className={`flex-row items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 ${
+      className={`flex-row items-center justify-center gap-2 rounded-xl bg-accent py-3.5 ${
         disabled && !sending ? 'opacity-50' : 'active:opacity-80'
       }`}>
       {sending ? <ActivityIndicator color="#ffffff" /> : null}

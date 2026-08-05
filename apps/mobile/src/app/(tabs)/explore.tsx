@@ -36,11 +36,11 @@ function RecentlyViewed() {
   return (
     <View className="mb-4">
       <View className="mb-2 flex-row items-center justify-between px-1">
-        <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        <Text className="text-xs font-semibold uppercase tracking-wide text-ink-2">
           {t('listings.recentlyViewed')}
         </Text>
         <Pressable onPress={clearRecentViews} hitSlop={8} accessibilityRole="button">
-          <Text className="text-xs font-medium text-blue-600 dark:text-blue-400">
+          <Text className="text-xs font-medium text-accent-text">
             {t('listings.clearRecent')}
           </Text>
         </Pressable>
@@ -85,7 +85,7 @@ export default function ListingsScreen() {
   const currentSortLabel = t(`filtersPage.sortOptions.${filters.sort}` as const);
 
   return (
-    <View className="flex-1 bg-neutral-100 dark:bg-black">
+    <View className="flex-1 bg-bg">
       <View className="px-4 pb-2" style={{ paddingTop: insets.top + SEARCH_BAR_CLEARANCE }}>
         <SortButton
           label={currentSortLabel}
@@ -99,7 +99,7 @@ export default function ListingsScreen() {
           accessibilityLabel={t('listings.sortBy')}
           testID="sort-button"
         />
-        <Text className="text-sm text-neutral-500">
+        <Text className="text-sm text-ink-2">
           {isLoading || isCountLoading
             ? t('common.loading')
             : t('listings.count', { count: totalCount ?? listings.length })}

@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { useEffectiveColorScheme } from '@/components/map-style';
+import { useTheme } from '@/hooks/use-theme';
 
 /** A titled card grouping one filter control, with an optional value summary. */
 export function FilterSection({
@@ -14,11 +14,11 @@ export function FilterSection({
   children: ReactNode;
 }) {
   return (
-    <View className="gap-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
+    <View className="gap-3 rounded-2xl bg-card p-4 shadow-sm">
       <View className="flex-row items-center justify-between">
-        <Text className="text-base font-semibold text-neutral-900 dark:text-white">{title}</Text>
+        <Text className="text-base font-semibold text-ink">{title}</Text>
         {value ? (
-          <Text className="text-sm font-medium text-blue-600 dark:text-blue-400">{value}</Text>
+          <Text className="text-sm font-medium text-accent-text">{value}</Text>
         ) : null}
       </View>
       {children}
@@ -52,15 +52,16 @@ export function SelectPills({
   /** Keys rendered dimmed and non-interactive (e.g. a not-yet-built option). */
   disabledKeys?: string[];
 }) {
-  const isDark = useEffectiveColorScheme() === 'dark';
-  const borderColor = isDark ? '#404040' : '#d4d4d4';
+  const theme = useTheme();
+  const borderColor = theme.border;
   return (
     <View className="flex-row flex-wrap gap-2">
       {options.map((opt) => {
         const active = selected.includes(opt.key);
         const disabled = disabledKeys?.includes(opt.key) ?? false;
-        const bg = active ? (isDark ? '#ffffff' : '#171717') : isDark ? '#262626' : '#ffffff';
-        const fg = active ? (isDark ? '#171717' : '#ffffff') : isDark ? '#ffffff' : '#171717';
+        // Active pills invert: ink fill with ground-coloured content.
+        const bg = active ? theme.text : theme.card;
+        const fg = active ? theme.background : theme.text;
         return (
           <Pressable
             key={opt.key}
@@ -115,10 +116,10 @@ export function Stepper({
   formatValue?: (value: number) => string;
   buttonsOnly?: boolean;
 }) {
-  const isDark = useEffectiveColorScheme() === 'dark';
-  const fg = isDark ? '#ffffff' : '#171717';
-  const disabledFg = isDark ? '#525252' : '#d4d4d4';
-  const borderColor = isDark ? '#404040' : '#d4d4d4';
+  const theme = useTheme();
+  const fg = theme.text;
+  const disabledFg = theme.border;
+  const borderColor = theme.border;
   const canDec = value > min;
   const canInc = value < max;
   const buttons = (
@@ -140,7 +141,7 @@ export function Stepper({
   if (buttonsOnly) return buttons;
   return (
     <View className="flex-row items-center justify-between">
-      <Text className="text-base text-neutral-700 dark:text-neutral-300">
+      <Text className="text-base text-ink-2">
         {formatValue ? formatValue(value) : String(value)}
       </Text>
       {buttons}

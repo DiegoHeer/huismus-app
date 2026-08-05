@@ -140,7 +140,7 @@ export default function FiltersScreen() {
   }
 
   return (
-    <View className="flex-1 bg-neutral-100 dark:bg-black">
+    <View className="flex-1 bg-bg">
       <ScrollView
         testID="filters-scroll"
         contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 16 }}
@@ -160,7 +160,7 @@ export default function FiltersScreen() {
             selected={[draft.mode]}
             onToggle={(key) => update({ mode: key as ListingMode, minPrice: null, maxPrice: null })}
           />
-          <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
+          <Text className="text-center text-sm text-ink-2">
             {t('filtersPage.rentComingSoon')}
           </Text>
         </View>
@@ -302,11 +302,11 @@ export default function FiltersScreen() {
 
       <View
         style={{ paddingBottom: insets.bottom + 12 }}
-        className="border-t border-neutral-200 bg-white px-4 pt-3 dark:border-neutral-800 dark:bg-neutral-900">
+        className="border-t border-border bg-card px-4 pt-3">
         <Pressable
           onPress={apply}
           accessibilityRole="button"
-          className="items-center rounded-xl bg-blue-600 py-3.5 active:opacity-80">
+          className="items-center rounded-xl bg-accent py-3.5 active:opacity-80">
           <Text className="text-base font-semibold text-white">
             {matchCount === undefined
               ? t('filtersPage.showHomesLoading')

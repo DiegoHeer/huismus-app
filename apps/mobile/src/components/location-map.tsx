@@ -3,7 +3,7 @@ import { Camera, Map, Marker } from '@maplibre/maplibre-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { MAP_STYLE_LIGHT } from './map-style';
-import { Brand } from '../constants/theme';
+import { useBrand } from '@/hooks/use-theme';
 
 export interface LocationMapProps {
   latitude: number;
@@ -28,6 +28,7 @@ export function LocationMap({
   mapStyle = MAP_STYLE_LIGHT,
   interactive = false,
 }: LocationMapProps) {
+  const brand = useBrand();
   return (
     <Map
       style={StyleSheet.absoluteFill}
@@ -59,7 +60,6 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 999,
-    backgroundColor: Brand.blue,
     borderWidth: 2,
     borderColor: '#ffffff',
   },

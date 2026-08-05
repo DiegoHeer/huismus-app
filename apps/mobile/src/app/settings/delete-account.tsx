@@ -16,6 +16,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/use-theme';
 
 /** Placeholder grey that reads on both light and dark inputs (neutral-400). */
 const PLACEHOLDER_COLOR = '#9ca3af';
@@ -93,7 +94,7 @@ export default function DeleteAccountScreen() {
 
   // Deleting signs the user out, which flips `user` to null and re-renders this
   // screen before we navigate away — render nothing rather than read a null user.
-  if (!user) return <View className="flex-1 bg-neutral-100 dark:bg-black" />;
+  if (!user) return <View className="flex-1 bg-bg" />;
 
   const provider = user.provider;
   const showPasswordField = provider !== 'google';
@@ -150,7 +151,7 @@ export default function DeleteAccountScreen() {
   const confirmDisabled = working;
 
   return (
-    <SafeAreaView edges={['bottom']} className="flex-1 bg-neutral-100 dark:bg-black">
+    <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -159,20 +160,20 @@ export default function DeleteAccountScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           {/* Warning sign in the middle of the page. */}
-          <View className="mt-4 h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-950">
+          <View className="mt-4 h-20 w-20 items-center justify-center rounded-full bg-accent/10">
             <AlertTriangleIcon size={44} color={scheme === 'dark' ? '#f87171' : '#dc2626'} />
           </View>
 
-          <Text className="text-center text-2xl font-bold text-neutral-900 dark:text-white">
+          <Text className="text-center text-2xl font-bold text-ink">
             {t('deleteAccountPage.title')}
           </Text>
-          <Text className="text-center text-base leading-6 text-neutral-500">
+          <Text className="text-center text-base leading-6 text-ink-2">
             {t('deleteAccountPage.warning')}
           </Text>
 
           {showPasswordField ? (
             <View className="w-full gap-1.5">
-              <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+              <Text className="text-sm font-medium text-ink-2">
                 {t('deleteAccountPage.passwordLabel')}
               </Text>
               <TextInput
@@ -188,11 +189,11 @@ export default function DeleteAccountScreen() {
                 placeholder={t('deleteAccountPage.passwordPlaceholder')}
                 placeholderTextColor={PLACEHOLDER_COLOR}
                 accessibilityLabel={t('deleteAccountPage.passwordLabel')}
-                className="rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+                className="rounded-xl border border-border bg-card px-4 py-3 text-base text-ink"
               />
             </View>
           ) : (
-            <Text className="text-center text-sm text-neutral-500">
+            <Text className="text-center text-sm text-ink-2">
               {t('deleteAccountPage.googleNote')}
             </Text>
           )}
@@ -210,7 +211,7 @@ export default function DeleteAccountScreen() {
               disabled={working}
               accessibilityRole="button"
               className="active:opacity-60">
-              <Text className="text-center text-sm font-medium text-neutral-500 underline">
+              <Text className="text-center text-sm font-medium text-ink-2 underline">
                 {t('deleteAccountPage.googleReauthLink')}
               </Text>
             </Pressable>
@@ -219,7 +220,7 @@ export default function DeleteAccountScreen() {
           {status === 'error' && errorKey ? (
             <Text
               accessibilityRole="alert"
-              className="text-center text-sm text-red-600 dark:text-red-400">
+              className="text-center text-sm text-accent-text">
               {t(`deleteAccountPage.${errorKey}`)}
             </Text>
           ) : null}
@@ -229,7 +230,14 @@ export default function DeleteAccountScreen() {
   );
 }
 
-/** Destructive red pill: trash icon + label, a spinner while the delete is in flight. */
+/**
+ * Destructive pill: trash icon + label, a spinner while the delete is in flight.
+ *
+ * An ink-outlined ghost rather than a filled red button. In this palette red
+ * *is* the brand — a filled red "Delete account" would read exactly like a
+ * filled red primary CTA — so the weight of the action is carried by the heavy
+ * outline, the trash icon and the type-to-confirm field above it instead.
+ */
 function ConfirmButton({
   label,
   busy,
@@ -241,6 +249,7 @@ function ConfirmButton({
   disabled: boolean;
   onPress: () => void;
 }) {
+  const { text: ink } = useTheme();
   return (
     <Pressable
       testID="delete-account-confirm"
@@ -248,11 +257,11 @@ function ConfirmButton({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ disabled, busy }}
-      className={`w-full flex-row items-center justify-center gap-2 rounded-full bg-red-600 py-4 ${
+      className={`w-full flex-row items-center justify-center gap-2 rounded-full border-2 border-ink py-4 ${
         disabled && !busy ? 'opacity-50' : 'active:opacity-80'
       }`}>
-      {busy ? <ActivityIndicator color="#ffffff" /> : <TrashIcon size={20} color="#ffffff" />}
-      <Text className="text-base font-semibold text-white">{label}</Text>
+      {busy ? <ActivityIndicator color={ink} /> : <TrashIcon size={20} color={ink} />}
+      <Text className="text-base font-semibold text-ink">{label}</Text>
     </Pressable>
   );
 }

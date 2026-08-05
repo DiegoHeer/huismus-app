@@ -98,23 +98,23 @@ function formatStat(fmt: Fmt, value: number | null, format: StatFormat): string 
 
 function TileBox({ label, value }: { label: string; value: string }) {
   return (
-    <View className="min-w-[46%] flex-1 rounded-2xl border border-neutral-200 bg-white px-4 py-3 dark:border-neutral-700/60 dark:bg-neutral-800/80">
+    <View className="min-w-[46%] flex-1 rounded-2xl border border-border bg-card px-4 py-3 dark:border-border/60 dark:bg-card/80">
       <Text
         numberOfLines={1}
-        className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+        className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">
         {label}
       </Text>
-      <Text className="mt-1 text-2xl font-bold text-neutral-900 dark:text-white">{value}</Text>
+      <Text className="mt-1 text-2xl font-bold text-ink">{value}</Text>
     </View>
   );
 }
 
 function StatCard({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <View className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-700/60 dark:bg-neutral-800/50">
-      <Text className="text-[15px] font-semibold text-neutral-900 dark:text-white">{title}</Text>
+    <View className="rounded-2xl border border-border bg-card p-4 dark:border-border/60 dark:bg-card/50">
+      <Text className="text-[15px] font-semibold text-ink">{title}</Text>
       {hint ? (
-        <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{hint}</Text>
+        <Text className="mt-0.5 text-xs text-ink-2">{hint}</Text>
       ) : null}
       <View className="mt-3">{children}</View>
     </View>
@@ -133,9 +133,9 @@ function Legend({
       {items.map((it) => (
         <View key={it.label} className="flex-row items-center gap-2">
           <View className="h-3 w-3 rounded-sm" style={{ backgroundColor: it.color }} />
-          <Text className="text-xs text-neutral-600 dark:text-neutral-300">
+          <Text className="text-xs text-ink-2">
             {it.label}{' '}
-            <Text className="font-bold text-neutral-900 dark:text-white">{it.percent}%</Text>
+            <Text className="font-bold text-ink">{it.percent}%</Text>
           </Text>
         </View>
       ))}
@@ -153,7 +153,7 @@ function SegmentedBar({ segments, colors }: { segments: StatSegment[]; colors: s
   }));
   return (
     <View>
-      <View className="h-7 flex-row overflow-hidden rounded-lg bg-neutral-200 dark:bg-neutral-700">
+      <View className="h-7 flex-row overflow-hidden rounded-lg bg-surface">
         {segments.map((seg, i) => (
           <View
             key={seg.labelKey}
@@ -174,7 +174,7 @@ function AgeBars({ rows }: { rows: AgeRow[] }) {
     <View className="gap-3">
       {rows.map((row, i) => (
         <View key={row.labelKey} className="flex-row items-center gap-3">
-          <Text className="w-16 text-right text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+          <Text className="w-16 text-right text-xs font-semibold text-ink-2">
             {t(`area.stats.${row.labelKey}`)}
           </Text>
           <View className="h-5 flex-1 justify-center">
@@ -187,7 +187,7 @@ function AgeBars({ rows }: { rows: AgeRow[] }) {
               }}
             />
           </View>
-          <Text className="w-9 text-xs font-bold text-neutral-900 dark:text-white">
+          <Text className="w-9 text-xs font-bold text-ink">
             {row.percent}%
           </Text>
         </View>
@@ -213,11 +213,11 @@ function PartyVotes({ parties, fmt }: { parties: ElectionPartyRow[]; fmt: Fmt })
               contentFit="contain"
             />
           ) : (
-            <View className="h-[22px] w-[22px] rounded-full bg-neutral-200 dark:bg-neutral-700" />
+            <View className="h-[22px] w-[22px] rounded-full bg-surface" />
           )}
           <Text
             numberOfLines={1}
-            className="w-20 text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+            className="w-20 text-xs font-semibold text-ink-2">
             {party.label}
           </Text>
           <View className="h-3 flex-1 justify-center">
@@ -230,7 +230,7 @@ function PartyVotes({ parties, fmt }: { parties: ElectionPartyRow[]; fmt: Fmt })
               }}
             />
           </View>
-          <Text className="w-14 text-right text-xs font-bold text-neutral-900 dark:text-white">
+          <Text className="w-14 text-right text-xs font-bold text-ink">
             {fmt.percent1(party.share)}
           </Text>
         </View>
@@ -281,7 +281,7 @@ function Donut({ segments, center }: { segments: StatSegment[]; center?: string 
       </Svg>
       {center ? (
         <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white">{center}</Text>
+          <Text className="text-2xl font-bold text-ink">{center}</Text>
         </View>
       ) : null}
     </View>
@@ -292,12 +292,12 @@ function ShareBar({ label, value, fmt }: { label: string; value: number; fmt: Fm
   return (
     <View>
       <View className="flex-row items-baseline justify-between">
-        <Text className="text-[13px] text-neutral-700 dark:text-neutral-300">{label}</Text>
-        <Text className="text-[13px] font-bold text-neutral-900 dark:text-white">
+        <Text className="text-[13px] text-ink-2">{label}</Text>
+        <Text className="text-[13px] font-bold text-ink">
           {fmt.percent1(value)}
         </Text>
       </View>
-      <View className="mt-1.5 h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+      <View className="mt-1.5 h-3 overflow-hidden rounded-full bg-surface">
         <View
           className="h-3 rounded-full"
           style={{ width: widthPct(value), backgroundColor: ACCENT }}
@@ -310,8 +310,8 @@ function ShareBar({ label, value, fmt }: { label: string; value: number; fmt: Fm
 function MissingState() {
   const { t } = useTranslation();
   return (
-    <View className="h-12 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800">
-      <Text className="text-xs italic text-neutral-500 dark:text-neutral-400">
+    <View className="h-12 items-center justify-center rounded-lg border border-dashed border-border bg-surface dark:border-border">
+      <Text className="text-xs italic text-ink-2">
         {t('area.stats.missing')}
       </Text>
     </View>
@@ -340,7 +340,7 @@ export function AreaStats({ stats }: AreaStatsProps) {
 
   if (!view || !stats) {
     return (
-      <Text className="mt-2 text-base leading-6 text-neutral-600 dark:text-neutral-300">
+      <Text className="mt-2 text-base leading-6 text-ink-2">
         {t('area.noStats')}
       </Text>
     );
@@ -349,8 +349,8 @@ export function AreaStats({ stats }: AreaStatsProps) {
   return (
     <View className="mt-3 gap-3">
       <View className="flex-row">
-        <View className="self-start rounded-full bg-blue-50 px-2.5 py-1 dark:bg-blue-950">
-          <Text className="text-xs font-semibold text-blue-600 dark:text-blue-300">
+        <View className="self-start rounded-full bg-accent/10 px-2.5 py-1">
+          <Text className="text-xs font-semibold text-accent-text">
             {`CBS ${stats.statsYear}`}
           </Text>
         </View>
@@ -388,7 +388,7 @@ export function AreaStats({ stats }: AreaStatsProps) {
                   color: CAT[i % CAT.length]!,
                 }))}
               />
-              <Text className="mt-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+              <Text className="mt-2 text-[11px] text-ink-2">
                 {t('area.stats.householdSizeUnit')}
               </Text>
             </View>
@@ -476,7 +476,7 @@ export function AreaStats({ stats }: AreaStatsProps) {
         title={t('area.stats.districtHeatingTitle')}
         hint={t('area.stats.districtHeatingHint')}>
         {view.districtHeating != null ? (
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <Text className="text-2xl font-bold text-ink">
             {`${Math.round(view.districtHeating)}%`}
           </Text>
         ) : (
