@@ -13,7 +13,9 @@ import { deferNavigation } from '@/lib/navigation';
 import { trackFiltersApplied } from '@/lib/analytics';
 import {
   AREA_DOMAIN,
+  boundedRangeLabel,
   BUILDING_TYPES,
+  compactEuro,
   countActiveFilters,
   DEFAULT_FILTERS,
   ENERGY_LABELS,
@@ -28,13 +30,6 @@ import {
   type Filters,
   type ListingMode,
 } from '@/lib/filters';
-
-// Compact euro label for the section summaries: €1450 / €675k / €1.2M.
-function compactEuro(v: number): string {
-  if (v >= 1_000_000) return `€${(v / 1_000_000).toFixed(v % 1_000_000 === 0 ? 0 : 1)}M`;
-  if (v >= 10_000) return `€${Math.round(v / 1000)}k`;
-  return `€${v}`;
-}
 
 // Debounce a rapidly-changing value (e.g. while dragging a slider) so the
 // "Show N homes" count isn't refetched on every intermediate value.
@@ -101,26 +96,24 @@ export default function FiltersScreen() {
 
   // Price — the slider runs on the indices of a log-ish ladder of stops (fine
   // near the bottom, coarse at the top; buy and rent each have their own, as
-  // with the histogram). The topmost stop is open-ended: parking the max thumb
-  // there means "€5M+" (no max constraint).
+  // with the histogram). Either end stop is open-ended, so the label reports the
+  // one bound that is actually set (see boundedRangeLabel). Summarise the
+  // *snapped* stops, not the raw filter values, so the text matches the thumbs.
   const steps = priceSteps(draft.mode);
   const topIndex = steps.length - 1;
   const priceIndices = [
     draft.minPrice === null ? 0 : nearestPriceIndex(steps, draft.minPrice),
     draft.maxPrice === null ? topIndex : nearestPriceIndex(steps, draft.maxPrice),
   ];
-  const priceLabel =
-    draft.minPrice === null && draft.maxPrice === null
-      ? anyLabel
-      : `${compactEuro(steps[priceIndices[0]])} – ${compactEuro(steps[priceIndices[1]])}${
-          draft.maxPrice === null ? '+' : ''
-        }`;
+  const priceLabel = boundedRangeLabel(
+    draft.minPrice === null ? null : steps[priceIndices[0]],
+    draft.maxPrice === null ? null : steps[priceIndices[1]],
+    compactEuro,
+    anyLabel,
+  );
 
   const areaValues = [draft.minAreaSqm ?? AREA_DOMAIN.min, draft.maxAreaSqm ?? AREA_DOMAIN.max];
-  const areaLabel =
-    draft.minAreaSqm === null && draft.maxAreaSqm === null
-      ? anyLabel
-      : `${areaValues[0]} – ${areaValues[1]} m²`;
+  const areaLabel = boundedRangeLabel(draft.minAreaSqm, draft.maxAreaSqm, String, anyLabel, 'm²');
 
   // Energy labels are a free multi-select; summarise them in canonical (best→worst)
   // order regardless of the order they were toggled in.

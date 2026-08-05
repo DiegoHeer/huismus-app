@@ -117,6 +117,44 @@ export function nearestPriceIndex(steps: readonly number[], value: number): numb
 export const AREA_DOMAIN = { min: 0, max: 300, step: 5 } as const;
 export const YEAR_DOMAIN = { min: 1900, max: 2025, step: 5 } as const;
 
+/** Compact euro label for the section summaries: €1450 / €675k / €1.2M. */
+export function compactEuro(v: number): string {
+  if (v >= 1_000_000) return `€${(v / 1_000_000).toFixed(v % 1_000_000 === 0 ? 0 : 1)}M`;
+  if (v >= 10_000) return `€${Math.round(v / 1000)}k`;
+  return `€${v}`;
+}
+
+/**
+ * Summary for a two-thumb range where `null` means "no constraint" on that side
+ * (the thumb is parked on its end stop). An open end is dropped rather than
+ * printed as its domain bound: "€0 – €450k" reads as a floor the user chose,
+ * and "€300k – €5M+" buries the point in a suffix — when in both cases the
+ * range is simply open on that side. Both ends open collapses to `anyLabel`.
+ * The ≤ / ≥ symbols are language-neutral, so only `anyLabel` needs translating.
+ *
+ * `format` renders one bound, so a leading currency symbol repeats per number
+ * ("€300k – €450k"). A trailing `unit` instead reads better shared across the
+ * whole range, so it's appended once: "80 – 250 m²", not "80 m² – 250 m²".
+ */
+export function boundedRangeLabel(
+  lo: number | null,
+  hi: number | null,
+  format: (v: number) => string,
+  anyLabel: string,
+  unit = '',
+): string {
+  let body: string;
+  if (lo === null) {
+    if (hi === null) return anyLabel;
+    body = `≤ ${format(hi)}`;
+  } else if (hi === null) {
+    body = `≥ ${format(lo)}`;
+  } else {
+    body = `${format(lo)} – ${format(hi)}`;
+  }
+  return unit ? `${body} ${unit}` : body;
+}
+
 // Mock "availability" histograms shown behind the price slider — a plausible
 // right-skewed shape per mode. Bucketed evenly across the slider track (so on
 // the log-ish ladder each bucket spans a widening price band). Replace with

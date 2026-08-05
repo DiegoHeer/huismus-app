@@ -33,6 +33,8 @@ import { useSliderDragLock } from '@/hooks/use-slider-drag-lock';
 import { trackOnboardingCompleted, trackOnboardingStep } from '@/lib/analytics';
 import { cityDisplayName } from '@/lib/city-search';
 import {
+  boundedRangeLabel,
+  compactEuro,
   nearestPriceIndex,
   PRICE_DISTRIBUTION_BUY,
   PRICE_DISTRIBUTION_RENT,
@@ -60,13 +62,6 @@ const TAP_THROTTLE_MS = 350;
 // scroll-snap-stop, and RNW strips it from inline styles).
 const webSnapStopMarker =
   Platform.OS === 'web' ? ({ dataSet: { pagesnap: 'always' } } as Record<string, unknown>) : null;
-
-/** Compact euro label for the price summary: €1450 / €675k / €1.2M. */
-function compactEuro(v: number): string {
-  if (v >= 1_000_000) return `€${(v / 1_000_000).toFixed(v % 1_000_000 === 0 ? 0 : 1)}M`;
-  if (v >= 10_000) return `€${Math.round(v / 1000)}k`;
-  return `€${v}`;
-}
 
 /**
  * The intro tour: five pages laid out side-by-side in one horizontal, paging
@@ -348,19 +343,20 @@ export function OnboardingFlow() {
 
   // Price slider stops + summary track the (currently buy-only) mode. The
   // slider runs on the indices of a log-ish ladder — fine steps low, big leaps
-  // high — whose topmost stop is the open-ended "€5M+" (no max constraint).
+  // high — whose end stops are both open-ended, so the label reports only the
+  // bound that is actually set (see boundedRangeLabel). Mirrors the Filters page.
   const steps = priceSteps(mode);
   const topIndex = steps.length - 1;
   const priceIndices = [
     price[0] === null ? 0 : nearestPriceIndex(steps, price[0]),
     price[1] === null ? topIndex : nearestPriceIndex(steps, price[1]),
   ];
-  const priceLabel =
-    price[0] === null && price[1] === null
-      ? t('filtersPage.any')
-      : `${compactEuro(steps[priceIndices[0]])} – ${compactEuro(steps[priceIndices[1]])}${
-          price[1] === null ? '+' : ''
-        }`;
+  const priceLabel = boundedRangeLabel(
+    price[0] === null ? null : steps[priceIndices[0]],
+    price[1] === null ? null : steps[priceIndices[1]],
+    compactEuro,
+    t('filtersPage.any'),
+  );
 
   const pages = [
     <OnboardingPage key="welcome">
