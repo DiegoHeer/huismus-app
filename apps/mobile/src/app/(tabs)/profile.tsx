@@ -6,6 +6,7 @@ import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { ContrastIcon, GlobeIcon } from '@/components/icons';
 import { useAuth, type AuthUser } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppearance } from '@/lib/appearance';
@@ -343,18 +344,23 @@ function SupportCard() {
   );
 }
 
+/** neutral-500 — the muted tone the trailing value uses in both schemes. */
+const VALUE_COLOR = '#737373';
+
 /**
- * A tappable settings row: leading stroked SVG icon, label, and a trailing
- * chevron. `onPress` is optional — without it the row is inert but still gives
- * press feedback.
+ * A tappable settings row: leading stroked SVG icon, label, an optional trailing
+ * value, and a chevron. `onPress` is optional — without it the row is inert but
+ * still gives press feedback.
  */
 function MenuRow({
   icon: Icon,
   label,
+  value,
   onPress,
 }: {
   icon: (props: IconProps) => ReactElement;
   label: string;
+  value?: ReactNode;
   onPress?: () => void;
 }) {
   const scheme = useColorScheme();
@@ -369,7 +375,10 @@ function MenuRow({
         <Icon color={iconColor} />
         <Text className="text-lg text-neutral-900 dark:text-white">{label}</Text>
       </View>
-      <Text className="text-xl text-neutral-400">›</Text>
+      <View className="flex-row items-center gap-1.5">
+        {value}
+        <Text className="text-xl text-neutral-400">›</Text>
+      </View>
     </Pressable>
   );
 }
@@ -383,22 +392,20 @@ function LanguageField() {
   const router = useRouter();
 
   return (
-    <Pressable
-      onPress={() => router.push('/settings/language')}
-      accessibilityRole="button"
-      className="flex-row items-center justify-between py-3 active:opacity-60">
-      <Text className="text-lg text-neutral-900 dark:text-white">{t('profile.language')}</Text>
-      <View className="flex-row items-center gap-1.5">
+    <MenuRow
+      icon={GlobeIcon}
+      label={t('profile.language')}
+      value={
         <Text className="text-lg text-neutral-500">{LANGUAGE_LABELS[activeLanguage(i18n)]}</Text>
-        <Text className="text-xl text-neutral-400">›</Text>
-      </View>
-    </Pressable>
+      }
+      onPress={() => router.push('/settings/language')}
+    />
   );
 }
 
 /**
- * Appearance selector row: shows the active appearance and opens a full-screen
- * selection page (`app/settings/appearance.tsx`) on press.
+ * Appearance selector row: shows the active appearance — its glyph plus label —
+ * and opens a full-screen selection page (`app/settings/appearance.tsx`) on press.
  */
 function AppearanceField() {
   const { t } = useTranslation();
@@ -406,18 +413,20 @@ function AppearanceField() {
   const { appearance } = useAppearance();
 
   const active = APPEARANCE_OPTIONS.find((entry) => entry.value === appearance)!;
+  const ActiveIcon = active.icon;
 
   return (
-    <Pressable
+    <MenuRow
+      icon={ContrastIcon}
+      label={t('profile.appearance')}
+      value={
+        <View className="flex-row items-center gap-1.5">
+          <ActiveIcon color={VALUE_COLOR} size={18} />
+          <Text className="text-lg text-neutral-500">{t(active.labelKey)}</Text>
+        </View>
+      }
       onPress={() => router.push('/settings/appearance')}
-      accessibilityRole="button"
-      className="flex-row items-center justify-between py-3 active:opacity-60">
-      <Text className="text-lg text-neutral-900 dark:text-white">{t('profile.appearance')}</Text>
-      <View className="flex-row items-center gap-1.5">
-        <Text className="text-lg text-neutral-500">{`${active.emoji} ${t(active.labelKey)}`}</Text>
-        <Text className="text-xl text-neutral-400">›</Text>
-      </View>
-    </Pressable>
+    />
   );
 }
 
