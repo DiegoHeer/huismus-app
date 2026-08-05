@@ -199,16 +199,22 @@ export function BathIcon({ color, size = 24 }: FactIconProps) {
   );
 }
 
-/** A calendar page with date dots — the construction year/period. */
-export function CalendarIcon({ color, size = 24 }: FactIconProps) {
+/**
+ * A mason's trowel, blade pointing down-left with the grip up-right — the
+ * construction year/period. The grip is a capsule: two 45° flanks closed by a
+ * semicircle at each end (chord 2r, hence the 2.68 arc deltas). Drawn corner to
+ * corner rather than inside a 24×24 square, so a diagonal glyph still carries
+ * the same visual weight as the upright fact icons beside it.
+ */
+export function TrowelIcon({ color, size = 24 }: FactIconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
+      <FactPath d="M4 20L8.5 10l5.5 5.5z" color={color} />
+      <FactPath d="M11.25 12.75L13.8 10.2" color={color} />
       <FactPath
-        d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"
+        d="M13.66 7.66L18.86 2.46a1.9 1.9 0 0 1 2.68 2.68L16.34 10.34a1.9 1.9 0 0 1-2.68-2.68z"
         color={color}
       />
-      <FactPath d="M16 2v4M8 2v4M3 10h18" color={color} />
-      <FactPath d="M8 14.5h.01M12 14.5h.01M16 14.5h.01M8 18h.01M12 18h.01" color={color} />
     </Svg>
   );
 }
