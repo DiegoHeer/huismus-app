@@ -22,6 +22,15 @@ import {
 /** Max residences the API returns per request (the `limit` ceiling). */
 const RESIDENCE_PAGE_SIZE = 100;
 
+/**
+ * How many pages a single {@link getListings} call will walk. The API caps
+ * `limit` at 100, so a dense viewport needs several requests to fill the map.
+ * Three bounds both the marker count and the request fan-out — a viewport with
+ * more matches than this is zoomed out too far for individual pins to be
+ * readable anyway.
+ */
+const MAX_RESIDENCE_PAGES = 3;
+
 /** Max residence suggestions the search typeahead requests per keystroke. */
 const RESIDENCE_SEARCH_LIMIT = 8;
 
@@ -126,6 +135,10 @@ function buildResidenceParams(query: ListingQuery, includeSort = true): URLSearc
   const apiStatus = query.status ? LISTING_TO_RESIDENCE_STATUS[query.status] : undefined;
   if (apiStatus) params.set('status', apiStatus);
   if (includeSort && query.sort) params.set('sort', query.sort);
+  if (query.bbox) {
+    const { west, south, east, north } = query.bbox;
+    params.set('bbox', `${west},${south},${east},${north}`);
+  }
   return params;
 }
 
@@ -134,13 +147,49 @@ function pageItems(res: ResidenceSummaryOut[] | ResidencePage): ResidenceSummary
   return Array.isArray(res) ? res : res.items;
 }
 
-export async function getListings(query: ListingQuery = {}): Promise<Listing[]> {
-  const params = buildResidenceParams(query);
-  params.set('limit', String(RESIDENCE_PAGE_SIZE));
+/**
+ * Fetch every residence matching `query`, walking up to
+ * {@link MAX_RESIDENCE_PAGES} pages. The first page's `total` says how many more
+ * exist, so the remainder are requested concurrently rather than in a chain.
+ *
+ * Concurrent offsets are safe because the API's every sort order ends in a
+ * unique `id` tiebreaker, making the row order total and stable — pages can't
+ * overlap or skip. Results are still deduped by id: two pages fetched in
+ * parallel could in principle straddle a concurrent write, and a repeated id
+ * would mean duplicate React keys on the map.
+ */
+async function fetchResidencePages(query: ListingQuery): Promise<ResidenceSummaryOut[]> {
+  const base = buildResidenceParams(query);
+  const fetchPage = (offset: number) => {
+    const params = new URLSearchParams(base);
+    params.set('limit', String(RESIDENCE_PAGE_SIZE));
+    params.set('offset', String(offset));
+    return request<ResidenceSummaryOut[] | ResidencePage>(`/v1/residences?${params}`);
+  };
 
-  const res = await request<ResidenceSummaryOut[] | ResidencePage>(`/v1/residences?${params}`);
+  const first = await fetchPage(0);
+  // A legacy bare array carries no total, so it is treated as the only page.
+  if (Array.isArray(first)) return first;
+
+  const pages = Math.min(MAX_RESIDENCE_PAGES, Math.ceil(first.total / RESIDENCE_PAGE_SIZE));
+  const rest =
+    pages > 1
+      ? await Promise.all(
+          Array.from({ length: pages - 1 }, (_, i) => fetchPage((i + 1) * RESIDENCE_PAGE_SIZE)),
+        )
+      : [];
+
+  const byId = new Map<number, ResidenceSummaryOut>();
+  for (const page of [first, ...rest]) {
+    for (const item of pageItems(page)) byId.set(item.id, item);
+  }
+  return [...byId.values()];
+}
+
+export async function getListings(query: ListingQuery = {}): Promise<Listing[]> {
+  const summaries = await fetchResidencePages(query);
   // Only geocoded residences can be placed on the map.
-  const listings = pageItems(res).filter(hasCoordinates).map(summaryToListing);
+  const listings = summaries.filter(hasCoordinates).map(summaryToListing);
   // The API has no free-text search, so honor `search` client-side.
   return query.search ? listings.filter((l) => matchesSearch(l, query.search!)) : listings;
 }

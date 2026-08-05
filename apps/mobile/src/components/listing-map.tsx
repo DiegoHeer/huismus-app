@@ -1,10 +1,11 @@
-import type { AreaPolygon, Listing } from '@huismus/types';
+import type { AreaPolygon, Listing, MapBounds } from '@huismus/types';
 import {
   Camera,
   type CameraRef,
   GeoJSONSource,
   Layer,
   Map,
+  type MapRef,
   Marker,
   RasterSource,
   VectorSource,
@@ -24,7 +25,13 @@ import {
   toFeatureCollection,
 } from './area-polygons';
 import { useMapStyle } from './map-style';
-import { BUILDINGS_3D_MIN_ZOOM, buildings3DPaint, DEFAULT_CENTER, priceLabel } from './map-shared';
+import {
+  BUILDINGS_3D_MIN_ZOOM,
+  boundsFromTuple,
+  buildings3DPaint,
+  DEFAULT_CENTER,
+  priceLabel,
+} from './map-shared';
 import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { type MapOverlay } from '../lib/map-overlays';
@@ -86,11 +93,18 @@ export interface ListingMapProps {
    */
   onMapPress?: (coord: { longitude: number; latitude: number }) => void;
   /**
-   * Fired once the camera settles after a pan/zoom, with the viewport centre
-   * and zoom. Lets the screen auto-load a city's neighborhoods once the user
-   * has zoomed in far enough — as if they'd tapped the middle of the map.
+   * Fired once the camera settles after a pan/zoom, with the viewport centre,
+   * zoom and visible bounds. Lets the screen auto-load a city's neighborhoods
+   * once the user has zoomed in far enough — as if they'd tapped the middle of
+   * the map — and reload the residences that fall inside the new viewport.
+   * `bounds` is omitted only if the map cannot report them yet.
    */
-  onCameraIdle?: (state: { longitude: number; latitude: number; zoom: number }) => void;
+  onCameraIdle?: (state: {
+    longitude: number;
+    latitude: number;
+    zoom: number;
+    bounds?: MapBounds;
+  }) => void;
   /**
    * The tapped city's outline, pulsing while its neighborhoods load. Null hides
    * it (data arrived, or no city is loading).
@@ -134,6 +148,10 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   ref,
 ) {
   const cameraRef = useRef<CameraRef>(null);
+  // The region-change event carries the visible bounds, but the initial framing
+  // arrives via onDidFinishLoadingMap, which doesn't — so hold a map ref to ask
+  // for them once on load.
+  const mapViewRef = useRef<MapRef>(null);
   // A flyTo can arrive before the native map has finished loading — the
   // boot-time preferred-city focus fires as soon as the cached city shapes
   // hydrate — and the camera may drop it. Until the map reports loaded, keep
@@ -186,29 +204,44 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         const [longitude, latitude] = e.nativeEvent.lngLat;
         onMapPress?.({ longitude, latitude });
       }}
-      // Once a pan/zoom settles, report the viewport centre + zoom so the
-      // screen can auto-load a city's neighborhoods when zoomed in far enough.
+      ref={mapViewRef}
+      // Once a pan/zoom settles, report the viewport centre, zoom and bounds so
+      // the screen can auto-load a city's neighborhoods when zoomed in far
+      // enough, and reload the residences inside the new viewport.
       onRegionDidChange={(e) => {
-        const [longitude, latitude] = e.nativeEvent.center;
-        onCameraIdle?.({ longitude, latitude, zoom: e.nativeEvent.zoom });
+        const { center: regionCenter, zoom, bounds } = e.nativeEvent;
+        const [longitude, latitude] = regionCenter;
+        onCameraIdle?.({
+          longitude,
+          latitude,
+          zoom,
+          bounds: bounds ? boundsFromTuple(bounds) : undefined,
+        });
       }}
-      onDidFinishLoadingMap={() => {
+      onDidFinishLoadingMap={async () => {
         mapLoadedRef.current = true;
         const target = pendingFlyToRef.current;
-        // Report the initial framing so the search bar has a centre to rank
-        // suggestions against before the user moves the map — the pending
-        // boot-time focus target if there is one, else the mount framing.
-        if (!target) {
-          onCameraIdle?.({ longitude: center[0], latitude: center[1], zoom: 11 });
-          return;
-        }
         pendingFlyToRef.current = null;
-        cameraRef.current?.flyTo({
-          center: [target.longitude, target.latitude],
-          zoom: target.zoom,
-          duration: 0,
+        // Apply the pending boot-time focus target, if there is one.
+        if (target) {
+          cameraRef.current?.flyTo({
+            center: [target.longitude, target.latitude],
+            zoom: target.zoom,
+            duration: 0,
+          });
+        }
+        // Report the initial framing so the search bar has a centre to rank
+        // suggestions against, and the screen a viewport to load residences
+        // for, before the user moves the map. The jump above may not be
+        // reflected in the bounds yet — the region change it fires reports the
+        // settled ones, so this is only the first approximation.
+        const bounds = await mapViewRef.current?.getBounds?.();
+        onCameraIdle?.({
+          longitude: target?.longitude ?? center[0],
+          latitude: target?.latitude ?? center[1],
+          zoom: target?.zoom ?? 11,
+          bounds: bounds ? boundsFromTuple(bounds) : undefined,
         });
-        onCameraIdle?.({ longitude: target.longitude, latitude: target.latitude, zoom: target.zoom ?? 11 });
       }}
       compassPosition={{
         bottom: insets.bottom + COMPASS_MARGIN,

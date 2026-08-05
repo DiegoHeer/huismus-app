@@ -203,6 +203,101 @@ describe('client (API mode)', () => {
     expect(listings[0]!.id).toBe('10');
   });
 
+  // ---- Viewport (bbox) + pagination ----
+  // The map scopes its query to the visible rectangle and walks several pages,
+  // because the API caps `limit` at 100 but a city viewport holds more.
+
+  /** A geocoded summary, minimal but complete enough for summaryToListing. */
+  const residence = (id: number) => ({
+    ...mockResidences[0]!,
+    id,
+    slug: `home-${id}`,
+  });
+
+  /** One page of the v2 envelope. */
+  const page = (items: unknown[], total: number, offset: number) => ({
+    ok: true,
+    json: async () => ({ items, total, limit: 100, offset, has_more: offset + items.length < total }),
+  });
+
+  it('getListings sends the map viewport as a bbox param', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(page([], 0, 0));
+
+    await getListingsApi({ bbox: { west: 4.75, south: 52.3, east: 5.05, north: 52.43 } });
+
+    const url = (global.fetch as jest.Mock).mock.calls[0]![0] as string;
+    // The API takes `minLon,minLat,maxLon,maxLat` — i.e. west,south,east,north.
+    expect(decodeURIComponent(url)).toContain('bbox=4.75,52.3,5.05,52.43');
+  });
+
+  it('getListings walks further pages when the viewport holds more than one', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(page([residence(1)], 250, 0))
+      .mockResolvedValueOnce(page([residence(2)], 250, 100))
+      .mockResolvedValueOnce(page([residence(3)], 250, 200));
+
+    const listings = await getListingsApi();
+
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    const offsets = (global.fetch as jest.Mock).mock.calls.map((call) => {
+      const url = new URL(call[0] as string);
+      return url.searchParams.get('offset');
+    });
+    expect(offsets).toEqual(['0', '100', '200']);
+    expect(listings.map((l) => l.id)).toEqual(['1', '2', '3']);
+  });
+
+  it('getListings stops at the page cap even when far more match', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(page([residence(1)], 10_000, 0))
+      .mockResolvedValueOnce(page([residence(2)], 10_000, 100))
+      .mockResolvedValueOnce(page([residence(3)], 10_000, 200))
+      .mockResolvedValue(page([residence(4)], 10_000, 300));
+
+    await getListingsApi();
+
+    // Three pages, not a hundred — the walk is bounded, not exhaustive.
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('getListings requests a single page when one covers the matches', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(page([residence(1)], 12, 0));
+
+    await getListingsApi();
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('getListings dedupes an id that appears on two pages', async () => {
+    // Concurrent pages could straddle a write; a repeated id would otherwise
+    // become a duplicate React key on the map.
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(page([residence(1), residence(2)], 150, 0))
+      .mockResolvedValueOnce(page([residence(2), residence(3)], 150, 100));
+
+    const listings = await getListingsApi();
+
+    expect(listings.map((l) => l.id)).toEqual(['1', '2', '3']);
+  });
+
+  it('getListingsCount scopes the count to the viewport too', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ items: [], total: 697, limit: 0, offset: 0, has_more: true }),
+    });
+
+    const total = await getListingsCountApi({
+      bbox: { west: 4.75, south: 52.3, east: 5.05, north: 52.43 },
+    });
+
+    expect(total).toBe(697);
+    const url = (global.fetch as jest.Mock).mock.calls[0]![0] as string;
+    expect(decodeURIComponent(url)).toContain('bbox=4.75,52.3,5.05,52.43');
+    // Count-only mode: no page of homes is fetched alongside it.
+    expect(url).toContain('limit=0');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('getListing fetches the detail endpoint and maps the full residence', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,

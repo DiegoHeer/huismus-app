@@ -164,6 +164,18 @@ export type SortOption =
   | 'price_per_m2_asc';
 
 /**
+ * A geographic rectangle, in degrees. Field order matches the API's `bbox`
+ * param (`minLon,minLat,maxLon,maxLat`) and MapLibre's `LngLatBounds` tuple
+ * (`[west, south, east, north]`), so converting either way is positional.
+ */
+export interface MapBounds {
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+
+/**
  * Filters accepted by the listings query — a flattened view of the search
  * filters, each field mapping to a `GET /v1/residences` query param. All
  * optional; an omitted field means "no constraint" on that facet.
@@ -188,4 +200,10 @@ export interface ListingQuery {
   status?: ListingStatus;
   /** Result ordering. Defaults to `newest` server-side when omitted. */
   sort?: SortOption;
+  /**
+   * Restrict results to this rectangle — the map's visible viewport, so panning
+   * and zooming load the homes actually on screen instead of a fixed first page
+   * of the whole country. Omitted = no geographic constraint.
+   */
+  bbox?: MapBounds;
 }

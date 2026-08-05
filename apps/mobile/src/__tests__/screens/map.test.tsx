@@ -189,3 +189,78 @@ describe('MapScreen sold pill', () => {
     });
   });
 });
+
+// Panning/zooming the map (and flying to a search result, which settles the
+// camera the same way) reloads the residences for the newly visible rectangle,
+// instead of keeping the fixed first page the screen fetched at mount.
+describe('MapScreen viewport loading', () => {
+  const realFetch = global.fetch;
+
+  beforeEach(() => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ items: [], total: 0, limit: 100, offset: 0, has_more: false }),
+    });
+  });
+
+  afterEach(() => {
+    global.fetch = realFetch;
+  });
+
+  const residenceUrls = () =>
+    (global.fetch as jest.Mock).mock.calls
+      .map((c) => String(c[0]))
+      .filter((u) => u.includes('/v1/residences'));
+
+  // Requests are relative in tests (no API_URL configured), so read the query
+  // string directly rather than through `new URL`.
+  const bboxes = () =>
+    residenceUrls()
+      .map((u) => new URLSearchParams(u.split('?')[1] ?? '').get('bbox'))
+      .filter((b): b is string => b !== null);
+
+  /** Settle the native camera on a viewport, as the map does after a gesture. */
+  const settleCamera = (map: unknown, bounds: [number, number, number, number]) =>
+    fireEvent(map as never, 'regionDidChange', {
+      nativeEvent: { center: [4.9, 52.37], zoom: 13, bounds },
+    });
+
+  it('requests the residences inside the viewport once the camera settles', async () => {
+    const { getByTestId } = await renderScreen();
+    await waitFor(() => expect(residenceUrls().length).toBeGreaterThan(0));
+
+    settleCamera(getByTestId('maplibre-map'), [4.75, 52.3, 5.05, 52.43]);
+
+    await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));
+
+    // The requested rectangle must cover everything the user can see — the
+    // query is padded and snapped outward, never cropped.
+    const [west, south, east, north] = bboxes().at(-1)!.split(',').map(Number) as number[];
+    expect(west!).toBeLessThanOrEqual(4.75);
+    expect(south!).toBeLessThanOrEqual(52.3);
+    expect(east!).toBeGreaterThanOrEqual(5.05);
+    expect(north!).toBeGreaterThanOrEqual(52.43);
+  });
+
+  it('re-requests for a real pan but not for a nudge', async () => {
+    const { getByTestId } = await renderScreen();
+    const map = getByTestId('maplibre-map');
+    await waitFor(() => expect(residenceUrls().length).toBeGreaterThan(0));
+
+    settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));
+    const afterFirst = residenceUrls().length;
+
+    // A few pixels of drift must not refetch — it snaps to the same rectangle,
+    // so the query key is unchanged and React Query serves the cache.
+    settleCamera(map, [4.751, 52.301, 5.051, 52.431]);
+    await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));
+    expect(residenceUrls().length).toBe(afterFirst);
+
+    // Panning a viewport's width away is a different rectangle, so it reloads.
+    settleCamera(map, [5.35, 52.3, 5.65, 52.43]);
+    await waitFor(() => expect(residenceUrls().length).toBeGreaterThan(afterFirst));
+    const distinct = new Set(bboxes());
+    expect(distinct.size).toBeGreaterThan(1);
+  });
+});

@@ -1,8 +1,19 @@
 import type { FillExtrusionLayerSpecification } from '@maplibre/maplibre-gl-style-spec';
-import type { Listing } from '@huismus/types';
+import type { Listing, MapBounds } from '@huismus/types';
 
 /** Fallback map centre (Amsterdam) when there are no polygons or listings to frame. */
 export const DEFAULT_CENTER = { longitude: 4.9041, latitude: 52.3676 } as const;
+
+/**
+ * Widen MapLibre's `[west, south, east, north]` bounds tuple (the shape the
+ * native region-change event reports) into the named form the listings query
+ * takes. The web map reports bounds as an object instead, so it converts inline.
+ */
+export function boundsFromTuple(
+  [west, south, east, north]: readonly [number, number, number, number],
+): MapBounds {
+  return { west, south, east, north };
+}
 
 /**
  * Below this zoom, individual buildings are too small for extrusion to read.

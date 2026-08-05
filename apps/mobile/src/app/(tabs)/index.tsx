@@ -1,5 +1,5 @@
 import { useAreas, useCities, useListings, useStats } from '@huismus/data';
-import type { AreaPolygon, Listing } from '@huismus/types';
+import type { AreaPolygon, Listing, MapBounds } from '@huismus/types';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
@@ -28,6 +28,7 @@ import { normalizeStats } from '@/lib/neighborhood-stats';
 import { zoomForType } from '@/lib/pdok';
 import { recordRecentView, useRecentViews } from '@/lib/recent-views';
 import type { Origin, SearchResult } from '@/lib/search';
+import { boundsEqual, quantizeBounds } from '@/lib/viewport';
 
 // Zoom level at or above which the map auto-loads the neighborhoods under its
 // centre. The initial framing sits at zoom 11 (no city selected yet); zooming
@@ -76,11 +77,23 @@ export default function MapScreen() {
   // sort otherwise drive the query — the server returns only matching, geocoded
   // homes (capped at the page size), which the map renders directly.
   const soldActive = activeFilters.has('sold');
+  // The rectangle the residence query is scoped to: the visible viewport,
+  // widened and snapped to a grid (see lib/viewport). Null until the map reports
+  // its first framing, which it does on load — so the very first fetch is
+  // already viewport-scoped rather than a fixed page of the whole country.
+  const [viewport, setViewport] = useState<MapBounds | null>(null);
   const query = useMemo(() => {
     const base = filtersToQuery(filters);
-    return soldActive ? { ...base, status: 'sold' as const } : base;
-  }, [filters, soldActive]);
-  const { data: listings = [], isLoading } = useListings(query);
+    return {
+      ...base,
+      ...(soldActive ? { status: 'sold' as const } : null),
+      ...(viewport ? { bbox: viewport } : null),
+    };
+  }, [filters, soldActive, viewport]);
+  // `isFetching` covers reloads for a new viewport, where the previous
+  // viewport's markers stay on screen (keepPreviousData) — distinct from
+  // `isLoading`, the first load with nothing to show yet.
+  const { data: listings = [], isLoading, isFetching } = useListings(query);
   // A home picked from the search bar. Injected into `shownListings` (deduped) so
   // its marker + card appear even when it's outside the current query/snapshot set.
   const [searchedListing, setSearchedListing] = useState<Listing | null>(null);
@@ -265,10 +278,32 @@ export default function MapScreen() {
   // glance doesn't keep swapping cities underfoot. This can fire right after
   // flying to a searched residence (its zoom crosses the threshold), so it
   // must leave the just-selected marker alone.
+  //
+  // It also reloads the residences for the new viewport: every settle snaps the
+  // visible bounds to a grid and, when that lands on a different cell, updates
+  // the query — so a pan or zoom loads the homes now on screen. Keeping the
+  // previous rectangle when the cell is unchanged is what makes a nudge free: an
+  // identical query key is a cache hit, and no state changes, so nothing
+  // re-renders. This covers the search bar too — picking a city, buurt or home
+  // flies the camera, and the settle that follows loads that area's homes.
   const handleCameraIdle = useCallback(
-    ({ longitude, latitude, zoom }: { longitude: number; latitude: number; zoom: number }) => {
+    ({
+      longitude,
+      latitude,
+      zoom,
+      bounds,
+    }: {
+      longitude: number;
+      latitude: number;
+      zoom: number;
+      bounds?: MapBounds;
+    }) => {
       setMapZoom(zoom);
       setMapCenter({ longitude, latitude });
+      if (bounds) {
+        const next = quantizeBounds(bounds);
+        setViewport((prev) => (boundsEqual(prev, next) ? prev : next));
+      }
       if (zoom < AUTO_LOAD_AREAS_ZOOM) return;
       selectCityAt({ longitude, latitude }, { deselectListing: false });
     },
@@ -375,10 +410,14 @@ export default function MapScreen() {
         </View>
         {/* Legend for the active overlay, explaining the colors it paints. */}
         {overlay && <OverlayLegend overlay={overlay} zoom={mapZoom} />}
-        {/* While a tapped city's neighborhoods download, show a spinner centered
-            below the pills. Cached cities resolve instantly, so it rarely shows. */}
-        {selectedCity && areasFetching && (
+        {/* Spinner centered below the pills for either background load: a tapped
+            city's neighborhoods (cached cities resolve instantly, so it rarely
+            shows), or the residences for a newly panned/zoomed viewport — during
+            which the previous viewport's markers stay on the map. One pill covers
+            both, so the two can never stack. */}
+        {((selectedCity && areasFetching) || (isFetching && !isLoading && !snapshotsActive)) && (
           <View
+            testID="map-background-loading"
             className="mt-3 self-center rounded-full bg-white p-2.5 shadow-md shadow-black/20 dark:bg-neutral-800"
             pointerEvents="none">
             <ActivityIndicator />

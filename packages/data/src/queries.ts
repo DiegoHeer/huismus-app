@@ -20,10 +20,18 @@ export const listingKeys = {
   detail: (id: string) => ['listings', 'detail', id] as const,
 };
 
+/**
+ * Residences matching `query`. The map passes the visible `bbox`, so every pan
+ * or zoom is a new query key and a fresh fetch. `keepPreviousData` holds the
+ * previous viewport's markers on screen while the next page loads, so the map
+ * never flashes empty mid-gesture — the caller distinguishes the two states via
+ * `isLoading` (first load, nothing to show) vs `isFetching` (refreshing).
+ */
 export function useListings(query: ListingQuery = {}) {
   return useQuery({
     queryKey: listingKeys.list(query),
     queryFn: () => getListings(query),
+    placeholderData: keepPreviousData,
   });
 }
 

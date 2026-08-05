@@ -1,6 +1,6 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import type { AreaPolygon, Listing } from '@huismus/types';
+import type { AreaPolygon, Listing, MapBounds } from '@huismus/types';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef } from 'react';
 import { Layer, Map, type MapRef, Marker, Source, useMap } from 'react-map-gl/maplibre';
 
@@ -114,6 +114,28 @@ function DataOverlay({ overlay, anchor }: { overlay: MapOverlay; anchor: string 
   );
 }
 
+/**
+ * The map's visible bounds, in the named form the listings query takes. MapLibre
+ * GL JS returns a `LngLatBounds` object here (the native SDK reports a tuple —
+ * see `boundsFromTuple`).
+ */
+function webBounds(map: {
+  getBounds: () => {
+    getWest: () => number;
+    getSouth: () => number;
+    getEast: () => number;
+    getNorth: () => number;
+  };
+}): MapBounds {
+  const bounds = map.getBounds();
+  return {
+    west: bounds.getWest(),
+    south: bounds.getSouth(),
+    east: bounds.getEast(),
+    north: bounds.getNorth(),
+  };
+}
+
 /** Web map via react-map-gl (MapLibre GL JS). Selected by Metro on web. */
 export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function ListingMap(
   {
@@ -189,16 +211,23 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
       style={{ width: '100%', height: '100%' }}
       interactiveLayerIds={polygons && polygons.length > 0 ? ['area-polygons-fill'] : []}
       // Report the initial framing once the map loads, so the search bar has a
-      // centre to rank suggestions against before the user moves the map.
+      // centre to rank suggestions against — and the screen a viewport to load
+      // residences for — before the user moves the map.
       onLoad={(e) => {
         const center = e.target.getCenter();
-        onCameraIdle?.({ longitude: center.lng, latitude: center.lat, zoom: e.target.getZoom() });
+        onCameraIdle?.({
+          longitude: center.lng,
+          latitude: center.lat,
+          zoom: e.target.getZoom(),
+          bounds: webBounds(e.target),
+        });
       }}
-      // Once a pan/zoom settles, report the viewport centre + zoom so the
-      // screen can auto-load a city's neighborhoods when zoomed in far enough.
+      // Once a pan/zoom settles, report the viewport centre, zoom and bounds so
+      // the screen can auto-load a city's neighborhoods when zoomed in far
+      // enough, and reload the residences inside the new viewport.
       onMoveEnd={(e) => {
         const { longitude, latitude, zoom } = e.viewState;
-        onCameraIdle?.({ longitude, latitude, zoom });
+        onCameraIdle?.({ longitude, latitude, zoom, bounds: webBounds(e.target) });
       }}
       onClick={(e) => {
         const id = e.features?.[0]?.properties?.id;
