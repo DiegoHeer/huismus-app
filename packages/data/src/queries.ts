@@ -26,12 +26,19 @@ export const listingKeys = {
  * previous viewport's markers on screen while the next page loads, so the map
  * never flashes empty mid-gesture — the caller distinguishes the two states via
  * `isLoading` (first load, nothing to show) vs `isFetching` (refreshing).
+ *
+ * `options.enabled` defers the first fetch; the map uses it to wait for the
+ * viewport the map reports on load, rather than fetching the country first and
+ * immediately discarding it.
  */
-export function useListings(query: ListingQuery = {}) {
+export function useListings(query: ListingQuery = {}, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: listingKeys.list(query),
     queryFn: () => getListings(query),
     placeholderData: keepPreviousData,
+    // The map waits for its first viewport before querying, so it doesn't spend
+    // a nationwide fetch on markers the bbox query is about to replace.
+    enabled: options.enabled ?? true,
   });
 }
 

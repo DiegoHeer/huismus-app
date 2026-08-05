@@ -45,6 +45,22 @@ async function renderScreen() {
   );
 }
 
+/**
+ * Settle the native camera on a viewport, as the map does once it has loaded and
+ * after every gesture. The screen holds the residence query until the map
+ * reports a camera, so a test that expects a request must fire this first — the
+ * maplibre mock renders an inert View and reports nothing on its own.
+ */
+function settleCamera(
+  map: unknown,
+  bounds: [number, number, number, number] = [4.75, 52.3, 5.05, 52.43],
+  zoom = 13,
+) {
+  fireEvent(map as never, 'regionDidChange', {
+    nativeEvent: { center: [4.9, 52.37], zoom, bounds },
+  });
+}
+
 describe('MapScreen', () => {
   it('renders the map component', async () => {
     const { getByTestId } = await renderScreen();
@@ -174,9 +190,10 @@ describe('MapScreen sold pill', () => {
       .filter((u) => u.includes('/v1/residences'));
 
   it('requests only sold residences from the API while the Sold pill is active', async () => {
-    const { getByText } = await renderScreen();
+    const { getByText, getByTestId } = await renderScreen();
+    settleCamera(getByTestId('maplibre-map'));
 
-    // The map mounts with the default, unfiltered query — no status constraint.
+    // The map queries with the default, unfiltered query — no status constraint.
     await waitFor(() => expect(residenceUrls().length).toBeGreaterThan(0));
     expect(residenceUrls().some((u) => u.includes('status=sold'))).toBe(false);
 
@@ -219,19 +236,21 @@ describe('MapScreen viewport loading', () => {
       .map((u) => new URLSearchParams(u.split('?')[1] ?? '').get('bbox'))
       .filter((b): b is string => b !== null);
 
-  /** Settle the native camera on a viewport, as the map does after a gesture. */
-  const settleCamera = (map: unknown, bounds: [number, number, number, number]) =>
-    fireEvent(map as never, 'regionDidChange', {
-      nativeEvent: { center: [4.9, 52.37], zoom: 13, bounds },
-    });
+  it('makes no request until the map reports a camera', async () => {
+    // Otherwise the screen would spend a nationwide fetch on markers the very
+    // next render replaces with the viewport-scoped ones.
+    await renderScreen();
+    await waitFor(() => expect(residenceUrls().length).toBe(0));
+  });
 
   it('requests the residences inside the viewport once the camera settles', async () => {
     const { getByTestId } = await renderScreen();
-    await waitFor(() => expect(residenceUrls().length).toBeGreaterThan(0));
 
     settleCamera(getByTestId('maplibre-map'), [4.75, 52.3, 5.05, 52.43]);
 
     await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));
+    // The bbox is on the *first* request — no unscoped fetch precedes it.
+    expect(bboxes().length).toBe(residenceUrls().length);
 
     // The requested rectangle must cover everything the user can see — the
     // query is padded and snapped outward, never cropped.
@@ -245,7 +264,6 @@ describe('MapScreen viewport loading', () => {
   it('re-requests for a real pan but not for a nudge', async () => {
     const { getByTestId } = await renderScreen();
     const map = getByTestId('maplibre-map');
-    await waitFor(() => expect(residenceUrls().length).toBeGreaterThan(0));
 
     settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
     await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));

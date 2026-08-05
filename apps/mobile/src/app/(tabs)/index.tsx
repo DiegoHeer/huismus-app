@@ -82,6 +82,12 @@ export default function MapScreen() {
   // its first framing, which it does on load — so the very first fetch is
   // already viewport-scoped rather than a fixed page of the whole country.
   const [viewport, setViewport] = useState<MapBounds | null>(null);
+  // Whether the map has reported a camera position at all. The query waits for
+  // this rather than for `viewport` itself: if a platform ever fails to report
+  // bounds, the map falls back to an unscoped page of homes instead of showing
+  // none at all. In the normal case both land in the same render, so the very
+  // first request already carries the bbox.
+  const [cameraReady, setCameraReady] = useState(false);
   const query = useMemo(() => {
     const base = filtersToQuery(filters);
     return {
@@ -90,10 +96,16 @@ export default function MapScreen() {
       ...(viewport ? { bbox: viewport } : null),
     };
   }, [filters, soldActive, viewport]);
+  // Held until the map reports its camera: without the bbox this would fetch a
+  // page of the whole country and then throw it away one render later.
   // `isFetching` covers reloads for a new viewport, where the previous
   // viewport's markers stay on screen (keepPreviousData) — distinct from
   // `isLoading`, the first load with nothing to show yet.
-  const { data: listings = [], isLoading, isFetching } = useListings(query);
+  const {
+    data: listings = [],
+    isLoading,
+    isFetching,
+  } = useListings(query, { enabled: cameraReady });
   // A home picked from the search bar. Injected into `shownListings` (deduped) so
   // its marker + card appear even when it's outside the current query/snapshot set.
   const [searchedListing, setSearchedListing] = useState<Listing | null>(null);
@@ -300,6 +312,7 @@ export default function MapScreen() {
     }) => {
       setMapZoom(zoom);
       setMapCenter({ longitude, latitude });
+      setCameraReady(true);
       if (bounds) {
         const next = quantizeBounds(bounds);
         setViewport((prev) => (boundsEqual(prev, next) ? prev : next));
