@@ -19,7 +19,8 @@ export default function AppearanceSettingsScreen() {
     <SettingsOptionsScreen
       options={APPEARANCE_OPTIONS.map((option) => ({
         key: option.value,
-        label: `${option.emoji} ${t(option.labelKey)}`,
+        label: t(option.labelKey),
+        icon: option.icon,
       }))}
       selectedKey={appearance}
       onSelect={(key) => {

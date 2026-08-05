@@ -22,22 +22,26 @@ beforeEach(() => {
 });
 
 describe('AppearanceSettingsScreen', () => {
-  it('lists the appearance options', async () => {
-    const { getByText } = await renderScreen();
-    expect(getByText('⚙️ System')).toBeTruthy();
-    expect(getByText('☀️ Light')).toBeTruthy();
-    expect(getByText('🌙 Dark')).toBeTruthy();
+  it('lists the appearance options, each with a leading glyph', async () => {
+    const { getByText, getAllByRole } = await renderScreen();
+    expect(getByText('System')).toBeTruthy();
+    expect(getByText('Light')).toBeTruthy();
+    expect(getByText('Dark')).toBeTruthy();
+
+    // Every row carries its mode glyph (an svg, per the test mock) next to the label.
+    for (const row of getAllByRole('button')) {
+      expect(within(row).queryAllByTestId('svg').length).toBeGreaterThan(0);
+    }
   });
 
   it('applies the chosen appearance and navigates back', async () => {
     const { getByText, getAllByRole } = await renderScreen();
 
-    // The check mark (an svg, per the test mock) marks the selected option, which
-    // defaults to System.
+    // The check mark marks the selected option, which defaults to System.
     const [systemRow] = getAllByRole('button');
-    expect(within(systemRow).queryByTestId('svg')).toBeTruthy();
+    expect(systemRow).toBeSelected();
 
-    fireEvent.press(getByText('🌙 Dark'));
+    fireEvent.press(getByText('Dark'));
 
     // The pop is deferred to the next frame (requestAnimationFrame) so the theme
     // swap commits before the transition — see AppearanceSettingsScreen — so the
@@ -46,8 +50,8 @@ describe('AppearanceSettingsScreen', () => {
     // The store update re-renders the page; the check mark moves to Dark.
     await waitFor(() => {
       const [systemAfter, , darkAfter] = getAllByRole('button');
-      expect(within(darkAfter).queryByTestId('svg')).toBeTruthy();
-      expect(within(systemAfter).queryByTestId('svg')).toBeNull();
+      expect(darkAfter).toBeSelected();
+      expect(systemAfter).not.toBeSelected();
     });
   });
 });

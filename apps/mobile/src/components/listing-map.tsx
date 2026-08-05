@@ -9,7 +9,7 @@ import {
   RasterSource,
   VectorSource,
 } from '@maplibre/maplibre-react-native';
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -26,6 +26,7 @@ import {
 import { useMapStyle } from './map-style';
 import { BUILDINGS_3D_MIN_ZOOM, buildings3DPaint, DEFAULT_CENTER, priceLabel } from './map-shared';
 import { usePulseOpacity } from './use-pulse-opacity';
+import { buildAreaIndex, findAreaAt } from '../lib/area-hit-test';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { type MapOverlay } from '../lib/map-overlays';
 import { useRecentViews } from '../lib/recent-views';
@@ -173,6 +174,26 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
     return first ? [first.longitude, first.latitude] : [DEFAULT_CENTER.longitude, DEFAULT_CENTER.latitude];
   }, [polygons, listings]);
 
+  // Bounding boxes for resolving a tap to the neighborhood actually under the
+  // finger — the native press event's own `features` can't do it (see
+  // `area-hit-test.ts`). Rebuilt only when the overlay set or its colors change.
+  const areaIndex = useMemo(() => buildAreaIndex(polygons ?? []), [polygons]);
+
+  // True for the press a marker tap fires underneath itself (see
+  // markerTapAtRef). Guards both the map's handler and the area overlay's, so a
+  // marker tap neither switches municipality nor selects the buurt below it.
+  const withinMarkerGrace = useCallback(
+    () => Date.now() - markerTapAtRef.current < MARKER_TAP_GRACE_MS,
+    [],
+  );
+
+  // A press on the bare map: hit-test it against the cities. Shared by the map's
+  // own handler and the area source's fall-through.
+  const pressMap = useCallback(
+    (lngLat: [number, number]) => onMapPress?.({ longitude: lngLat[0], latitude: lngLat[1] }),
+    [onMapPress],
+  );
+
   return (
     <Map
       style={StyleSheet.absoluteFill}
@@ -180,11 +201,8 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
       // A press not consumed by an area overlay falls through to here; hit-test
       // it against the cities. `lngLat` is a [longitude, latitude] tuple.
       onPress={(e) => {
-        // Ignore the press a marker tap fires underneath itself (see
-        // markerTapAtRef) — a marker tap must not also switch municipality.
-        if (Date.now() - markerTapAtRef.current < MARKER_TAP_GRACE_MS) return;
-        const [longitude, latitude] = e.nativeEvent.lngLat;
-        onMapPress?.({ longitude, latitude });
+        if (withinMarkerGrace()) return;
+        pressMap(e.nativeEvent.lngLat);
       }}
       // Once a pan/zoom settles, report the viewport centre + zoom so the
       // screen can auto-load a city's neighborhoods when zoomed in far enough.
@@ -270,9 +288,21 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         <GeoJSONSource
           id="area-polygons"
           data={toFeatureCollection(polygons)}
+          // Resolve the tap from its coordinate, NOT from `features`: the native
+          // hit test returns every feature within a 44 pt/dp box of the touch,
+          // in render order, so `features[0]` is an arbitrary neighbor — visibly
+          // so when zoomed out, where that box spans several buurten. See
+          // `area-hit-test.ts`. A tap inside the box but outside every
+          // neighborhood is a press on the bare map, matching web's behavior.
           onPress={(e) => {
-            const id = e.nativeEvent.features[0]?.properties?.id;
-            if (typeof id === 'string') onSelectPolygon?.(id);
+            if (withinMarkerGrace()) return;
+            const { lngLat } = e.nativeEvent;
+            const id = findAreaAt(lngLat, areaIndex);
+            if (id) {
+              onSelectPolygon?.(id);
+              return;
+            }
+            pressMap(lngLat);
           }}>
           <Layer
             id="area-polygons-fill"
