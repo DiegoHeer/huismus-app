@@ -6,7 +6,13 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FilterSection, SelectPills, Stepper } from '@/components/filter-controls';
+import {
+  FilterSection,
+  ModePills,
+  PriceRangeField,
+  SelectPills,
+  Stepper,
+} from '@/components/filter-controls';
 import { RangeSlider } from '@/components/range-slider';
 import { useSliderDragLock } from '@/hooks/use-slider-drag-lock';
 import { deferNavigation } from '@/lib/navigation';
@@ -15,20 +21,14 @@ import {
   AREA_DOMAIN,
   boundedRangeLabel,
   BUILDING_TYPES,
-  compactEuro,
   countActiveFilters,
   DEFAULT_FILTERS,
   ENERGY_LABELS,
   filtersToQuery,
-  nearestPriceIndex,
-  PRICE_DISTRIBUTION_BUY,
-  PRICE_DISTRIBUTION_RENT,
-  priceSteps,
   SORT_OPTIONS,
   useFilters,
   YEAR_DOMAIN,
   type Filters,
-  type ListingMode,
 } from '@/lib/filters';
 
 // Debounce a rapidly-changing value (e.g. while dragging a slider) so the
@@ -94,24 +94,6 @@ export default function FiltersScreen() {
   // Bedrooms/bathrooms render as discrete 0–6 sliders; 0 reads as "Any", n as "+n".
   const roomCountLabel = (v: number) => (v === 0 ? anyLabel : `+${v}`);
 
-  // Price — the slider runs on the indices of a log-ish ladder of stops (fine
-  // near the bottom, coarse at the top; buy and rent each have their own, as
-  // with the histogram). Either end stop is open-ended, so the label reports the
-  // one bound that is actually set (see boundedRangeLabel). Summarise the
-  // *snapped* stops, not the raw filter values, so the text matches the thumbs.
-  const steps = priceSteps(draft.mode);
-  const topIndex = steps.length - 1;
-  const priceIndices = [
-    draft.minPrice === null ? 0 : nearestPriceIndex(steps, draft.minPrice),
-    draft.maxPrice === null ? topIndex : nearestPriceIndex(steps, draft.maxPrice),
-  ];
-  const priceLabel = boundedRangeLabel(
-    draft.minPrice === null ? null : steps[priceIndices[0]],
-    draft.maxPrice === null ? null : steps[priceIndices[1]],
-    compactEuro,
-    anyLabel,
-  );
-
   const areaValues = [draft.minAreaSqm ?? AREA_DOMAIN.min, draft.maxAreaSqm ?? AREA_DOMAIN.max];
   const areaLabel = boundedRangeLabel(draft.minAreaSqm, draft.maxAreaSqm, String, anyLabel, 'm²');
 
@@ -140,40 +122,18 @@ export default function FiltersScreen() {
         keyboardShouldPersistTaps="handled"
         scrollEnabled={!dragging}
         showsVerticalScrollIndicator={false}>
-        <View className="gap-2">
-          <SelectPills
-            stretch
-            // Rent is a placeholder until the backend supports it (deal_type=rent);
-            // keep it visible but disabled so Buy stays the only, selected option.
-            disabledKeys={['rent']}
-            options={[
-              { key: 'buy', label: t('filtersPage.buy') },
-              { key: 'rent', label: t('filtersPage.rent') },
-            ]}
-            selected={[draft.mode]}
-            onToggle={(key) => update({ mode: key as ListingMode, minPrice: null, maxPrice: null })}
-          />
-          <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
-            {t('filtersPage.rentComingSoon')}
-          </Text>
-        </View>
+        <ModePills
+          mode={draft.mode}
+          // The price ladders differ per mode, so a staged range can't carry over.
+          onChange={(mode) => update({ mode, minPrice: null, maxPrice: null })}
+        />
 
-        <FilterSection title={t('filtersPage.price')} value={priceLabel}>
-          <RangeSlider
-            min={0}
-            max={topIndex}
-            step={1}
-            values={priceIndices}
-            distribution={draft.mode === 'rent' ? PRICE_DISTRIBUTION_RENT : PRICE_DISTRIBUTION_BUY}
-            onChange={([lo, hi]) =>
-              update({
-                minPrice: lo <= 0 ? null : steps[lo],
-                maxPrice: hi >= topIndex ? null : steps[hi],
-              })
-            }
-            {...sliderDrag}
-          />
-        </FilterSection>
+        <PriceRangeField
+          mode={draft.mode}
+          value={[draft.minPrice, draft.maxPrice]}
+          onChange={([minPrice, maxPrice]) => update({ minPrice, maxPrice })}
+          {...sliderDrag}
+        />
 
         <FilterSection title={t('filtersPage.propertyType')}>
           <SelectPills

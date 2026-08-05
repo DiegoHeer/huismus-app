@@ -1,7 +1,18 @@
+import { useTranslation } from '@huismus/i18n';
 import { type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { useEffectiveColorScheme } from '@/components/map-style';
+import { RangeSlider } from '@/components/range-slider';
+import {
+  boundedRangeLabel,
+  compactEuro,
+  nearestPriceIndex,
+  PRICE_DISTRIBUTION_BUY,
+  PRICE_DISTRIBUTION_RENT,
+  priceSteps,
+  type ListingMode,
+} from '@/lib/filters';
 
 /** A titled card grouping one filter control, with an optional value summary. */
 export function FilterSection({
@@ -145,6 +156,110 @@ export function Stepper({
       </Text>
       {buttons}
     </View>
+  );
+}
+
+// --- Composite fields ------------------------------------------------------
+// Unlike the presentational controls above, these two know about the filter
+// domain. Both the Filters screen and the onboarding tour show the same
+// buy/rent + price pair, so the plumbing lives here once rather than being
+// mirrored (and drifting) in two screens.
+
+/**
+ * Buy/Rent segmented control plus its caption. Rent is a placeholder until the
+ * backend supports `deal_type=rent` — it stays visible but disabled, so Buy is
+ * the only selectable option.
+ *
+ * Buy and rent prices live on entirely different scales (see {@link priceSteps}),
+ * so a staged price range does not survive a mode change: callers own that state
+ * and must clear it in `onChange`.
+ */
+export function ModePills({
+  mode,
+  onChange,
+}: {
+  mode: ListingMode;
+  onChange: (mode: ListingMode) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <View className="gap-2">
+      <SelectPills
+        stretch
+        disabledKeys={['rent']}
+        options={[
+          { key: 'buy', label: t('filtersPage.buy') },
+          { key: 'rent', label: t('filtersPage.rent') },
+        ]}
+        selected={[mode]}
+        onToggle={(key) => onChange(key as ListingMode)}
+      />
+      <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
+        {t('filtersPage.rentComingSoon')}
+      </Text>
+    </View>
+  );
+}
+
+/** A price range in euros; `null` on either side means that end is unconstrained. */
+export type PriceRange = [number | null, number | null];
+
+/**
+ * The price range card: titled section, summary, histogram and two thumbs.
+ *
+ * The slider underneath runs on *indices* of a log-ish ladder of stops — fine
+ * near the bottom, coarse at the top, one ladder (and histogram) per mode — so
+ * equal thumb travel covers €200k–€400k as comfortably as €2M–€3M. That index
+ * ↔ euro adaptation is entirely internal: `value` and `onChange` both speak
+ * {@link PriceRange}, where either end stop reads back as `null`.
+ *
+ * Pass `onDragStart`/`onDragEnd` (see `useSliderDragLock`) — without them the
+ * enclosing scrollable steals the drag on iOS.
+ */
+export function PriceRangeField({
+  mode,
+  value,
+  onChange,
+  onDragStart,
+  onDragEnd,
+}: {
+  mode: ListingMode;
+  value: PriceRange;
+  onChange: (value: PriceRange) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+}) {
+  const { t } = useTranslation();
+  const [lo, hi] = value;
+  const steps = priceSteps(mode);
+  const topIndex = steps.length - 1;
+  const indices = [
+    lo === null ? 0 : nearestPriceIndex(steps, lo),
+    hi === null ? topIndex : nearestPriceIndex(steps, hi),
+  ];
+  // Summarise the *snapped* stops rather than the raw values, so the text always
+  // agrees with where the thumbs actually sit.
+  const label = boundedRangeLabel(
+    lo === null ? null : steps[indices[0]],
+    hi === null ? null : steps[indices[1]],
+    compactEuro,
+    t('filtersPage.any'),
+  );
+  return (
+    <FilterSection title={t('filtersPage.price')} value={label}>
+      <RangeSlider
+        min={0}
+        max={topIndex}
+        step={1}
+        values={indices}
+        distribution={mode === 'rent' ? PRICE_DISTRIBUTION_RENT : PRICE_DISTRIBUTION_BUY}
+        onChange={([nextLo, nextHi]) =>
+          onChange([nextLo <= 0 ? null : steps[nextLo], nextHi >= topIndex ? null : steps[nextHi]])
+        }
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+      />
+    </FilterSection>
   );
 }
 

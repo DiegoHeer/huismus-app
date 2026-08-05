@@ -1,52 +1,14 @@
-import { act, fireEvent, render, renderHook } from '@testing-library/react-native';
+import { act, render, renderHook } from '@testing-library/react-native';
 import type { ReactTestInstance } from 'react-test-renderer';
 
 import { RangeSlider } from '@/components/range-slider';
 import { useSliderDragLock } from '@/hooks/use-slider-drag-lock';
 
+import { measureTrack, responderEvent } from '../support/slider-gestures';
+
 const TRACK_WIDTH = 200;
 
-// PanResponder derives its gestureState from the centroid of `touchHistory`, so
-// a hand-rolled responder event has to carry a full single-touch bank. Timestamps
-// must increase across moves, or PanResponder discards the later one as a
-// duplicate dispatch.
-// `dx` accumulates from each record's previous → current position, so a move has
-// to state where the finger was as well as where it now is.
-function responderEvent({
-  x = 0,
-  y = 0,
-  prevX = x,
-  prevY = y,
-  timestamp = 1,
-}: { x?: number; y?: number; prevX?: number; prevY?: number; timestamp?: number } = {}) {
-  return {
-    nativeEvent: { touches: [{ pageX: x, pageY: y }], changedTouches: [], pageX: x, pageY: y },
-    touchHistory: {
-      touchBank: [
-        {
-          touchActive: true,
-          startPageX: prevX,
-          startPageY: prevY,
-          startTimeStamp: 0,
-          currentPageX: x,
-          currentPageY: y,
-          currentTimeStamp: timestamp,
-          previousPageX: prevX,
-          previousPageY: prevY,
-          previousTimeStamp: timestamp - 1,
-        },
-      ],
-      numberActiveTouches: 1,
-      indexOfSingleActiveTouch: 0,
-      mostRecentTimeStamp: timestamp,
-    },
-  };
-}
-
-/**
- * Renders a slider and returns its thumbs. The thumbs only mount once the track
- * has a measured width, and layout events never fire under Jest — so fire one.
- */
+/** Renders a slider and returns its thumbs, track already measured. */
 async function renderSlider(props: Partial<Parameters<typeof RangeSlider>[0]> = {}) {
   const onDragStart = jest.fn();
   const onDragEnd = jest.fn();
@@ -61,12 +23,8 @@ async function renderSlider(props: Partial<Parameters<typeof RangeSlider>[0]> = 
       {...props}
     />,
   );
-  await act(async () => {
-    fireEvent(view.getByTestId('range-slider-track'), 'layout', {
-      nativeEvent: { layout: { width: TRACK_WIDTH, height: 24 } },
-    });
-  });
-  return { ...view, onDragStart, onDragEnd, thumbs: view.getAllByRole('adjustable') };
+  const thumbs = await measureTrack(view, { width: TRACK_WIDTH });
+  return { ...view, onDragStart, onDragEnd, thumbs };
 }
 
 describe('RangeSlider gesture contract', () => {
@@ -157,12 +115,7 @@ describe('drag lock wiring', () => {
     }
 
     const view = await render(<Host />);
-    await act(async () => {
-      fireEvent(view.getByTestId('range-slider-track'), 'layout', {
-        nativeEvent: { layout: { width: TRACK_WIDTH, height: 24 } },
-      });
-    });
-    thumbs = view.getAllByRole('adjustable');
+    thumbs = await measureTrack(view, { width: TRACK_WIDTH });
 
     await act(async () => thumbs[0].props.onResponderGrant(responderEvent()));
     expect(scrollEnabled.at(-1)).toBe(false);

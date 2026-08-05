@@ -14,6 +14,8 @@ import { clearMapFocus, useMapFocus } from '@/lib/map-focus';
 import { resetOnboarding, useOnboarding } from '@/lib/onboarding';
 import { getPreferredCities, setPreferredCities } from '@/lib/preferred-cities';
 
+import { measureTrack, responderEvent } from '../support/slider-gestures';
+
 async function renderScreen(language: 'en' | 'nl' = 'en') {
   const i18n = initI18n(language);
   await i18n.changeLanguage(language);
@@ -239,42 +241,10 @@ describe('OnboardingScreen', () => {
   // iOS steals the touch for either scroll view unless they are disabled outright
   // (Android blocks them via the JS responder) — see hooks/use-slider-drag-lock.
   describe('price slider drags', () => {
-    // Thumbs only mount once the track has been measured, and layout events
-    // never fire under Jest. Every page is mounted in the pager, so the filters
-    // page's slider is reachable without navigating to it.
+    // Every page is mounted in the pager, so the filters page's slider is
+    // reachable without navigating to it.
     async function grabThumb(view: Awaited<ReturnType<typeof renderScreen>>) {
-      await act(async () => {
-        fireEvent(view.getByTestId('range-slider-track'), 'layout', {
-          nativeEvent: { layout: { width: 240, height: 24 } },
-        });
-      });
-      return view.getAllByRole('adjustable')[0];
-    }
-
-    // See range-slider.test.tsx — PanResponder needs a full single-touch bank.
-    function responderEvent() {
-      return {
-        nativeEvent: { touches: [{ pageX: 0, pageY: 0 }], changedTouches: [], pageX: 0, pageY: 0 },
-        touchHistory: {
-          touchBank: [
-            {
-              touchActive: true,
-              startPageX: 0,
-              startPageY: 0,
-              startTimeStamp: 0,
-              currentPageX: 0,
-              currentPageY: 0,
-              currentTimeStamp: 1,
-              previousPageX: 0,
-              previousPageY: 0,
-              previousTimeStamp: 0,
-            },
-          ],
-          numberActiveTouches: 1,
-          indexOfSingleActiveTouch: 0,
-          mostRecentTimeStamp: 1,
-        },
-      };
+      return (await measureTrack(view))[0];
     }
 
     it('freezes both the pager and the page body for the duration of the drag', async () => {
