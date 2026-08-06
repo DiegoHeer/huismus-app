@@ -1,5 +1,7 @@
 import { supportedLanguages, type SupportedLanguage } from '@huismus/i18n';
 
+import { MonitorIcon, MoonIcon, SunIcon, type Icon } from '@/components/icons';
+
 import type { Appearance } from './appearance';
 
 /**
@@ -13,11 +15,11 @@ export const LANGUAGE_LABELS: Record<SupportedLanguage, string> = {
   pt: '🇵🇹 Português',
 };
 
-/** Appearance options for the selector. `labelKey` is translated; `emoji` is decoration. */
-export const APPEARANCE_OPTIONS: { value: Appearance; emoji: string; labelKey: string }[] = [
-  { value: 'system', emoji: '⚙️', labelKey: 'profile.appearance_system' },
-  { value: 'light', emoji: '☀️', labelKey: 'profile.appearance_light' },
-  { value: 'dark', emoji: '🌙', labelKey: 'profile.appearance_dark' },
+/** Appearance options for the selector. `labelKey` is translated; `icon` is decoration. */
+export const APPEARANCE_OPTIONS: { value: Appearance; icon: Icon; labelKey: string }[] = [
+  { value: 'system', icon: MonitorIcon, labelKey: 'profile.appearance_system' },
+  { value: 'light', icon: SunIcon, labelKey: 'profile.appearance_light' },
+  { value: 'dark', icon: MoonIcon, labelKey: 'profile.appearance_dark' },
 ];
 
 /**

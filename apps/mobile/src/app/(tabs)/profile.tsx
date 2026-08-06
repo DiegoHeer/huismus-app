@@ -7,6 +7,7 @@ import { DisplayText, Text } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { ContrastIcon, GlobeIcon } from '@/components/icons';
 import { useAuth, type AuthUser } from '@/hooks/use-auth';
 import { useAppearance } from '@/lib/appearance';
 import { resetOnboarding } from '@/lib/onboarding';
@@ -345,17 +346,19 @@ function SupportCard() {
 }
 
 /**
- * A tappable settings row: leading stroked SVG icon, label, and a trailing
- * chevron. `onPress` is optional — without it the row is inert but still gives
- * press feedback.
+ * A tappable settings row: leading stroked SVG icon, label, an optional trailing
+ * value, and a chevron. `onPress` is optional — without it the row is inert but
+ * still gives press feedback.
  */
 function MenuRow({
   icon: Icon,
   label,
+  value,
   onPress,
 }: {
   icon: (props: IconProps) => ReactElement;
   label: string;
+  value?: ReactNode;
   onPress?: () => void;
 }) {
   // Match the row label.
@@ -369,7 +372,10 @@ function MenuRow({
         <Icon color={iconColor} />
         <Text className="text-lg text-ink">{label}</Text>
       </View>
-      <Text className="text-xl text-ink-2">›</Text>
+      <View className="flex-row items-center gap-1.5">
+        {value}
+        <Text className="text-xl text-ink-2">›</Text>
+      </View>
     </Pressable>
   );
 }
@@ -383,41 +389,41 @@ function LanguageField() {
   const router = useRouter();
 
   return (
-    <Pressable
+    <MenuRow
+      icon={GlobeIcon}
+      label={t('profile.language')}
+      value={<Text className="text-lg text-ink-2">{LANGUAGE_LABELS[activeLanguage(i18n)]}</Text>}
       onPress={() => router.push('/settings/language')}
-      accessibilityRole="button"
-      className="flex-row items-center justify-between py-3 active:opacity-60">
-      <Text className="text-lg text-ink">{t('profile.language')}</Text>
-      <View className="flex-row items-center gap-1.5">
-        <Text className="text-lg text-ink-2">{LANGUAGE_LABELS[activeLanguage(i18n)]}</Text>
-        <Text className="text-xl text-ink-2">›</Text>
-      </View>
-    </Pressable>
+    />
   );
 }
 
 /**
- * Appearance selector row: shows the active appearance and opens a full-screen
- * selection page (`app/settings/appearance.tsx`) on press.
+ * Appearance selector row: shows the active appearance — its glyph plus label —
+ * and opens a full-screen selection page (`app/settings/appearance.tsx`) on press.
  */
 function AppearanceField() {
   const { t } = useTranslation();
   const router = useRouter();
   const { appearance } = useAppearance();
+  // The glyph sits beside the trailing label, so it takes the same muted token.
+  const valueColor = useTheme().textSecondary;
 
   const active = APPEARANCE_OPTIONS.find((entry) => entry.value === appearance)!;
+  const ActiveIcon = active.icon;
 
   return (
-    <Pressable
+    <MenuRow
+      icon={ContrastIcon}
+      label={t('profile.appearance')}
+      value={
+        <View className="flex-row items-center gap-1.5">
+          <ActiveIcon color={valueColor} size={18} />
+          <Text className="text-lg text-ink-2">{t(active.labelKey)}</Text>
+        </View>
+      }
       onPress={() => router.push('/settings/appearance')}
-      accessibilityRole="button"
-      className="flex-row items-center justify-between py-3 active:opacity-60">
-      <Text className="text-lg text-ink">{t('profile.appearance')}</Text>
-      <View className="flex-row items-center gap-1.5">
-        <Text className="text-lg text-ink-2">{`${active.emoji} ${t(active.labelKey)}`}</Text>
-        <Text className="text-xl text-ink-2">›</Text>
-      </View>
-    </Pressable>
+    />
   );
 }
 

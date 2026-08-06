@@ -2,13 +2,15 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@huismus/ui';
 import Svg, { Path } from 'react-native-svg';
 
-import { useBrand } from '@/hooks/use-theme';
-
+import type { Icon } from '@/components/icons';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 export interface SettingsOption {
   /** Stable identity, used for selection comparison and as the React key. */
   key: string;
   label: string;
+  /** Optional leading glyph, drawn in the label's color. */
+  icon?: Icon;
 }
 
 /** Feather-style check mark, shown next to the active option. */
@@ -36,6 +38,8 @@ export function SettingsOptionsScreen({
 }) {
   // Matches the app's `text-accent-text` convention.
   const checkColor = useBrand().accent;
+  // Leading glyphs track the label, so they read the same `ink` token it does.
+  const iconColor = useTheme().text;
 
   return (
     <View className="flex-1 bg-bg">
@@ -43,6 +47,7 @@ export function SettingsOptionsScreen({
         <View className="overflow-hidden rounded-2xl bg-card shadow-sm">
           {options.map((option, index) => {
             const selected = option.key === selectedKey;
+            const Icon = option.icon;
             return (
               <Pressable
                 key={option.key}
@@ -52,7 +57,10 @@ export function SettingsOptionsScreen({
                 className={`flex-row items-center justify-between px-4 py-4 active:opacity-60 ${
                   index > 0 ? 'border-t border-border' : ''
                 }`}>
-                <Text className="text-lg text-ink">{option.label}</Text>
+                <View className="flex-row items-center gap-3">
+                  {Icon ? <Icon color={iconColor} /> : null}
+                  <Text className="text-lg text-ink">{option.label}</Text>
+                </View>
                 {selected ? <CheckIcon color={checkColor} /> : null}
               </Pressable>
             );
