@@ -24,12 +24,12 @@ import {
   AreaIcon,
   BathIcon,
   BedIcon,
-  CalendarIcon,
   EnergyIcon,
   HeartIcon,
   HomeIcon,
   RoomsIcon,
   ShareIcon,
+  TrowelIcon,
 } from '../../components/icons';
 import { LocationMap } from '../../components/location-map';
 // maptiler-basic GL style, with its key-gated MapTiler source/glyphs rewritten
@@ -122,7 +122,7 @@ export default function ListingDetailScreen() {
       ? {
           label: t('listing.constructionPeriod'),
           value: listing.constructionPeriod,
-          icon: CalendarIcon,
+          icon: TrowelIcon,
         }
       : null,
     listing.energyLabel
