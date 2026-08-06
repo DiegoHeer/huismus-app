@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
-import { DisplayText, Text } from './text';
+import { DisplayText, Text } from '@huismus/ui';
 
 import { useTheme } from '@/hooks/use-theme';
 
@@ -168,7 +168,7 @@ function StepButton({
       hitSlop={6}
       style={{ borderColor }}
       className="h-9 w-9 items-center justify-center rounded-full border active:opacity-60">
-      <DisplayText style={{ color, lineHeight: 24 }} className=" text-2xl">
+      <DisplayText style={{ color, lineHeight: 24 }} className="text-2xl">
         {label}
       </DisplayText>
     </Pressable>

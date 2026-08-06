@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { Animated, Pressable, ScrollView, View } from 'react-native';
-import { DisplayText, Text } from '../text';
+import { DisplayText, Text } from '@huismus/ui';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { useBrand, useTheme } from '@/hooks/use-theme';

@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
-import { Text } from './text';
+import { Text } from '@huismus/ui';
 
 /**
  * Presentational primitives shared by the text-based settings pages (Privacy,

@@ -10,12 +10,10 @@
  *
  * Both faces are in turn kept value-for-value in sync with huismus-web's
  * src/styles/tokens.css, so the app and the marketing site stay one brand.
- * Spec §3; see theme/theme.html for the reference sheet.
+ * Spec §3; see docs/theme.html for the reference sheet.
  */
 
 import '@/global.css';
-
-import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
@@ -73,7 +71,31 @@ export const Brand = {
   },
 } as const;
 
-/** The hero washes, top-to-bottom stops. Spec §3 "Gradients". */
+/**
+ * A token at partial alpha, as an `rgba()` string.
+ *
+ * For the className side this is what `bg-accent/55` already does; this is the
+ * same thing for the RN StyleSheet / SVG / MapLibre side. Reach for it instead
+ * of putting `opacity` on the element whenever only *one* colour should fade —
+ * `opacity` composites the whole subtree, so a badge's outline and its label
+ * fade along with its fill (see the viewed map pins in components/listing-map).
+ */
+export function withAlpha(hex: string, alpha: number): string {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? [...h].map((c) => c + c).join('') : h;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * The hero washes, top-to-bottom stops. Spec §3 "Gradients".
+ *
+ * Unused by the app — mirrored from huismus-web's `--hero-gradient` /
+ * `--dusk-gradient` to keep this file a complete copy of `tokens.css`, which is
+ * the invariant the whole token layer rests on. Deleting it would make the two
+ * files diverge for the first time. Same reason `--badge` sits unused in
+ * global.css.
+ */
 export const Gradients = {
   /** Dageraad — red into coral into warm paper. */
   light: ['#D7442E', '#C63A2B', '#D97A5A', '#F0DFC9', '#FAF6F0'],
@@ -81,37 +103,15 @@ export const Gradients = {
   dark: ['#BC2828', '#A5231B', '#571C14', '#2A1712', '#16110D'],
 } as const;
 
-export const Fonts = Platform.select({
-  // Registered natively by the expo-font config plugin (app.json), which embeds
-  // all four weights of each family under a single family name so `fontWeight`
-  // selects the right file rather than synthesising a bold. On web the same two
-  // names come from @font-face in global.css.
-  default: {
-    display: 'Spline Sans',
-    body: 'Inter',
-    sans: 'Inter',
-    serif: 'serif',
-    rounded: 'Spline Sans',
-    mono: 'monospace',
-  },
-  ios: {
-    display: 'Spline Sans',
-    body: 'Inter',
-    sans: 'Inter',
-    serif: 'ui-serif',
-    rounded: 'Spline Sans',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  web: {
-    display: 'var(--font-display)',
-    body: 'var(--font-body)',
-    sans: 'var(--font-body)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-display)',
-    mono: 'var(--font-mono)',
-  },
-});
+/**
+ * The type half of the tokens, re-exported so `@/constants/theme` stays the one
+ * import for everything themed on the StyleSheet side.
+ *
+ * It's *defined* in `@huismus/ui` because that's where the `Text` primitives
+ * that seed it live, and a cross-package component can't reach into
+ * `apps/mobile`. See packages/ui/src/fonts.ts.
+ */
+export { Fonts } from '@huismus/ui';
 
 export const Spacing = {
   half: 2,

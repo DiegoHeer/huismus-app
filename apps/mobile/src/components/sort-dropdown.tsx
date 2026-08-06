@@ -1,6 +1,6 @@
 import type { SortOption } from '@huismus/types';
 import { Pressable, View } from 'react-native';
-import { DisplayText, Text } from './text';
+import { DisplayText, Text } from '@huismus/ui';
 
 import { CheckIcon, ChevronDownIcon } from '@/components/icons';
 import { useTheme } from '@/hooks/use-theme';
@@ -46,7 +46,7 @@ export function SortButton({ label, open, onPress, accessibilityLabel, testID }:
       testID={testID}
       style={{ height: SORT_BUTTON_HEIGHT }}
       className="flex-row items-center gap-1 self-start active:opacity-70">
-      <DisplayText className=" text-2xl font-bold text-ink">{label}</DisplayText>
+      <DisplayText className="text-2xl font-bold text-ink">{label}</DisplayText>
       <View style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
         <ChevronDownIcon color={glyph} size={22} />
       </View>

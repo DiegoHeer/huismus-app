@@ -1,6 +1,6 @@
 import { useTranslation } from '@huismus/i18n';
 import { Pressable, Switch, View } from 'react-native';
-import { Text } from '../../components/text';
+import { Text } from '@huismus/ui';
 
 import { CheckIcon } from '@/components/icons';
 import { InfoCard, SettingsContentScreen } from '@/components/settings-content';
@@ -22,7 +22,14 @@ export default function MapSettingsScreen() {
     <SettingsContentScreen>
       <InfoCard title={t('mapSettingsPage.basemapTitle')}>
         <Text className="text-sm text-ink-2">{t('mapSettingsPage.basemapDescription')}</Text>
-        <View className="overflow-hidden rounded-xl border border-border">
+        {/* `radiogroup` wraps the rows so each one is announced with its
+            position ("2 of 3"); a bare `radio` outside a group is an invalid
+            ARIA structure and screen readers read it as a lone control. */}
+        <View
+          testID="basemap-picker"
+          accessibilityRole="radiogroup"
+          accessibilityLabel={t('mapSettingsPage.basemapTitle')}
+          className="overflow-hidden rounded-xl border border-border">
           {BASEMAP_FAMILIES.map((family, index) => (
             <BasemapOption
               key={family}
@@ -73,7 +80,9 @@ function BasemapOption({
       testID={`basemap-option-${family}`}
       onPress={onSelect}
       accessibilityRole="radio"
-      accessibilityState={{ selected }}
+      // `checked`, not `selected` — `selected` maps to aria-selected, which
+      // role="radio" does not support, so the state goes unannounced.
+      accessibilityState={{ checked: selected }}
       accessibilityLabel={t(`mapSettingsPage.basemap.${family}`)}
       className={`flex-row items-center justify-between gap-3 px-4 py-3 active:bg-surface ${
         first ? '' : 'border-t border-border'

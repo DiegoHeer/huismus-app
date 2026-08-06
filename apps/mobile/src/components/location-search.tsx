@@ -11,7 +11,7 @@ import {
   type TextInput as RNTextInput,
   type TextInputSubmitEditingEventData,
 } from 'react-native';
-import { Text, TextInput } from './text';
+import { Text, TextInput } from '@huismus/ui';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useFadingText } from '@/components/use-fading-text';

@@ -2,7 +2,7 @@ import { useTranslation } from '@huismus/i18n';
 import { useNavigation } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, type TextInputProps, View } from 'react-native';
-import { DisplayText, Text, TextInput } from './text';
+import { DisplayText, Text, TextInput } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -81,7 +81,7 @@ export function AuthScaffold({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <View className="gap-1.5">
-            <DisplayText className=" text-2xl font-bold text-ink">{title}</DisplayText>
+            <DisplayText className="text-2xl font-bold text-ink">{title}</DisplayText>
             {subtitle ? <Text className="text-base text-ink-2">{subtitle}</Text> : null}
           </View>
           {children}

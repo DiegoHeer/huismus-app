@@ -2,7 +2,7 @@ import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
-import { DisplayText, Text, TextInput } from '../../components/text';
+import { DisplayText, Text, TextInput } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 

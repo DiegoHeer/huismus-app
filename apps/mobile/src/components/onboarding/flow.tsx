@@ -3,7 +3,7 @@ import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Dimensions, Platform, Pressable, View, type GestureResponderEvent, type ScrollView } from 'react-native';
-import { Text } from '../text';
+import { Text } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FilterSection, SelectPills } from '@/components/filter-controls';

@@ -1,6 +1,6 @@
 import { useTranslation } from '@huismus/i18n';
 import { View } from 'react-native';
-import { Text } from '../../../components/text';
+import { Text } from '@huismus/ui';
 
 import { InfoCard, Paragraph, SettingsContentScreen } from '@/components/settings-content';
 

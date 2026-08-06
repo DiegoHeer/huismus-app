@@ -29,6 +29,16 @@ export function buildings3DPaint(scheme: 'light' | 'dark'): FillExtrusionLayerSp
 }
 
 /**
+ * How far an already-viewed listing's pin fades. Blue had a pale second shade
+ * for this; red has no equally obvious pale twin, so the "seen" read is carried
+ * by alpha on the fill instead.
+ *
+ * Applied to the fill colour, never as `opacity` on the marker — see the note
+ * in `listing-map.tsx`. Shared so the native and web markers can't drift.
+ */
+export const VIEWED_PIN_ALPHA = 0.55;
+
+/**
  * Compact price shown inside a map marker:
  * - ≥ €1M  → millions with up to 2 decimals, e.g. 1,252,000 → "€1.25M"
  * - ≥ €1k  → thousands, e.g. 450,000 → "€450k"

@@ -11,7 +11,7 @@ import {
 } from '@maplibre/maplibre-react-native';
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Text } from './text';
+import { Text } from '@huismus/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -25,12 +25,19 @@ import {
   toFeatureCollection,
 } from './area-polygons';
 import { useMapStyle } from './map-style';
-import { BUILDINGS_3D_MIN_ZOOM, buildings3DPaint, DEFAULT_CENTER, priceLabel } from './map-shared';
+import {
+  BUILDINGS_3D_MIN_ZOOM,
+  buildings3DPaint,
+  DEFAULT_CENTER,
+  priceLabel,
+  VIEWED_PIN_ALPHA,
+} from './map-shared';
 import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { type MapOverlay } from '../lib/map-overlays';
 import { useRecentViews } from '../lib/recent-views';
 import { useBrand } from '@/hooks/use-theme';
+import { withAlpha } from '@/constants/theme';
 
 // The search bar overlays the top of the map, so park the compass in the
 // bottom-left corner instead — clear of both the search field and the listing
@@ -135,6 +142,12 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   ref,
 ) {
   const brand = useBrand();
+  // Already-seen listings fade their fill only. Putting the alpha in the colour
+  // rather than `opacity` on the marker keeps the white outline and the price
+  // label at full strength — they are what make a pin readable over arbitrary
+  // tiles — and stops the bubble and its tail double-blending where they
+  // overlap, which `markerArrow`'s -1px tuck exists to hide.
+  const viewedFill = withAlpha(brand.accent, VIEWED_PIN_ALPHA);
   const cameraRef = useRef<CameraRef>(null);
   // A flyTo can arrive before the native map has finished loading — the
   // boot-time preferred-city focus fires as soon as the cached city shapes
@@ -304,7 +317,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         </GeoJSONSource>
       )}
       {listings.map((listing) => {
-        const viewed = viewedIds.has(listing.id);
+        const fill = viewedIds.has(listing.id) ? viewedFill : brand.accent;
         return (
           <Marker
             key={listing.id}
@@ -321,18 +334,12 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
               onSelect?.(listing.id);
             }}>
             <View style={styles.markerWrap}>
-              <View style={[styles.marker, { backgroundColor: brand.accent }, viewed && styles.markerViewed]}>
+              <View style={[styles.marker, { backgroundColor: fill }]}>
                 <Text style={styles.markerText} numberOfLines={1}>
                   {priceLabel(listing)}
                 </Text>
               </View>
-              <View
-                style={[
-                  styles.markerArrow,
-                  { borderTopColor: brand.accent },
-                  viewed && styles.markerViewed,
-                ]}
-              />
+              <View style={[styles.markerArrow, { borderTopColor: fill }]} />
             </View>
           </Marker>
         );
@@ -353,9 +360,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#ffffff',
-  },
-  markerViewed: {
-    opacity: 0.55,
   },
   // Downward triangle tail that turns the bubble into a pin. Pulled up 1px so it
   // tucks under the bubble's white border, leaving no seam between the two.

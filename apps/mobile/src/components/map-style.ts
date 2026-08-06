@@ -99,6 +99,25 @@ export function basemapFor(family: BasemapFamily, scheme: 'light' | 'dark'): Map
 }
 
 /**
+ * Drop a `beforeId` the loaded style doesn't actually have.
+ *
+ * MapLibre throws outright when `beforeId` names a missing layer, which takes
+ * the whole map down rather than just mis-ordering one overlay. For the
+ * vendored specs `basemap.test.ts` proves the anchors exist, but Liberty is
+ * fetched from OpenFreeMap at runtime — the point of referencing it by URL is
+ * that it tracks upstream, so its layer list can change without this repo
+ * changing. `undefined` means "add on top", which loses the label ordering but
+ * keeps the map alive.
+ *
+ * `layerIds` is null until the style has loaded, in which case the declared
+ * anchor is passed through untouched — nothing has been added yet at that point.
+ */
+export function resolveAnchor(anchor: string, layerIds: Set<string> | null): string | undefined {
+  if (!layerIds) return anchor;
+  return layerIds.has(anchor) ? anchor : undefined;
+}
+
+/**
  * The basemap for the chosen family (Settings → Map) at the app's effective
  * theme. Also returns the resolved `scheme` so the overlay layers can match it
  * without re-deriving the theme.

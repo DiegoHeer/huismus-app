@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, View } from 'react-native';
-import { Text } from './text';
+import { Text } from '@huismus/ui';
 import Svg, { Path } from 'react-native-svg';
 
 import { useBrand } from '@/hooks/use-theme';

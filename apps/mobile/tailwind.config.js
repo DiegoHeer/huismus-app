@@ -38,14 +38,12 @@ module.exports = {
         success: token('success'),
         badge: token('badge'),
       },
-      fontFamily: {
-        // Spline Sans for display, Inter for body — both self-hosted, no font
-        // CDN. These family names are exactly what expo-font registers natively
-        // (app.json) and what @font-face declares on web, so one class works on
-        // all three platforms.
-        display: ['Spline Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        body: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-      },
+      // No `fontFamily` here on purpose. The families are seeded by the Text /
+      // DisplayText primitives in @huismus/ui, and a `font-*` class would be a
+      // footgun next to them: NativeWind resolves className into the element
+      // *before* its style prop, so the seeded family would beat the class and
+      // `font-display` would silently do nothing. Leaving the utilities
+      // undefined makes that a build error instead of a wrong-looking screen.
     },
   },
   plugins: [],

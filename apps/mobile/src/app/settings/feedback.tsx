@@ -2,7 +2,7 @@ import { submitFeedback, type FeedbackIn, type FeedbackPlatform } from '@huismus
 import { isSupportedLanguage, useTranslation } from '@huismus/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
-import { Text, TextInput } from '../../components/text';
+import { Text, TextInput } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 

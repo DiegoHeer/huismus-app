@@ -179,18 +179,26 @@ function warmShift(value: string, scheme: 'light' | 'dark'): string {
   return rgb.a === 1 ? `rgb(${r},${g},${b})` : `rgba(${r},${g},${b},${rgb.a})`;
 }
 
-/** Rewrite a paint value, recursing through expression arrays and stop objects. */
-function recolor(value: unknown, target: string, scheme: 'light' | 'dark'): unknown {
+/**
+ * Rewrite a paint value to `target`, recursing through expression arrays and
+ * stop objects.
+ *
+ * No `scheme` needed, unlike {@link recolorUnknown}: the role lookup already
+ * resolved the palette before this is called, so every colour in the value —
+ * however deeply nested in an expression — becomes the same `target`. That
+ * flattens a zoom-interpolated ramp to one colour on purpose; the base styles
+ * use those ramps to fade a layer in, and the fade survives in the layer's
+ * opacity stops.
+ */
+function recolor(value: unknown, target: string): unknown {
   if (typeof value === 'string') {
     // Only rewrite things that actually parse as a colour — an expression's
     // operator strings ("interpolate", "linear", "zoom") must pass through.
     return parseColor(value) ? target : value;
   }
-  if (Array.isArray(value)) return value.map((v) => recolor(v, target, scheme));
+  if (Array.isArray(value)) return value.map((v) => recolor(v, target));
   if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [k, recolor(v, target, scheme)]),
-    );
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, recolor(v, target)]));
   }
   return value;
 }
@@ -210,9 +218,7 @@ export function warmBasemap(style: StyleSpecification, scheme: 'light' | 'dark')
     for (const [property, value] of Object.entries(paint)) {
       if (!property.endsWith('color')) continue;
       const role = roleFor(layer.id, property);
-      next[property] = role
-        ? recolor(value, palette[role], scheme)
-        : recolorUnknown(value, scheme);
+      next[property] = role ? recolor(value, palette[role]) : recolorUnknown(value, scheme);
     }
     return { ...layer, paint: next };
   });

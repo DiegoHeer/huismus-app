@@ -1,10 +1,9 @@
 import { useListings, useListingsCount } from '@huismus/data';
 import { useTranslation } from '@huismus/i18n';
-import { ListingCard } from '@huismus/ui';
+import { ListingCard, Text } from '@huismus/ui';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, ScrollView, View } from 'react-native';
-import { Text } from '../../components/text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LikeButton } from '@/components/like-button';

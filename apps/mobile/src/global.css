@@ -34,7 +34,7 @@ div:has(> [data-pagesnap='always']) {
 /*
  * Dageraad (light) & Gloed (dark) — the canonical design tokens, kept
  * value-for-value in sync with huismus-web's src/styles/tokens.css so the app
- * and the marketing site stay one brand. Spec §3; see theme/theme.html.
+ * and the marketing site stay one brand. Spec §3; see docs/theme.html.
  *
  * Stored as space-separated RGB channels rather than hex because Tailwind reads
  * them through `rgb(var(--x) / <alpha-value>)` (tailwind.config.js) — that's what
@@ -58,6 +58,11 @@ div:has(> [data-pagesnap='always']) {
   --accent-strong: 188 40 40; /* #BC2828 — hover / pressed */
   --accent-text: 179 48 28; /* #B3301C — links / eyebrows (AA on bg) */
   --success: 62 124 79; /* #3E7C4F — energy labels, positive stats */
+  /* Fixed dark chrome — identical in both themes, because what sits on it (a
+     white wordmark, a store logo) is fixed too. huismus-web uses it for the
+     App Store / Play badges and the footer; the app has neither, so it is
+     unused here and mirrored only to keep this file a complete copy of
+     tokens.css. Same reason as `Gradients` in constants/theme.ts. */
   --badge: 30 25 21; /* #1E1915 — store badges, footer */
 }
 

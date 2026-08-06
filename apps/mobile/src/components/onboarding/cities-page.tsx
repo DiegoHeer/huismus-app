@@ -2,7 +2,7 @@ import type { CityName } from '@huismus/data';
 import { useTranslation } from '@huismus/i18n';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
-import { Text, TextInput } from '../text';
+import { Text, TextInput } from '@huismus/ui';
 
 import { SelectPills } from '@/components/filter-controls';
 import { BuildingsGlyph, OnboardingHeader, OnboardingPage } from '@/components/onboarding/shared';

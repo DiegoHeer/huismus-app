@@ -1,6 +1,11 @@
 import type { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
 
-import { basemapFor, MAP_STYLE_DARK, MAP_STYLE_LIGHT } from '@/components/map-style';
+import {
+  basemapFor,
+  MAP_STYLE_DARK,
+  MAP_STYLE_LIGHT,
+  resolveAnchor,
+} from '@/components/map-style';
 import { warmBasemap, WARM_DARK, WARM_LIGHT } from '@/components/warm-basemap';
 import { BASEMAP_FAMILIES } from '@/lib/map-settings';
 
@@ -119,6 +124,13 @@ describe('basemapFor', () => {
     }
   });
 
+  it('cannot verify Liberty, which is why resolveAnchor exists', () => {
+    // Liberty is a URL, so there is no local spec to inspect — the test below
+    // covers only the families whose layer list ships in this repo. What
+    // protects Liberty at runtime is resolveAnchor, not this assertion.
+    expect(typeof basemapFor('liberty', 'light').mapStyle).toBe('string');
+  });
+
   it('anchors the polygon overlays on a layer the style actually has', () => {
     for (const scheme of ['light', 'dark'] as const) {
       for (const family of ['standard', 'warm'] as const) {
@@ -130,5 +142,24 @@ describe('basemapFor', () => {
         expect(ids.indexOf(overlayBeforeId)).toBeGreaterThan(ids.indexOf(polygonsBeforeId));
       }
     }
+  });
+});
+
+describe('resolveAnchor', () => {
+  it('keeps an anchor the loaded style has', () => {
+    expect(resolveAnchor('building', new Set(['water', 'building']))).toBe('building');
+  });
+
+  it('drops one it does not, so MapLibre appends instead of throwing', () => {
+    // A `beforeId` naming a missing layer is a hard throw that takes the map
+    // down; undefined only loses the ordering. Liberty is fetched from
+    // OpenFreeMap, so its layer list can change without this repo changing.
+    expect(resolveAnchor('highway_name_other', new Set(['water', 'building']))).toBeUndefined();
+  });
+
+  it('passes the anchor through before the style has loaded', () => {
+    // Nothing has been added to the map yet at that point, so there is nothing
+    // to throw; the real check happens on the styledata that follows.
+    expect(resolveAnchor('building', null)).toBe('building');
   });
 });

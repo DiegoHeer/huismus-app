@@ -1,5 +1,5 @@
 import { Platform, StyleSheet, type TextProps } from 'react-native';
-import { Text } from './text';
+import { Text } from '@huismus/ui';
 
 import { Fonts, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';

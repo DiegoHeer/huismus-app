@@ -1,7 +1,7 @@
 import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import { DisplayText, Text } from '../../components/text';
+import { DisplayText, Text } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 

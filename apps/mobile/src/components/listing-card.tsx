@@ -3,7 +3,7 @@ import { useTranslation } from '@huismus/i18n';
 import type { Listing } from '@huismus/types';
 import { Image } from 'expo-image';
 import { Pressable, View } from 'react-native';
-import { DisplayText, Text } from './text';
+import { DisplayText, Text } from '@huismus/ui';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -185,7 +185,7 @@ export function ListingCard({ listing, onPress, onClose }: ListingCardProps) {
               accessibilityLabel={t('listing.close')}
               hitSlop={8}
               className="h-11 w-11 items-center justify-center rounded-full bg-white shadow active:opacity-70">
-              <DisplayText className=" text-2xl leading-none text-ink-2">×</DisplayText>
+              <DisplayText className="text-2xl leading-none text-ink-2">×</DisplayText>
             </Pressable>
           </View>
         </View>

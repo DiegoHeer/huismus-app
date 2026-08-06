@@ -6,7 +6,7 @@ import {
   type TextProps,
 } from 'react-native';
 
-import { Fonts } from '@/constants/theme';
+import { Fonts } from './fonts';
 
 /**
  * `Text` and `TextInput` with the app's body face applied by default.
@@ -26,8 +26,13 @@ import { Fonts } from '@/constants/theme';
  * display face is its own component rather than a `font-display` class — the
  * precedence is then unambiguous on both platforms.
  *
- * Import these instead of react-native's in app code. Refs are forwarded, so a
- * `useRef<RNTextInput>` still focuses the real input (see location-search.tsx).
+ * This lives in `@huismus/ui` rather than in the app so that it is genuinely the
+ * *only* mechanism. It used to sit in `apps/mobile/src/components/text.tsx`,
+ * which left this package unable to reach it — `ListingCard` reached for a
+ * `font-body` class instead, so the app had two ways to set the same family and
+ * no test telling them apart. Import these instead of react-native's in every
+ * package. Refs are forwarded, so a `useRef<RNTextInput>` still focuses the real
+ * input (see apps/mobile location-search.tsx).
  */
 const bodyFont = { fontFamily: Fonts.body } as const;
 const displayFont = { fontFamily: Fonts.display } as const;

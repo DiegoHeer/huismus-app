@@ -3,7 +3,7 @@ import type { NeighborhoodStats } from '@huismus/types';
 import { Image } from 'expo-image';
 import { useMemo, type ReactNode } from 'react';
 import { View, type DimensionValue } from 'react-native';
-import { DisplayText, Text } from './text';
+import { DisplayText, Text } from '@huismus/ui';
 import Svg, { Circle } from 'react-native-svg';
 
 import {
@@ -50,7 +50,13 @@ const PARTY_LOGOS: Record<string, number> = {
 /*
  * Chart palettes, per theme. `seq` is an ordinal ramp on the brand hue (age
  * bands, construction year); `cat` is a categorical set (household, tenure,
- * dwelling type, origin); `accent` fills the single-series bars.
+ * dwelling type, origin); `accent` fills the single-series bars; `track` is the
+ * unfilled remainder behind every bar and the donut ring.
+ *
+ * `track` is a step *away* from the card rather than `surface`, which is only
+ * ~1.03:1 against `card` in Gloed — a `bg-surface` track would leave the empty
+ * part of a bar invisible and make it read as though it ended at its last
+ * segment.
  *
  * Theme-aware rather than constant: these marks sit on `bg-card`, which is
  * #FFFFFF in Dageraad and #261F18 in Gloed, and one palette cannot be legible
@@ -182,6 +188,7 @@ function SegmentedBar({
   colors: readonly string[];
 }) {
   const { t } = useTranslation();
+  const { track } = useCharts();
   const legendItems = segments.map((seg, i) => ({
     label: t(`area.stats.${seg.labelKey}`),
     percent: seg.percent,
@@ -189,7 +196,9 @@ function SegmentedBar({
   }));
   return (
     <View>
-      <View className="h-7 flex-row overflow-hidden rounded-lg bg-surface">
+      <View
+        className="h-7 flex-row overflow-hidden rounded-lg"
+        style={{ backgroundColor: track }}>
         {segments.map((seg, i) => (
           <View
             key={seg.labelKey}
@@ -326,7 +335,7 @@ function Donut({ segments, center }: { segments: StatSegment[]; center?: string 
 }
 
 function ShareBar({ label, value, fmt }: { label: string; value: number; fmt: Fmt }) {
-  const { accent } = useCharts();
+  const { accent, track } = useCharts();
   return (
     <View>
       <View className="flex-row items-baseline justify-between">
@@ -335,7 +344,9 @@ function ShareBar({ label, value, fmt }: { label: string; value: number; fmt: Fm
           {fmt.percent1(value)}
         </Text>
       </View>
-      <View className="mt-1.5 h-3 overflow-hidden rounded-full bg-surface">
+      <View
+        className="mt-1.5 h-3 overflow-hidden rounded-full"
+        style={{ backgroundColor: track }}>
         <View
           className="h-3 rounded-full"
           style={{ width: widthPct(value), backgroundColor: accent }}
@@ -348,7 +359,7 @@ function ShareBar({ label, value, fmt }: { label: string; value: number; fmt: Fm
 function MissingState() {
   const { t } = useTranslation();
   return (
-    <View className="h-12 items-center justify-center rounded-lg border border-dashed border-border bg-surface dark:border-border">
+    <View className="h-12 items-center justify-center rounded-lg border border-dashed border-border bg-surface">
       <Text className="text-xs italic text-ink-2">
         {t('area.stats.missing')}
       </Text>
