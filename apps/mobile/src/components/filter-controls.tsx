@@ -192,7 +192,12 @@ export function ModePills({
           { key: 'rent', label: t('filtersPage.rent') },
         ]}
         selected={[mode]}
-        onToggle={(key) => onChange(key as ListingMode)}
+        // Re-picking the active mode isn't a change. Callers clear the staged
+        // price range in `onChange`, so forwarding it would wipe a range the
+        // user never asked to lose.
+        onToggle={(key) => {
+          if (key !== mode) onChange(key as ListingMode);
+        }}
       />
       <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
         {t('filtersPage.rentComingSoon')}
@@ -237,11 +242,13 @@ export function PriceRangeField({
     lo === null ? 0 : nearestPriceIndex(steps, lo),
     hi === null ? topIndex : nearestPriceIndex(steps, hi),
   ];
-  // Summarise the *snapped* stops rather than the raw values, so the text always
-  // agrees with where the thumbs actually sit.
+  // Summarise from the same indices the slider runs on, and treat the end stops
+  // as open exactly as `onChange` below does. Reading the raw values instead
+  // would disagree with the thumbs for a stored bound that snaps onto an end —
+  // printing a "€0" floor for a thumb that is in fact unconstrained.
   const label = boundedRangeLabel(
-    lo === null ? null : steps[indices[0]],
-    hi === null ? null : steps[indices[1]],
+    indices[0] <= 0 ? null : steps[indices[0]],
+    indices[1] >= topIndex ? null : steps[indices[1]],
     compactEuro,
     t('filtersPage.any'),
   );

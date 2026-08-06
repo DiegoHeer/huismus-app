@@ -14,7 +14,7 @@ Tem de ter pelo menos 16 anos para criar uma conta. Ao criar uma conta, deve for
 
 ## 3. Conta e segurança
 
-Pode iniciar sessão com o Google ou com um e-mail e palavra-passe. É responsável por toda a atividade na sua conta. Pode eliminar a sua conta a qualquer momento em **Definições**; ao fazê-lo, os dados associados também são eliminados, conforme descrito na nossa [Política de Privacidade](/settings/legal/privacy-policy).
+Pode iniciar sessão com o Google ou com um e-mail e palavra-passe. É responsável por toda a atividade na sua conta. Pode eliminar a sua conta a qualquer momento em **Definições**; ao fazê-lo, os dados associados também são eliminados, conforme descrito na nossa [Política de Privacidade](https://huismusapp.com/en/privacy-policy/).
 
 ## 4. Utilização permitida
 
@@ -62,7 +62,7 @@ Estes termos regem-se pela lei neerlandesa. Preferimos resolver qualquer litígi
 
 ## 13. Outras disposições
 
-Se alguma disposição destes termos for considerada inválida, as restantes disposições mantêm-se em vigor. Em conjunto com a nossa [Política de Privacidade](/settings/legal/privacy-policy), estes termos constituem o acordo completo entre si e nós relativamente à utilização do Serviço.
+Se alguma disposição destes termos for considerada inválida, as restantes disposições mantêm-se em vigor. Em conjunto com a nossa [Política de Privacidade](https://huismusapp.com/en/privacy-policy/), estes termos constituem o acordo completo entre si e nós relativamente à utilização do Serviço.
 
 ## 14. Contacto
 

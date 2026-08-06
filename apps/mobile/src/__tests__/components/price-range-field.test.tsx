@@ -77,11 +77,27 @@ describe('PriceRangeField', () => {
     expect(onChange).toHaveBeenLastCalledWith([null, 450_000]);
   });
 
-  it('switches ladder and histogram with the mode', async () => {
-    // Rent tops out three orders of magnitude lower, so the same open-ended top
-    // stop summarises completely differently.
-    const { view } = await renderField([1450, null], 'rent');
+  // A bound that snaps onto an end stop is unconstrained as far as `onChange` is
+  // concerned, so the summary has to read it that way too — otherwise a stored
+  // value below the first stop prints the "€0" floor this label set out to kill.
+  it('reads a bound that snaps onto an end stop as open, not as a €0 floor', async () => {
+    const { view } = await renderField([5_000, 450_000]);
+    expect(BUY_STEPS[0]).toBe(0); // the stop 5k snaps to
+    expect(view.getByText('≤ €450k')).toBeTruthy();
+  });
+
+  it('reads a bound that snaps onto the top stop as open', async () => {
+    const { view } = await renderField([300_000, 5_000_000]);
+    expect(view.getByText('≥ €300k')).toBeTruthy();
+  });
+
+  it('switches the ladder with the mode', async () => {
+    // Rent tops out three orders of magnitude lower and has its own number of
+    // stops, so both the summary and the slider's index domain change with it.
+    const { view, thumbs } = await renderField([1450, null], 'rent');
     expect(view.getByText('≥ €1450')).toBeTruthy();
+    expect(thumbs[0].props.accessibilityValue.max).toBe(priceSteps('rent').length - 1);
+    expect(priceSteps('rent').length).not.toBe(BUY_STEPS.length);
   });
 });
 
@@ -115,5 +131,14 @@ describe('ModePills', () => {
     const { view, onChange } = await renderPills('rent');
     await act(async () => fireEvent.press(view.getByRole('button', { name: 'Buy' })));
     expect(onChange).toHaveBeenCalledWith('buy');
+  });
+
+  // Callers clear the staged price range in `onChange`, so a press that doesn't
+  // actually change the mode must not reach them — it would reset a range the
+  // user had set.
+  it('swallows a press on the mode that is already active', async () => {
+    const { view, onChange } = await renderPills('buy');
+    await act(async () => fireEvent.press(view.getByRole('button', { name: 'Buy' })));
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

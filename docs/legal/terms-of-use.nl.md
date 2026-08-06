@@ -14,7 +14,7 @@ Je moet ten minste 16 jaar oud zijn om een account aan te maken. Als je een acco
 
 ## 3. Account en beveiliging
 
-Je kunt inloggen met Google of met een e-mailadres en wachtwoord. Je bent verantwoordelijk voor alle activiteit onder je account. Je kunt je account op elk moment verwijderen via **Instellingen**; daarmee verwijderen we ook de bijbehorende gegevens, zoals beschreven in onze [Privacyverklaring](/settings/legal/privacy-policy).
+Je kunt inloggen met Google of met een e-mailadres en wachtwoord. Je bent verantwoordelijk voor alle activiteit onder je account. Je kunt je account op elk moment verwijderen via **Instellingen**; daarmee verwijderen we ook de bijbehorende gegevens, zoals beschreven in onze [Privacyverklaring](https://huismusapp.com/privacy/).
 
 ## 4. Toegestaan gebruik
 
@@ -62,7 +62,7 @@ Op deze voorwaarden is Nederlands recht van toepassing. Geschillen leggen we bij
 
 ## 13. Overig
 
-Als een bepaling uit deze voorwaarden ongeldig blijkt, blijven de overige bepalingen gewoon van kracht. Deze voorwaarden vormen samen met onze [Privacyverklaring](/settings/legal/privacy-policy) de volledige afspraak tussen jou en ons over het gebruik van de Dienst.
+Als een bepaling uit deze voorwaarden ongeldig blijkt, blijven de overige bepalingen gewoon van kracht. Deze voorwaarden vormen samen met onze [Privacyverklaring](https://huismusapp.com/privacy/) de volledige afspraak tussen jou en ons over het gebruik van de Dienst.
 
 ## 14. Contact
 

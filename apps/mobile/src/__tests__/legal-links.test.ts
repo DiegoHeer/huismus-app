@@ -34,4 +34,19 @@ describe('openLegalDocument', () => {
     openLegalDocument('terms-of-use', 'nl');
     expect(mockOpenBrowserAsync).toHaveBeenCalledWith('https://huismusapp.com/nl/terms-of-use/');
   });
+
+  // iOS rejects when a browser is already presented — a fast double-tap on the
+  // settings row. Nothing awaits this call, so an unhandled rejection is what
+  // the user would actually see.
+  it('swallows a browser that refuses to open', async () => {
+    const unhandled = jest.fn();
+    process.on('unhandledRejection', unhandled);
+    mockOpenBrowserAsync.mockRejectedValueOnce(new Error('Another WebBrowser is already presented'));
+
+    expect(() => openLegalDocument('privacy-policy', 'en')).not.toThrow();
+    await new Promise((resolve) => setImmediate(resolve));
+
+    process.off('unhandledRejection', unhandled);
+    expect(unhandled).not.toHaveBeenCalled();
+  });
 });
