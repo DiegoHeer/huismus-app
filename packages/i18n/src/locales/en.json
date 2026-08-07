@@ -236,9 +236,6 @@
       "noData": "No data"
     }
   },
-  "map": {
-    "cappedResults": "Showing {{shown}} of {{total}} homes — zoom in for the rest"
-  },
   "filtersPage": {
     "title": "Filters",
     "reset": "Reset",

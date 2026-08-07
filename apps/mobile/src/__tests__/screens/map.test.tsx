@@ -367,30 +367,6 @@ describe('MapScreen viewport loading', () => {
     await waitFor(() => expect(queryByTestId('map-initial-loading')).toBeNull());
   });
 
-  it('says so when more homes match the viewport than it can draw', async () => {
-    // The page cap is otherwise invisible: 300 pins look the same whether that
-    // is every home in the area or a slice of four thousand.
-    (global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => ({ items: [], total: 4000, limit: 100, offset: 0, has_more: true }),
-    });
-    const { getByTestId, getByText } = await renderScreen();
-
-    settleCamera(getByTestId('maplibre-map'));
-
-    await waitFor(() => expect(getByTestId('map-capped-results')).toBeTruthy());
-    expect(getByText(/of 4,000 homes/)).toBeTruthy();
-  });
-
-  it('stays quiet when the viewport holds fewer homes than the cap', async () => {
-    const { getByTestId, queryByTestId } = await renderScreen();
-
-    settleCamera(getByTestId('maplibre-map'));
-
-    await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));
-    expect(queryByTestId('map-capped-results')).toBeNull();
-  });
-
   it('requests the residences inside the viewport once the camera settles', async () => {
     const { getByTestId } = await renderScreen();
 

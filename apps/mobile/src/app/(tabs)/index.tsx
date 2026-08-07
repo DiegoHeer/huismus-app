@@ -1,10 +1,8 @@
-import { MAX_MAP_RESIDENCES, useAreas, useCities, useListings, useStats } from '@huismus/data';
-import { useTranslation } from '@huismus/i18n';
+import { useAreas, useCities, useListings, useStats } from '@huismus/data';
 import type { AreaPolygon, Listing, MapBounds } from '@huismus/types';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
-import { Text } from '@huismus/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { areasCenter } from '@/components/area-polygons';
@@ -56,7 +54,6 @@ const VIEWPORT_STALE_TIME_MS = 2 * 60 * 1000;
 const NO_LISTINGS: Listing[] = [];
 
 export default function MapScreen() {
-  const { t } = useTranslation();
   const brand = useBrand();
   const { filters } = useFilters();
   const { data: cities = [] } = useCities(loadCities);
@@ -124,10 +121,6 @@ export default function MapScreen() {
     staleTime: VIEWPORT_STALE_TIME_MS,
   });
   const listings = data?.listings ?? NO_LISTINGS;
-  // How many homes actually matched the viewport, which is more than the map can
-  // draw wherever they're dense (see MAX_MAP_RESIDENCES). Worth saying out loud:
-  // "300 homes here" and "300 of 4,000 here" call for different next moves.
-  const omittedHomes = (data?.total ?? 0) > MAX_MAP_RESIDENCES;
   // A home picked from the search bar. Injected into `shownListings` (deduped) so
   // its marker + card appear even when it's outside the current query/snapshot set.
   const [searchedListing, setSearchedListing] = useState<Listing | null>(null);
@@ -471,25 +464,6 @@ export default function MapScreen() {
             className="mt-3 self-center rounded-full bg-card p-2.5 shadow-md shadow-black/20"
             pointerEvents="none">
             <ActivityIndicator />
-          </View>
-        )}
-        {/* More homes match the viewport than the map can draw, so say so rather
-            than let the cap read as "that's all there is". Held back while a
-            fetch is in flight — the counts would be the *previous* viewport's,
-            and reading a stale total mid-pan is worse than reading none — and
-            while either a snapshot pill sources the map from disk or the pill
-            above has this slot. */}
-        {omittedHomes && !isFetching && !snapshotsActive && !areasLoading && (
-          <View
-            testID="map-capped-results"
-            className="mt-3 self-center rounded-full bg-card px-3 py-1.5 shadow-md shadow-black/20"
-            pointerEvents="none">
-            <Text className="text-xs text-ink-2">
-              {t('map.cappedResults', {
-                shown: listings.length.toLocaleString(),
-                total: (data?.total ?? 0).toLocaleString(),
-              })}
-            </Text>
           </View>
         )}
       </View>

@@ -236,9 +236,6 @@
       "noData": "Geen data"
     }
   },
-  "map": {
-    "cappedResults": "Toont {{shown}} van {{total}} woningen — zoom in voor de rest"
-  },
   "filtersPage": {
     "title": "Filters",
     "reset": "Wissen",
