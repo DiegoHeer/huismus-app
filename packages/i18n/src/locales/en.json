@@ -28,7 +28,6 @@
     "appearance_dark": "Dark",
     "account": "Account",
     "notifications": "Notifications",
-    "subscription": "Subscription",
     "support": "Support",
     "privacy": "Privacy & security",
     "help": "Help & support",
@@ -77,9 +76,6 @@
         "a": "Open a listing and tap “Visit realtor” to go to the original listing page with the realtor's details."
       }
     }
-  },
-  "subscriptionPage": {
-    "comingSoon": "Subscription and payment methods coming soon."
   },
   "notificationsPage": {
     "comingSoon": "Notification settings coming soon."

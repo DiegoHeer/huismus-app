@@ -13,11 +13,6 @@ const PAGES = [
   { path: '/settings/about', text: 'Huismus', name: 'about-page', maxDiffPixelRatio: 0.05 },
   { path: '/settings/help', text: 'Frequently asked questions', name: 'help-page', maxDiffPixelRatio: 0.05 },
   {
-    path: '/settings/subscription',
-    text: 'Subscription and payment methods coming soon.',
-    name: 'subscription-page',
-  },
-  {
     path: '/settings/notifications',
     text: 'Notification settings coming soon.',
     name: 'notifications-page',

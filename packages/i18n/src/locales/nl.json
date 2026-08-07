@@ -28,7 +28,6 @@
     "appearance_dark": "Donker",
     "account": "Account",
     "notifications": "Meldingen",
-    "subscription": "Abonnement",
     "support": "Ondersteuning",
     "privacy": "Privacy en beveiliging",
     "help": "Help en ondersteuning",
@@ -77,9 +76,6 @@
         "a": "Open een woning en tik op “Bekijk bij makelaar” om naar de oorspronkelijke advertentie met de makelaarsgegevens te gaan."
       }
     }
-  },
-  "subscriptionPage": {
-    "comingSoon": "Abonnement en betaalmethoden komen binnenkort."
   },
   "notificationsPage": {
     "comingSoon": "Meldingsinstellingen komen binnenkort."

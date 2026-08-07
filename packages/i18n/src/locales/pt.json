@@ -28,7 +28,6 @@
     "appearance_dark": "Escuro",
     "account": "Conta",
     "notifications": "Notificações",
-    "subscription": "Subscrição",
     "support": "Apoio",
     "privacy": "Privacidade e segurança",
     "help": "Ajuda e apoio",
@@ -77,9 +76,6 @@
         "a": "Abra um imóvel e toque em “Ver no agente imobiliário” para ir à página original do anúncio com os respetivos dados."
       }
     }
-  },
-  "subscriptionPage": {
-    "comingSoon": "Subscrição e métodos de pagamento em breve."
   },
   "notificationsPage": {
     "comingSoon": "Definições de notificações em breve."
