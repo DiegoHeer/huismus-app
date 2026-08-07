@@ -1,8 +1,9 @@
-import { useAreas, useCities, useListings, useStats } from '@huismus/data';
+import { MAX_MAP_RESIDENCES, useAreas, useCities, useListings, useStats } from '@huismus/data';
+import { useTranslation } from '@huismus/i18n';
 import type { AreaPolygon, Listing, MapBounds } from '@huismus/types';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { areasCenter } from '@/components/area-polygons';
@@ -11,7 +12,7 @@ import { FilterPills } from '@/components/filter-pills';
 import { ListingCard } from '@/components/listing-card';
 import { ListingMap, type ListingMapRef } from '@/components/listing-map';
 import { LocationSearch, type LocationSearchRef } from '@/components/location-search';
-import { DEFAULT_CENTER } from '@/components/map-shared';
+import { DEFAULT_CENTER, INITIAL_ZOOM } from '@/components/map-shared';
 import { useEffectiveColorScheme } from '@/components/map-style';
 import { OverlayLegend } from '@/components/overlay-legend';
 import { Brand } from '@/constants/theme';
@@ -40,7 +41,20 @@ const AUTO_LOAD_AREAS_ZOOM = 12;
 // places); the explore tab keeps the default places-only bar.
 const SEARCH_SOURCES = ['homes', 'buurten', 'places'] as const;
 
+// How long a viewport's homes stay fresh. Quantizing the bbox already makes a
+// nudge re-use the previous query key, but without this every pan *back* to a
+// rectangle just visited would refetch it — React Query treats a result as stale
+// the moment it lands. Panning to and fro around a city is an ordinary gesture,
+// and listings don't turn over by the minute, so a couple of minutes of reuse
+// costs nothing and saves the whole round trip.
+const VIEWPORT_STALE_TIME_MS = 2 * 60 * 1000;
+
+// Stable identity for "no homes yet", so waiting on the first viewport doesn't
+// hand `shownListings` a fresh array to re-memoize on every render.
+const NO_LISTINGS: Listing[] = [];
+
 export default function MapScreen() {
+  const { t } = useTranslation();
   const { filters } = useFilters();
   const { data: cities = [] } = useCities(loadCities);
   const insets = useSafeAreaInsets();
@@ -99,13 +113,18 @@ export default function MapScreen() {
   // Held until the map reports its camera: without the bbox this would fetch a
   // page of the whole country and then throw it away one render later.
   // `isFetching` covers reloads for a new viewport, where the previous
-  // viewport's markers stay on screen (keepPreviousData) — distinct from
+  // viewport's markers stay on screen (keepPrevious) — distinct from
   // `isLoading`, the first load with nothing to show yet.
-  const {
-    data: listings = [],
-    isLoading,
-    isFetching,
-  } = useListings(query, { enabled: cameraReady });
+  const { data, isLoading, isFetching } = useListings(query, {
+    enabled: cameraReady,
+    keepPrevious: true,
+    staleTime: VIEWPORT_STALE_TIME_MS,
+  });
+  const listings = data?.listings ?? NO_LISTINGS;
+  // How many homes actually matched the viewport, which is more than the map can
+  // draw wherever they're dense (see MAX_MAP_RESIDENCES). Worth saying out loud:
+  // "300 homes here" and "300 of 4,000 here" call for different next moves.
+  const omittedHomes = (data?.total ?? 0) > MAX_MAP_RESIDENCES;
   // A home picked from the search bar. Injected into `shownListings` (deduped) so
   // its marker + card appear even when it's outside the current query/snapshot set.
   const [searchedListing, setSearchedListing] = useState<Listing | null>(null);
@@ -138,7 +157,7 @@ export default function MapScreen() {
   const overlay = overlayById(overlayId);
   // Viewport zoom as of the last camera settle — drives the legend's "zoom in"
   // hint for overlays that only render at building-level zooms.
-  const [mapZoom, setMapZoom] = useState(11);
+  const [mapZoom, setMapZoom] = useState(INITIAL_ZOOM);
   // Viewport centre as of the last camera settle — the origin the search bar
   // ranks its suggestions against (nearest first). Seeded with the national
   // default and replaced with the real centre once the map reports one.
@@ -313,10 +332,11 @@ export default function MapScreen() {
       setMapZoom(zoom);
       setMapCenter({ longitude, latitude });
       setCameraReady(true);
-      if (bounds) {
-        const next = quantizeBounds(bounds);
-        setViewport((prev) => (boundsEqual(prev, next) ? prev : next));
-      }
+      // A null quantization means the map hasn't laid out yet — keep whatever
+      // viewport we already had rather than querying a rectangle that is about
+      // to be replaced.
+      const next = bounds ? quantizeBounds(bounds) : null;
+      if (next) setViewport((prev) => (boundsEqual(prev, next) ? prev : next));
       if (zoom < AUTO_LOAD_AREAS_ZOOM) return;
       selectCityAt({ longitude, latitude }, { deselectListing: false });
     },
@@ -436,6 +456,23 @@ export default function MapScreen() {
             <ActivityIndicator />
           </View>
         )}
+        {/* More homes match the viewport than the map can draw, so say so rather
+            than let the cap read as "that's all there is". Suppressed while a
+            fetch is in flight (the spinner above has the slot, and the two must
+            never stack) and while a snapshot pill sources the map from disk. */}
+        {omittedHomes && !isFetching && !snapshotsActive && (
+          <View
+            testID="map-capped-results"
+            className="mt-3 self-center rounded-full bg-white px-3 py-1.5 shadow-md shadow-black/20 dark:bg-neutral-800"
+            pointerEvents="none">
+            <Text className="text-xs text-neutral-600 dark:text-neutral-300">
+              {t('map.cappedResults', {
+                shown: listings.length.toLocaleString(),
+                total: (data?.total ?? 0).toLocaleString(),
+              })}
+            </Text>
+          </View>
+        )}
       </View>
       {selected && (
         <View
@@ -453,9 +490,16 @@ export default function MapScreen() {
         </View>
       )}
       {/* The spinner tracks the server query — irrelevant (and misleading)
-          while a snapshot pill sources the map from disk instead. */}
-      {isLoading && !snapshotsActive && (
-        <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
+          while a snapshot pill sources the map from disk instead.
+          `!cameraReady` is part of the first-load state too: until the map
+          reports a camera the query is disabled, and a disabled query is
+          `isPending` with `isFetching` false, so `isLoading` is false. Without
+          this the screen would sit on an empty map showing nothing at all. */}
+      {(isLoading || !cameraReady) && !snapshotsActive && (
+        <View
+          testID="map-initial-loading"
+          className="absolute inset-0 items-center justify-center"
+          pointerEvents="none">
           <ActivityIndicator />
         </View>
       )}

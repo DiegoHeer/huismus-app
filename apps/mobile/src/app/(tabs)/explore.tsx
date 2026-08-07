@@ -65,10 +65,15 @@ export default function ListingsScreen() {
   // Same filtered query as the map screen — the shared filters store keeps the
   // list, the map, and the bar's count badge in lock-step.
   const query = useMemo(() => filtersToQuery(filters), [filters]);
-  const { data: listings = [], isLoading, refetch, isRefetching } = useListings(query);
-  // The feed only ever holds one fetched page (capped server-side), so its
-  // length understates the true match count — mirror the filters screen's
-  // "Show N homes" badge and ask the server directly (limit=0 count-only mode).
+  // No bbox here, so this stays a single page: the multi-page walk in
+  // `getListingsPage` exists to fill a map viewport, and pages 2-3 of the whole
+  // country would be as arbitrary as page 1. Defaults otherwise — changing the
+  // filters or the sort should show the loading state, not hold a stale feed.
+  const { data, isLoading, refetch, isRefetching } = useListings(query);
+  const listings = data?.listings ?? [];
+  // The feed only ever holds that one page, so its length understates the true
+  // match count — mirror the filters screen's "Show N homes" badge and ask the
+  // server directly (limit=0 count-only mode).
   const { data: totalCount, isLoading: isCountLoading } = useListingsCount(query);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();

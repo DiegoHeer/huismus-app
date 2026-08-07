@@ -7,8 +7,8 @@ import {
   getCityNames,
   getStats,
   getListing,
-  getListings,
   getListingsCount,
+  getListingsPage,
   type CityName,
 } from './client';
 
@@ -20,25 +20,42 @@ export const listingKeys = {
   detail: (id: string) => ['listings', 'detail', id] as const,
 };
 
+/** Options the map needs and the Listings feed deliberately does not. */
+export interface UseListingsOptions {
+  /**
+   * Defer the first fetch. The map waits for the viewport it reports on load,
+   * rather than fetching the country first and immediately discarding it.
+   */
+  enabled?: boolean;
+  /**
+   * Hold the previous result on screen while the next one loads, so the map
+   * never flashes empty mid-gesture. Callers distinguish the two states via
+   * `isLoading` (first load, nothing to show) vs `isFetching` (refreshing).
+   *
+   * Off by default: a list that changes filters *should* show its loading state.
+   */
+  keepPrevious?: boolean;
+  /** How long a result stays fresh, in ms. Defaults to React Query's 0. */
+  staleTime?: number;
+}
+
 /**
- * Residences matching `query`. The map passes the visible `bbox`, so every pan
- * or zoom is a new query key and a fresh fetch. `keepPreviousData` holds the
- * previous viewport's markers on screen while the next page loads, so the map
- * never flashes empty mid-gesture — the caller distinguishes the two states via
- * `isLoading` (first load, nothing to show) vs `isFetching` (refreshing).
+ * Residences matching `query`, plus the server's total match count (see
+ * {@link getListingsPage} — the map draws at most a few pages, so the two differ
+ * wherever homes are dense). The map passes the visible `bbox`, so every pan or
+ * zoom is a new query key.
  *
- * `options.enabled` defers the first fetch; the map uses it to wait for the
- * viewport the map reports on load, rather than fetching the country first and
- * immediately discarding it.
+ * The `signal` is threaded into the fetch on purpose: React Query only aborts a
+ * superseded query if its query function consumed the signal, and a fast pan
+ * otherwise leaves every abandoned viewport's requests running to completion.
  */
-export function useListings(query: ListingQuery = {}, options: { enabled?: boolean } = {}) {
+export function useListings(query: ListingQuery = {}, options: UseListingsOptions = {}) {
   return useQuery({
     queryKey: listingKeys.list(query),
-    queryFn: () => getListings(query),
-    placeholderData: keepPreviousData,
-    // The map waits for its first viewport before querying, so it doesn't spend
-    // a nationwide fetch on markers the bbox query is about to replace.
+    queryFn: ({ signal }) => getListingsPage(query, signal),
+    placeholderData: options.keepPrevious ? keepPreviousData : undefined,
     enabled: options.enabled ?? true,
+    staleTime: options.staleTime,
   });
 }
 
@@ -50,7 +67,7 @@ export function useListings(query: ListingQuery = {}, options: { enabled?: boole
 export function useListingsCount(query: ListingQuery = {}) {
   return useQuery({
     queryKey: listingKeys.count(query),
-    queryFn: () => getListingsCount(query),
+    queryFn: ({ signal }) => getListingsCount(query, signal),
     placeholderData: keepPreviousData,
   });
 }

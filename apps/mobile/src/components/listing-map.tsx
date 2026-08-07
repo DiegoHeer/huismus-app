@@ -30,6 +30,7 @@ import {
   boundsFromTuple,
   buildings3DPaint,
   DEFAULT_CENTER,
+  INITIAL_ZOOM,
   priceLabel,
 } from './map-shared';
 import { usePulseOpacity } from './use-pulse-opacity';
@@ -222,24 +223,28 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         mapLoadedRef.current = true;
         const target = pendingFlyToRef.current;
         pendingFlyToRef.current = null;
-        // Apply the pending boot-time focus target, if there is one.
+        // Apply the pending boot-time focus target, if there is one. That jump
+        // is itself a camera move, so it fires `onRegionDidChange` with the
+        // settled bounds — reporting here as well would only add a query for
+        // the pre-jump framing, thrown away a moment later. Let the region
+        // change be the first report instead.
         if (target) {
           cameraRef.current?.flyTo({
             center: [target.longitude, target.latitude],
             zoom: target.zoom,
             duration: 0,
           });
+          return;
         }
-        // Report the initial framing so the search bar has a centre to rank
-        // suggestions against, and the screen a viewport to load residences
-        // for, before the user moves the map. The jump above may not be
-        // reflected in the bounds yet — the region change it fires reports the
-        // settled ones, so this is only the first approximation.
+        // No jump pending, so this is the framing the user will actually see:
+        // report it, giving the search bar a centre to rank suggestions against
+        // and the screen a viewport to load residences for before the first
+        // gesture. Bounds don't come with this event, so ask the map for them.
         const bounds = await mapViewRef.current?.getBounds?.();
         onCameraIdle?.({
-          longitude: target?.longitude ?? center[0],
-          latitude: target?.latitude ?? center[1],
-          zoom: target?.zoom ?? 11,
+          longitude: center[0],
+          latitude: center[1],
+          zoom: INITIAL_ZOOM,
           bounds: bounds ? boundsFromTuple(bounds) : undefined,
         });
       }}
@@ -251,7 +256,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
           are then driven solely by the user's gestures and the imperative ref
           (search flyTo) — loading a tapped city's neighborhoods, selecting an
           area, or toggling 3D buildings must not move it. */}
-      <Camera ref={cameraRef} initialViewState={{ center, zoom: 11 }} />
+      <Camera ref={cameraRef} initialViewState={{ center, zoom: INITIAL_ZOOM }} />
       {buildings3D && (
         <Layer
           id="buildings-3d"

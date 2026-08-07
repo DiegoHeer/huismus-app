@@ -19,18 +19,35 @@ function contains(outer: MapBounds, inner: MapBounds): boolean {
   );
 }
 
+/** Area of a rectangle in square degrees — good enough to compare two of them. */
+function area(b: MapBounds): number {
+  return (b.east - b.west) * (b.north - b.south);
+}
+
 describe('quantizeBounds', () => {
   it('never crops the visible viewport', () => {
-    const q = quantizeBounds(AMSTERDAM);
+    const q = quantizeBounds(AMSTERDAM)!;
     expect(contains(q, AMSTERDAM)).toBe(true);
   });
 
   it('fetches beyond the edges, so a short drag reveals loaded markers', () => {
-    const q = quantizeBounds(AMSTERDAM);
+    const q = quantizeBounds(AMSTERDAM)!;
     expect(q.west).toBeLessThan(AMSTERDAM.west);
     expect(q.east).toBeGreaterThan(AMSTERDAM.east);
     expect(q.south).toBeLessThan(AMSTERDAM.south);
     expect(q.north).toBeGreaterThan(AMSTERDAM.north);
+  });
+
+  // The page cap in `getListingsPage` is spent on the whole fetched rectangle,
+  // not on what's on screen, so every extra unit of area is markers the user
+  // paid for and cannot see. Padding and the outward snap compound, so this
+  // guards the product of the two rather than either alone.
+  it.each([
+    ['city', AMSTERDAM],
+    ['buurt', { west: 5.07, south: 52.08, east: 5.16, north: 52.122 }],
+    ['street', { west: 5.43, south: 52.35, east: 5.51, north: 52.392 }],
+  ] as const)('stays close to the visible area at %s zoom', (_label, viewport) => {
+    expect(area(quantizeBounds(viewport)!) / area(viewport)).toBeLessThan(2.5);
   });
 
   it('maps a small nudge onto the same rectangle', () => {
@@ -59,13 +76,13 @@ describe('quantizeBounds', () => {
     // Zooming in halves the span around the same centre.
     const zoomedIn: MapBounds = { west: 4.825, south: 52.3325, east: 4.975, north: 52.3975 };
     expect(quantizeBounds(zoomedIn)).not.toEqual(quantizeBounds(AMSTERDAM));
-    expect(contains(quantizeBounds(zoomedIn), zoomedIn)).toBe(true);
+    expect(contains(quantizeBounds(zoomedIn)!, zoomedIn)).toBe(true);
   });
 
   it('keeps the result inside valid lon/lat range', () => {
     // Zoomed out over the pole/antimeridian, padding would otherwise overshoot
     // and the API rejects out-of-range values with a 422.
-    const q = quantizeBounds({ west: -179, south: -89, east: 179, north: 89 });
+    const q = quantizeBounds({ west: -179, south: -89, east: 179, north: 89 })!;
     expect(q.west).toBeGreaterThanOrEqual(-180);
     expect(q.east).toBeLessThanOrEqual(180);
     expect(q.south).toBeGreaterThanOrEqual(-90);
@@ -73,8 +90,6 @@ describe('quantizeBounds', () => {
   });
 
   it('returns the whole world for a world-spanning viewport', () => {
-    // Wrapping past the antimeridian would leave west > east — an empty
-    // rectangle server-side, i.e. a map with no markers at all.
     expect(quantizeBounds({ west: -200, south: -80, east: 200, north: 80 })).toEqual({
       west: -180,
       south: -90,
@@ -83,11 +98,26 @@ describe('quantizeBounds', () => {
     });
   });
 
-  it('survives a degenerate zero-span viewport', () => {
-    // Reported briefly on some platforms before the map has laid out.
-    const q = quantizeBounds({ west: 4.9, south: 52.37, east: 4.9, north: 52.37 });
-    expect(Number.isFinite(q.west)).toBe(true);
-    expect(Number.isFinite(q.north)).toBe(true);
+  it('returns the whole world when the viewport wraps the antimeridian', () => {
+    // Wrapping leaves west > east — an empty rectangle server-side, i.e. a map
+    // with no markers at all. Degrade to unscoped instead.
+    expect(quantizeBounds({ west: 170, south: 52.3, east: -170, north: 52.43 })).toEqual({
+      west: -180,
+      south: -90,
+      east: 180,
+      north: 90,
+    });
+  });
+
+  it('reports no viewport for a degenerate zero-span one', () => {
+    // Reported briefly on some platforms before the map has laid out. This is
+    // "not ready yet", not "the user is looking at a point": snapping it would
+    // ask for a zero-area rectangle, and the whole-world fallback would spend a
+    // nationwide fetch on a frame about to be replaced. The caller keeps the
+    // viewport it already had.
+    expect(quantizeBounds({ west: 4.9, south: 52.37, east: 4.9, north: 52.37 })).toBeNull();
+    expect(quantizeBounds({ west: 4.75, south: 52.37, east: 5.05, north: 52.37 })).toBeNull();
+    expect(quantizeBounds({ west: NaN, south: NaN, east: NaN, north: NaN })).toBeNull();
   });
 });
 

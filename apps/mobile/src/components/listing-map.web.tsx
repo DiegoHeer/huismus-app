@@ -18,7 +18,13 @@ import {
   toFeatureCollection,
 } from './area-polygons';
 import { useMapStyle } from './map-style';
-import { BUILDINGS_3D_MIN_ZOOM, buildings3DPaint, DEFAULT_CENTER, priceLabel } from './map-shared';
+import {
+  BUILDINGS_3D_MIN_ZOOM,
+  buildings3DPaint,
+  DEFAULT_CENTER,
+  INITIAL_ZOOM,
+  priceLabel,
+} from './map-shared';
 import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { useRecentViews } from '../lib/recent-views';
@@ -199,7 +205,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   return (
     <Map
       ref={attachMap}
-      initialViewState={{ ...center, zoom: 11 }}
+      initialViewState={{ ...center, zoom: INITIAL_ZOOM }}
       mapStyle={mapStyle}
       // Swap themes with a full style reload, not a diff. Diffing races the
       // runtime-added overlay: it tries to move the overlay layer to the new

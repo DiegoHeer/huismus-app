@@ -243,6 +243,41 @@ describe('MapScreen viewport loading', () => {
     await waitFor(() => expect(residenceUrls().length).toBe(0));
   });
 
+  it('shows the loading state while waiting for the camera', async () => {
+    // A disabled query is `isPending` with `isFetching` false, so `isLoading` is
+    // false — the screen has to treat "no camera yet" as loading itself, or it
+    // sits on an empty map that reads as "there are no homes here".
+    const { getByTestId, queryByTestId } = await renderScreen();
+    expect(getByTestId('map-initial-loading')).toBeTruthy();
+
+    settleCamera(getByTestId('maplibre-map'));
+    await waitFor(() => expect(queryByTestId('map-initial-loading')).toBeNull());
+  });
+
+  it('says so when more homes match the viewport than it can draw', async () => {
+    // The page cap is otherwise invisible: 300 pins look the same whether that
+    // is every home in the area or a slice of four thousand.
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ items: [], total: 4000, limit: 100, offset: 0, has_more: true }),
+    });
+    const { getByTestId, getByText } = await renderScreen();
+
+    settleCamera(getByTestId('maplibre-map'));
+
+    await waitFor(() => expect(getByTestId('map-capped-results')).toBeTruthy());
+    expect(getByText(/of 4,000 homes/)).toBeTruthy();
+  });
+
+  it('stays quiet when the viewport holds fewer homes than the cap', async () => {
+    const { getByTestId, queryByTestId } = await renderScreen();
+
+    settleCamera(getByTestId('maplibre-map'));
+
+    await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));
+    expect(queryByTestId('map-capped-results')).toBeNull();
+  });
+
   it('requests the residences inside the viewport once the camera settles', async () => {
     const { getByTestId } = await renderScreen();
 
@@ -261,24 +296,53 @@ describe('MapScreen viewport loading', () => {
     expect(north!).toBeGreaterThanOrEqual(52.43);
   });
 
+  /**
+   * The distinct *viewport-scoped* residence queries the screen has asked for.
+   * A cache entry appears the moment a settle produces a new query key, so
+   * counting these says whether a settle was a new rectangle or the same one —
+   * without racing whatever the fetch scheduler is doing.
+   *
+   * The unscoped entry React Query keys before the camera reports is filtered
+   * out: it is disabled and never fetched, so it is not a viewport.
+   */
+  const viewportQueries = () =>
+    queryClient
+      .getQueryCache()
+      .findAll({ queryKey: ['listings', 'list'] })
+      .filter((query) => query.queryHash.includes('bbox'));
+
   it('re-requests for a real pan but not for a nudge', async () => {
     const { getByTestId } = await renderScreen();
     const map = getByTestId('maplibre-map');
 
     settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
-    await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));
-    const afterFirst = residenceUrls().length;
+    await waitFor(() => expect(residenceUrls()).toHaveLength(1));
 
     // A few pixels of drift must not refetch — it snaps to the same rectangle,
-    // so the query key is unchanged and React Query serves the cache.
+    // so the query key is unchanged and React Query serves the cache. The
+    // settle renders synchronously, so a rectangle that had missed the grid
+    // would already have keyed its own cache entry by the time this runs.
     settleCamera(map, [4.751, 52.301, 5.051, 52.431]);
-    await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));
-    expect(residenceUrls().length).toBe(afterFirst);
+    await waitFor(() => expect(viewportQueries()).toHaveLength(1));
 
     // Panning a viewport's width away is a different rectangle, so it reloads.
     settleCamera(map, [5.35, 52.3, 5.65, 52.43]);
-    await waitFor(() => expect(residenceUrls().length).toBeGreaterThan(afterFirst));
-    const distinct = new Set(bboxes());
-    expect(distinct.size).toBeGreaterThan(1);
+    await waitFor(() => expect(residenceUrls()).toHaveLength(2));
+
+    // Two rectangles, two requests — the nudge cost nothing.
+    expect(viewportQueries()).toHaveLength(2);
+    expect(new Set(bboxes()).size).toBe(2);
+  });
+
+  it('keeps a fetched viewport fresh, so panning back to it is free', async () => {
+    // Quantizing only makes a *nudge* free. Without a staleTime React Query
+    // marks every result stale the moment it lands, so panning to and fro
+    // around a city — an ordinary gesture — would pay the round trip each way.
+    const { getByTestId } = await renderScreen();
+
+    settleCamera(getByTestId('maplibre-map'), [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(residenceUrls()).toHaveLength(1));
+
+    expect(viewportQueries()[0]!.isStale()).toBe(false);
   });
 });

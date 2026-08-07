@@ -219,6 +219,9 @@
       "noData": "Sem dados"
     }
   },
+  "map": {
+    "cappedResults": "A mostrar {{shown}} de {{total}} casas — aproxime para ver as restantes"
+  },
   "filtersPage": {
     "title": "Filtros",
     "reset": "Limpar",

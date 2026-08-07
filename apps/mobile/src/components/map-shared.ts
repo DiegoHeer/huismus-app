@@ -5,6 +5,13 @@ import type { Listing, MapBounds } from '@huismus/types';
 export const DEFAULT_CENTER = { longitude: 4.9041, latitude: 52.3676 } as const;
 
 /**
+ * Zoom the map opens at — roughly a province in view. Shared by both platforms'
+ * `initialViewState` and by the framing they report before the first gesture, so
+ * the reported zoom can't drift from the one actually applied.
+ */
+export const INITIAL_ZOOM = 11;
+
+/**
  * Widen MapLibre's `[west, south, east, north]` bounds tuple (the shape the
  * native region-change event reports) into the named form the listings query
  * takes. The web map reports bounds as an object instead, so it converts inline.

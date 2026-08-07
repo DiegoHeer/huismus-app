@@ -23,13 +23,24 @@ import {
 const RESIDENCE_PAGE_SIZE = 100;
 
 /**
- * How many pages a single {@link getListings} call will walk. The API caps
- * `limit` at 100, so a dense viewport needs several requests to fill the map.
- * Three bounds both the marker count and the request fan-out — a viewport with
- * more matches than this is zoomed out too far for individual pins to be
- * readable anyway.
+ * How many pages a *viewport-scoped* {@link getListingsPage} call will walk. The
+ * API caps `limit` at 100, so a dense viewport needs several requests to fill
+ * the map. Three bounds both the marker count and the request fan-out — a
+ * viewport with more matches than this is zoomed out too far for individual pins
+ * to be readable anyway.
+ *
+ * A query with no `bbox` stays on one page: pages 2-3 of the whole country are
+ * as arbitrary as page 1, so the Listings feed would pay triple the requests for
+ * nothing (it reads its count from {@link getListingsCount}).
  */
 const MAX_RESIDENCE_PAGES = 3;
+
+/**
+ * The most homes a viewport-scoped query can return. A `total` above this means
+ * the map is drawing a strict subset of what matched, and should say so instead
+ * of letting the cap pass for "that's all there is".
+ */
+export const MAX_MAP_RESIDENCES = MAX_RESIDENCE_PAGES * RESIDENCE_PAGE_SIZE;
 
 /** Max residence suggestions the search typeahead requests per keystroke. */
 const RESIDENCE_SEARCH_LIMIT = 8;
@@ -148,50 +159,94 @@ function pageItems(res: ResidenceSummaryOut[] | ResidencePage): ResidenceSummary
 }
 
 /**
- * Fetch every residence matching `query`, walking up to
- * {@link MAX_RESIDENCE_PAGES} pages. The first page's `total` says how many more
- * exist, so the remainder are requested concurrently rather than in a chain.
+ * Fetch the residences matching `query`, walking up to
+ * {@link MAX_RESIDENCE_PAGES} pages when the query is viewport-scoped. The first
+ * page's `total` says how many more exist, so the remainder are requested
+ * concurrently rather than in a chain.
  *
  * Concurrent offsets are safe because the API's every sort order ends in a
  * unique `id` tiebreaker, making the row order total and stable — pages can't
  * overlap or skip. Results are still deduped by id: two pages fetched in
  * parallel could in principle straddle a concurrent write, and a repeated id
  * would mean duplicate React keys on the map.
+ *
+ * `total` is reported back unchanged, so callers can tell "300 homes here" from
+ * "300 of 4,000 here" — the page cap is otherwise invisible.
  */
-async function fetchResidencePages(query: ListingQuery): Promise<ResidenceSummaryOut[]> {
+async function fetchResidencePages(
+  query: ListingQuery,
+  signal?: AbortSignal,
+): Promise<{ items: ResidenceSummaryOut[]; total: number }> {
   const base = buildResidenceParams(query);
   const fetchPage = (offset: number) => {
     const params = new URLSearchParams(base);
     params.set('limit', String(RESIDENCE_PAGE_SIZE));
     params.set('offset', String(offset));
-    return request<ResidenceSummaryOut[] | ResidencePage>(`/v1/residences?${params}`);
+    return request<ResidenceSummaryOut[] | ResidencePage>(`/v1/residences?${params}`, { signal });
   };
 
   const first = await fetchPage(0);
   // A legacy bare array carries no total, so it is treated as the only page.
-  if (Array.isArray(first)) return first;
+  if (Array.isArray(first)) return { items: first, total: first.length };
 
-  const pages = Math.min(MAX_RESIDENCE_PAGES, Math.ceil(first.total / RESIDENCE_PAGE_SIZE));
+  const maxPages = query.bbox ? MAX_RESIDENCE_PAGES : 1;
+  const pages = Math.min(maxPages, Math.ceil(first.total / RESIDENCE_PAGE_SIZE));
+  // `allSettled`, not `all`: a page that fails must not discard the homes the
+  // pages beside it already returned. Partial markers beat an empty map, and
+  // `total` still reports the truth, so a short result stays legible as one.
   const rest =
     pages > 1
-      ? await Promise.all(
-          Array.from({ length: pages - 1 }, (_, i) => fetchPage((i + 1) * RESIDENCE_PAGE_SIZE)),
-        )
+      ? (
+          await Promise.allSettled(
+            Array.from({ length: pages - 1 }, (_, i) => fetchPage((i + 1) * RESIDENCE_PAGE_SIZE)),
+          )
+        ).flatMap((settled) => (settled.status === 'fulfilled' ? [settled.value] : []))
       : [];
 
   const byId = new Map<number, ResidenceSummaryOut>();
   for (const page of [first, ...rest]) {
     for (const item of pageItems(page)) byId.set(item.id, item);
   }
-  return [...byId.values()];
+  return { items: [...byId.values()], total: first.total };
 }
 
-export async function getListings(query: ListingQuery = {}): Promise<Listing[]> {
-  const summaries = await fetchResidencePages(query);
+/** Map markers for a query, plus how many residences actually matched it. */
+export interface ListingsPage {
+  /** The homes to draw — at most {@link MAX_RESIDENCE_PAGES} pages of them. */
+  listings: Listing[];
+  /**
+   * Residences matching `query` server-side, before the page cap and before
+   * ungeocoded ones are dropped. Greater than `listings.length` means the map is
+   * showing a subset, which the caller should say out loud.
+   */
+  total: number;
+}
+
+/**
+ * Residences matching `query` as map markers, with the server's match count
+ * alongside. Pass the React Query `signal` so a superseded viewport's requests
+ * are aborted instead of running to completion.
+ */
+export async function getListingsPage(
+  query: ListingQuery = {},
+  signal?: AbortSignal,
+): Promise<ListingsPage> {
+  const { items, total } = await fetchResidencePages(query, signal);
   // Only geocoded residences can be placed on the map.
-  const listings = summaries.filter(hasCoordinates).map(summaryToListing);
+  const listings = items.filter(hasCoordinates).map(summaryToListing);
   // The API has no free-text search, so honor `search` client-side.
-  return query.search ? listings.filter((l) => matchesSearch(l, query.search!)) : listings;
+  return {
+    listings: query.search ? listings.filter((l) => matchesSearch(l, query.search!)) : listings,
+    total,
+  };
+}
+
+/** {@link getListingsPage} without the count, for callers that only draw homes. */
+export async function getListings(
+  query: ListingQuery = {},
+  signal?: AbortSignal,
+): Promise<Listing[]> {
+  return (await getListingsPage(query, signal)).listings;
 }
 
 /**
@@ -199,10 +254,15 @@ export async function getListings(query: ListingQuery = {}): Promise<Listing[]> 
  * the API's count-only mode (`limit=0` → `{ total }`) so the filters screen can
  * show a truthful "Show N homes" badge without fetching a page of homes.
  */
-export async function getListingsCount(query: ListingQuery = {}): Promise<number> {
+export async function getListingsCount(
+  query: ListingQuery = {},
+  signal?: AbortSignal,
+): Promise<number> {
   const params = buildResidenceParams(query, false);
   params.set('limit', '0');
-  const res = await request<ResidenceSummaryOut[] | ResidencePage>(`/v1/residences?${params}`);
+  const res = await request<ResidenceSummaryOut[] | ResidencePage>(`/v1/residences?${params}`, {
+    signal,
+  });
   return Array.isArray(res) ? res.length : res.total;
 }
 
