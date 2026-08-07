@@ -35,7 +35,7 @@ import {
 import { usePulseOpacity } from './use-pulse-opacity';
 import { buildAreaIndex, findAreaAt } from '../lib/area-hit-test';
 import { outlineColorFor } from '../lib/area-choropleth';
-import { type MapOverlay } from '../lib/map-overlays';
+import { hides3DBuildings, type MapOverlay } from '../lib/map-overlays';
 import { useRecentViews } from '../lib/recent-views';
 import { useBrand } from '@/hooks/use-theme';
 import { withAlpha } from '@/constants/theme';
@@ -113,6 +113,10 @@ export interface ListingMapProps {
   /**
    * Extrude the basemap's buildings to their real height. The camera is left
    * alone — the extrusion is drawn top-down unless the user tilts the map.
+   *
+   * A per-building `overlay` overrides it: the extrusion would bury the very
+   * data that overlay paints, so the buildings stay flat until it's cleared —
+   * see `hides3DBuildings`. The preference itself is untouched.
    */
   buildings3D?: boolean;
 }
@@ -252,7 +256,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
           (search flyTo) — loading a tapped city's neighborhoods, selecting an
           area, or toggling 3D buildings must not move it. */}
       <Camera ref={cameraRef} initialViewState={{ center, zoom: 11 }} />
-      {buildings3D && (
+      {buildings3D && !hides3DBuildings(overlay) && (
         <Layer
           id="buildings-3d"
           source="openmaptiles"

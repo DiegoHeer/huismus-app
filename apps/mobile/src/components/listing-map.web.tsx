@@ -13,7 +13,7 @@ import {
 } from 'react';
 import { Layer, Map, type MapRef, Marker, Source, useMap } from 'react-map-gl/maplibre';
 
-import type { MapOverlay } from '../lib/map-overlays';
+import { hides3DBuildings, type MapOverlay } from '../lib/map-overlays';
 
 import type { ListingMapProps, ListingMapRef } from './listing-map';
 import {
@@ -247,7 +247,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         // A click off any area overlay → hit-test which city it lands in.
         onMapPress?.({ longitude: e.lngLat.lng, latitude: e.lngLat.lat });
       }}>
-      {buildings3D && (
+      {buildings3D && !hides3DBuildings(overlay) && (
         <Layer
           id="buildings-3d"
           source="openmaptiles"
