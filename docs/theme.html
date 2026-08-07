@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dageraad &amp; Gloed — Huismus Design Tokens</title>
+<style>
+  @font-face {
+    font-family: 'Spline Sans';
+    src: url(../public/fonts/spline-sans-latin.woff2) format('woff2');
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url(../public/fonts/inter-latin.woff2) format('woff2');
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #FAF6F0;
+    --surface: #F1E9DE;
+    --card: #FFFFFF;
+    --border: #E6DCCE;
+    --ink: #2A231C;
+    --ink-2: #6F6354;
+    --accent: #D7442E;
+    --accent-strong: #BC2828;
+    --accent-text: #B3301C;
+    --success: #3E7C4F;
+    --accent-rgb: 215, 68, 46;
+    --shadow: 0 12px 32px -12px rgba(42, 35, 28, 0.22);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16110D;
+      --surface: #211A14;
+      --card: #261F18;
+      --border: #362C22;
+      --ink: #F5EDE4;
+      --ink-2: #A99C8C;
+      --accent: #E85B41;
+      --accent-strong: #D7442E;
+      --accent-text: #FF8A66;
+      --success: #7FB58C;
+      --accent-rgb: 232, 91, 65;
+      --shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16110D;
+    --surface: #211A14;
+    --card: #261F18;
+    --border: #362C22;
+    --ink: #F5EDE4;
+    --ink-2: #A99C8C;
+    --accent: #E85B41;
+    --accent-strong: #D7442E;
+    --accent-text: #FF8A66;
+    --success: #7FB58C;
+    --accent-rgb: 232, 91, 65;
+    --shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+  :root[data-theme="light"] {
+    --bg: #FAF6F0;
+    --surface: #F1E9DE;
+    --card: #FFFFFF;
+    --border: #E6DCCE;
+    --ink: #2A231C;
+    --ink-2: #6F6354;
+    --accent: #D7442E;
+    --accent-strong: #BC2828;
+    --accent-text: #B3301C;
+    --success: #3E7C4F;
+    --accent-rgb: 215, 68, 46;
+    --shadow: 0 12px 32px -12px rgba(42, 35, 28, 0.22);
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body { transition: none; }
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 96px; }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-row {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .brand {
+    font-family: 'Spline Sans', ui-sans-serif, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .brand span { color: var(--ink-2); font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.85rem; }
+  .site-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .site-nav a {
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    border-radius: 999px;
+  }
+  .site-nav a:hover { color: var(--ink); background: var(--surface); }
+  .site-nav a:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 14px 7px 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover { border-color: var(--accent-text); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+  .theme-toggle svg { width: 15px; height: 15px; display: block; }
+  .icon-moon { display: none; }
+  :root[data-theme="dark"] .icon-sun { display: none; }
+  :root[data-theme="dark"] .icon-moon { display: block; }
+
+  .intro { padding: 56px 0 40px; }
+  .eyebrow {
+    font-family: 'Spline Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+    display: block;
+    margin: 0 0 12px;
+  }
+  h1.title {
+    font-family: 'Spline Sans', ui-sans-serif, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-size: clamp(2.1rem, 4.6vw, 3rem);
+    line-height: 1.05;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .lede {
+    font-size: 1.0625rem;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  section.block { padding: 48px 0; border-top: 1px solid var(--border); }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; margin-bottom: 28px; flex-wrap: wrap; }
+  h2.section-title {
+    font-family: 'Spline Sans', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: 1.6rem;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .section-note { font-size: 0.9rem; color: var(--ink-2); max-width: 40ch; margin: 0; }
+
+  /* Color tokens */
+  .token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .token-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+  .swatch-pair { display: flex; height: 84px; }
+  .swatch-half { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px 10px; }
+  .swatch-half .mode { font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.75; }
+  .swatch-half .hex { font-family: 'Spline Sans', sans-serif; font-weight: 500; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+  .token-meta { padding: 12px 14px 14px; }
+  .token-name { font-family: 'Spline Sans', sans-serif; font-weight: 600; font-size: 0.9rem; margin: 0 0 3px; }
+  .token-desc { font-size: 0.82rem; color: var(--ink-2); margin: 0; }
+
+  /* Red budget */
+  .rule-quote {
+    font-size: 1.05rem;
+    max-width: 58ch;
+    margin: 0 0 32px;
+    color: var(--ink);
+  }
+  .rule-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 720px) { .rule-cols { grid-template-columns: 1fr; } }
+  .rule-col-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .rule-col-head h3 { font-family: 'Spline Sans', sans-serif; font-weight: 600; font-size: 0.95rem; margin: 0; }
+  .badge { font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; font-family: 'Spline Sans', sans-serif; font-weight: 500; }
+  .badge.yes { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent-strong); }
+  .badge.no { background: var(--surface); color: var(--ink-2); border: 1px solid var(--border); }
+  .rule-list { display: flex; flex-direction: column; gap: 10px; }
+  .rule-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+  .rule-item .demo { flex-shrink: 0; }
+  .rule-item .caption { font-size: 0.82rem; color: var(--ink-2); }
+  .rule-item .caption b { color: var(--ink); font-weight: 600; }
+
+  .demo-hero-chip { width: 34px; height: 24px; border-radius: 6px; background: linear-gradient(180deg, var(--accent), var(--accent-strong)); }
+  .demo-btn { font-family: 'Spline Sans', sans-serif; font-weight: 600; font-size: 0.8rem; color: #fff; background: var(--accent); padding: 7px 14px; border-radius: 999px; }
+  .demo-pin { width: 20px; height: 20px; position: relative; }
+  .demo-pin svg { width: 100%; height: 100%; fill: var(--accent); }
+  .live-dot-wrap { display: flex; align-items: center; gap: 7px; font-family: 'Spline Sans', sans-serif; font-weight: 500; font-size: 0.8rem; }
+  .live-dot { width: 9px; height: 9px; border-radius: 999px; background: var(--accent); animation: pulse-dot 2s ease-in-out infinite; }
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.4); }
+    50% { box-shadow: 0 0 0 5px rgba(var(--accent-rgb), 0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+  .demo-link { color: var(--accent-text); font-size: 0.85rem; text-decoration: underline; text-underline-offset: 2px; }
+
+  .not-item .swatch-bad { width: 34px; height: 24px; border-radius: 6px; flex-shrink: 0; }
+  .not-item.a .swatch-bad { background: var(--accent); }
+  .not-item.b p.bad-text { color: var(--accent); font-size: 0.85rem; margin: 0; font-weight: 500; }
+
+  /* Gradients */
+  .gradient-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .gradient-card { border-radius: 20px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .gradient-swatch { height: 180px; }
+  .gradient-swatch.dageraad {
+    background:
+      radial-gradient(50% 60% at 50% -10%, #E85B41 0%, transparent 70%),
+      linear-gradient(180deg, #D7442E 0%, #C63A2B 38%, #D97A5A 62%, #F0DFC9 86%, #FAF6F0 100%);
+  }
+  .gradient-swatch.gloed {
+    background:
+      radial-gradient(70% 60% at 70% 95%, #FF7A50 0%, transparent 50%),
+      radial-gradient(72% 70% at 72% 82%, #D7442E 0%, transparent 55%),
+      linear-gradient(180deg, #1C1712 0%, #16110D 100%);
+  }
+  .gradient-swatch.avondrood {
+    background: linear-gradient(180deg, #FAF6F0 0%, #F0DFC9 14%, #D97A5A 38%, #C63A2B 62%, #D7442E 100%);
+  }
+  .gradient-label { padding: 14px 16px 16px; background: var(--card); }
+  .gradient-label h3 { font-family: 'Spline Sans', sans-serif; font-weight: 600; font-size: 0.95rem; margin: 0 0 4px; }
+  .gradient-label p { font-size: 0.82rem; color: var(--ink-2); margin: 0; }
+
+  /* Type */
+  .type-block { margin-bottom: 40px; }
+  .type-block:last-child { margin-bottom: 0; }
+  .display-lg {
+    font-family: 'Spline Sans', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-size: clamp(1.8rem, 4.2vw, 2.6rem);
+    line-height: 1.08;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .display-en {
+    font-family: 'Spline Sans', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: 1.4rem;
+    color: var(--ink-2);
+    margin: 0;
+  }
+  .specimen-tag { font-size: 0.75rem; color: var(--ink-2); font-family: 'Inter', sans-serif; margin: 0 0 8px; }
+  .specimen-tag code { font-family: 'Spline Sans', sans-serif; }
+  .body-copy { font-size: 1.0625rem; line-height: 1.65; max-width: 60ch; margin: 0; }
+  .body-copy + .body-copy { margin-top: 12px; }
+
+  .weight-row { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 4px; }
+  .weight-sample .label { font-size: 0.72rem; color: var(--ink-2); margin: 0 0 4px; font-family: 'Inter', sans-serif; }
+  .weight-sample .glyphs { font-size: 1.15rem; margin: 0; }
+  .w-spline-500 { font-family: 'Spline Sans', sans-serif; font-weight: 500; }
+  .w-spline-600 { font-family: 'Spline Sans', sans-serif; font-weight: 600; }
+  .w-inter-400 { font-family: 'Inter', sans-serif; font-weight: 400; }
+  .w-inter-600 { font-family: 'Inter', sans-serif; font-weight: 600; }
+
+  .numeral-table { border-collapse: collapse; margin-top: 4px; }
+  .numeral-table td { padding: 6px 20px 6px 0; font-size: 1.3rem; }
+  .numeral-table .prop { font-variant-numeric: normal; }
+  .numeral-table .tab { font-variant-numeric: tabular-nums; }
+  .numeral-table .row-label { font-size: 0.78rem; color: var(--ink-2); font-family: 'Inter', sans-serif; padding-right: 16px; vertical-align: middle; }
+
+  footer.credit { padding-top: 48px; text-align: center; }
+  footer.credit p { font-size: 0.8rem; color: var(--ink-2); margin: 0; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-row">
+    <div class="brand">Dageraad &amp; Gloed <span>huismus tokens</span></div>
+    <nav class="site-nav">
+      <a href="#color">Color</a>
+      <a href="#red-budget">Red budget</a>
+      <a href="#gradients">Gradients</a>
+      <a href="#type">Type</a>
+    </nav>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.6 15.3a8.6 8.6 0 0 1-10-13 9 9 0 1 0 10 13Z"/></svg>
+      <span id="theme-label">Dageraad</span>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <span class="eyebrow">Design system reference</span>
+    <h1 class="title">Dageraad &amp; Gloed</h1>
+    <p class="lede">One brand, one sun cycle. Light mode is <b>Dageraad</b> — signal red melting into warm paper; dark mode is <b>Gloed</b> — the same red as an ember glow on charcoal. Toggle above to see both.</p>
+  </div>
+
+  <section class="block" id="color">
+    <div class="section-head">
+      <h2 class="section-title">Color tokens</h2>
+      <p class="section-note">Each token's light and dark value, shown side by side regardless of the page's current mode.</p>
+    </div>
+    <div class="token-grid" id="token-grid"></div>
+  </section>
+
+  <section class="block" id="red-budget">
+    <div class="section-head">
+      <h2 class="section-title">The red budget</h2>
+    </div>
+    <p class="rule-quote">Brand red is rationed to five places: the hero, the primary CTA, map pins, the live dot, and links or eyebrows. Nowhere else — every other neutral stays warm charcoal or paper.</p>
+    <div class="rule-cols">
+      <div>
+        <div class="rule-col-head"><h3>Where red lives</h3><span class="badge yes">on-brand</span></div>
+        <div class="rule-list">
+          <div class="rule-item"><div class="demo"><div class="demo-hero-chip"></div></div><p class="caption"><b>Hero wash</b> — the Dageraad / Gloed gradient</p></div>
+          <div class="rule-item"><div class="demo"><span class="demo-btn">Bekijk aanbod</span></div><p class="caption"><b>Primary CTA</b> — one red button per view</p></div>
+          <div class="rule-item"><div class="demo"><div class="demo-pin"><svg viewBox="0 0 24 24"><path d="M12 2c-4.4 0-8 3.6-8 8 0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8Zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/></svg></div></div><p class="caption"><b>Map pins</b> — matches found on the map</p></div>
+          <div class="rule-item"><div class="demo"><div class="live-dot-wrap"><span class="live-dot"></span></div></div><p class="caption"><b>Live dot</b> — new listing just came in</p></div>
+          <div class="rule-item"><div class="demo"><span class="demo-link">Meer weten →</span></div><p class="caption"><b>Links &amp; eyebrows</b> — AA contrast on paper</p></div>
+        </div>
+      </div>
+      <div>
+        <div class="rule-col-head"><h3>Where it stays out</h3><span class="badge no">off-brand</span></div>
+        <div class="rule-list">
+          <div class="rule-item not-item a"><div class="swatch-bad"></div><p class="caption"><b>Decorative borders</b> on a neutral card — outside the five contexts</p></div>
+          <div class="rule-item not-item b"><p class="bad-text">Nieuwe woningen deze week</p><p class="caption"><b>Body text</b> set in red — drops contrast and breaks the budget</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="gradients">
+    <div class="section-head">
+      <h2 class="section-title">Hero gradients</h2>
+      <p class="section-note">Pure CSS washes, one per theme, plus the reversed ramp used for the closing CTA.</p>
+    </div>
+    <div class="gradient-grid">
+      <div class="gradient-card">
+        <div class="gradient-swatch dageraad"></div>
+        <div class="gradient-label"><h3>Dageraad</h3><p>Red into coral into warm paper, with a sky glow at the top — the light-mode hero.</p></div>
+      </div>
+      <div class="gradient-card">
+        <div class="gradient-swatch gloed"></div>
+        <div class="gradient-label"><h3>Gloed</h3><p>Charcoal base with an ember glow and a coral core low in the frame — the dark-mode hero.</p></div>
+      </div>
+      <div class="gradient-card">
+        <div class="gradient-swatch avondrood"></div>
+        <div class="gradient-label"><h3>Avondrood</h3><p>The Dageraad ramp reversed, paper into red — reserved for the final call-to-action.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="type">
+    <div class="section-head">
+      <h2 class="section-title">Type</h2>
+      <p class="section-note">Spline Sans for display, Inter for body — both self-hosted, no font CDN.</p>
+    </div>
+
+    <div class="type-block">
+      <p class="specimen-tag"><code>Spline Sans</code> 600 · tight tracking · display</p>
+      <p class="display-lg">Nieuwe woningen. Eerder in beeld.</p>
+      <p class="display-en">New listings. First look, first move.</p>
+    </div>
+
+    <div class="type-block">
+      <p class="specimen-tag"><code>Spline Sans</code> 500 · uppercase · eyebrow / label use</p>
+      <span class="eyebrow" style="margin:0;">AANBOD · LIVE</span>
+    </div>
+
+    <div class="type-block">
+      <p class="specimen-tag"><code>Inter</code> 400 · body · max 65ch</p>
+      <p class="body-copy">Huismus verzamelt nieuw woningaanbod uit tientallen makelaars en stuurt een melding zodra er een match is voor jouw zoekprofiel — vaak nog voordat het aanbod op de grote portals verschijnt.</p>
+    </div>
+
+    <div class="type-block">
+      <p class="specimen-tag">Weight pairing</p>
+      <div class="weight-row">
+        <div class="weight-sample"><p class="label">Spline Sans 500</p><p class="glyphs w-spline-500">Aa Bb Gg 0123</p></div>
+        <div class="weight-sample"><p class="label">Spline Sans 600</p><p class="glyphs w-spline-600">Aa Bb Gg 0123</p></div>
+        <div class="weight-sample"><p class="label">Inter 400</p><p class="glyphs w-inter-400">Aa Bb Gg 0123</p></div>
+        <div class="weight-sample"><p class="label">Inter 600</p><p class="glyphs w-inter-600">Aa Bb Gg 0123</p></div>
+      </div>
+    </div>
+
+    <div class="type-block">
+      <p class="specimen-tag">Tabular numerals — used for every figure, so counters and stats never jitter</p>
+      <table class="numeral-table">
+        <tr><td class="row-label">proportional</td><td class="prop">1.248</td><td class="prop">86</td><td class="prop">24.510</td></tr>
+        <tr><td class="row-label">tabular-nums</td><td class="tab">1.248</td><td class="tab">86</td><td class="tab">24.510</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <footer class="credit">
+    <p>Dageraad &amp; Gloed — design system §3 · huismus-web</p>
+  </footer>
+
+</div>
+
+<script>
+  var TOKENS = [
+    { name: '--bg', desc: 'page ground', light: '#FAF6F0', dark: '#16110D' },
+    { name: '--surface', desc: 'tinted sections, chips', light: '#F1E9DE', dark: '#211A14' },
+    { name: '--card', desc: 'cards, inputs', light: '#FFFFFF', dark: '#261F18' },
+    { name: '--border', desc: 'hairlines', light: '#E6DCCE', dark: '#362C22' },
+    { name: '--ink', desc: 'headings, text', light: '#2A231C', dark: '#F5EDE4' },
+    { name: '--ink-2', desc: 'secondary text', light: '#6F6354', dark: '#A99C8C' },
+    { name: '--accent', desc: 'primary buttons, pins, live dot', light: '#D7442E', dark: '#E85B41' },
+    { name: '--accent-strong', desc: 'hover / pressed', light: '#BC2828', dark: '#D7442E' },
+    { name: '--accent-text', desc: 'links / eyebrows (AA on bg)', light: '#B3301C', dark: '#FF8A66' },
+    { name: '--success', desc: 'energy labels, positive stats', light: '#3E7C4F', dark: '#7FB58C' }
+  ];
+  var LABEL_COLOR = {
+    '#FAF6F0': '#2A231C', '#F1E9DE': '#2A231C', '#FFFFFF': '#2A231C', '#E6DCCE': '#2A231C',
+    '#2A231C': '#FAF6F0', '#6F6354': '#FAF6F0',
+    '#D7442E': '#FFFFFF', '#BC2828': '#FFFFFF', '#B3301C': '#FFFFFF', '#3E7C4F': '#FFFFFF',
+    '#16110D': '#F5EDE4', '#211A14': '#F5EDE4', '#261F18': '#F5EDE4', '#362C22': '#F5EDE4',
+    '#F5EDE4': '#16110D', '#A99C8C': '#16110D',
+    '#E85B41': '#1C1712', '#FF8A66': '#1C1712', '#7FB58C': '#16110D'
+  };
+
+  var grid = document.getElementById('token-grid');
+  TOKENS.forEach(function (t) {
+    var card = document.createElement('div');
+    card.className = 'token-card';
+    card.innerHTML =
+      '<div class="swatch-pair">' +
+        '<div class="swatch-half" style="background:' + t.light + ';color:' + LABEL_COLOR[t.light] + '">' +
+          '<span class="mode">Light</span><span class="hex">' + t.light + '</span>' +
+        '</div>' +
+        '<div class="swatch-half" style="background:' + t.dark + ';color:' + LABEL_COLOR[t.dark] + '">' +
+          '<span class="mode">Dark</span><span class="hex">' + t.dark + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="token-meta">' +
+        '<p class="token-name">' + t.name + '</p>' +
+        '<p class="token-desc">' + t.desc + '</p>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  var label = document.getElementById('theme-label');
+
+  function currentTheme() {
+    if (root.dataset.theme === 'dark' || root.dataset.theme === 'light') return root.dataset.theme;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function render(t) {
+    label.textContent = t === 'dark' ? 'Gloed' : 'Dageraad';
+    btn.setAttribute('aria-pressed', t === 'dark' ? 'true' : 'false');
+  }
+  root.dataset.theme = currentTheme();
+  render(root.dataset.theme);
+
+  btn.addEventListener('click', function () {
+    var next = currentTheme() === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    render(next);
+  });
+</script>
+</body>
+</html>

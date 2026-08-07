@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from '@huismus/ui';
 
 /**
  * Presentational primitives shared by the text-based settings pages (Privacy,
@@ -11,7 +12,7 @@ import { ScrollView, Text, View } from 'react-native';
 /** Scrollable page container with the standard settings background + padding. */
 export function SettingsContentScreen({ children }: { children: ReactNode }) {
   return (
-    <View className="flex-1 bg-neutral-100 dark:bg-black">
+    <View className="flex-1 bg-bg">
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 16 }}
         showsVerticalScrollIndicator={false}>
@@ -24,9 +25,9 @@ export function SettingsContentScreen({ children }: { children: ReactNode }) {
 /** A grouped white card; the optional `title` renders as a heading above the body. */
 export function InfoCard({ title, children }: { title?: string; children: ReactNode }) {
   return (
-    <View className="gap-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
+    <View className="gap-3 rounded-2xl bg-card p-4 shadow-sm">
       {title ? (
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">{title}</Text>
+        <Text className="text-lg font-semibold text-ink">{title}</Text>
       ) : null}
       {children}
     </View>
@@ -36,7 +37,7 @@ export function InfoCard({ title, children }: { title?: string; children: ReactN
 /** Body paragraph with comfortable line height for longer copy. */
 export function Paragraph({ children }: { children: ReactNode }) {
   return (
-    <Text className="text-base leading-6 text-neutral-600 dark:text-neutral-300">{children}</Text>
+    <Text className="text-base leading-6 text-ink-2">{children}</Text>
   );
 }
 
@@ -47,8 +48,8 @@ export function Paragraph({ children }: { children: ReactNode }) {
  */
 export function ComingSoon({ message }: { message: string }) {
   return (
-    <View className="flex-1 items-center justify-center bg-neutral-100 px-10 dark:bg-black">
-      <Text className="text-center text-lg text-neutral-500 dark:text-neutral-400">{message}</Text>
+    <View className="flex-1 items-center justify-center bg-bg px-10">
+      <Text className="text-center text-lg text-ink-2">{message}</Text>
     </View>
   );
 }

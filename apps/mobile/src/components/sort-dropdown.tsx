@@ -1,8 +1,9 @@
 import type { SortOption } from '@huismus/types';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { DisplayText, Text } from '@huismus/ui';
 
 import { CheckIcon, ChevronDownIcon } from '@/components/icons';
-import { useEffectiveColorScheme } from '@/components/map-style';
+import { useTheme } from '@/hooks/use-theme';
 
 /**
  * Height reserved for {@link SortButton}. The explore header anchors the
@@ -13,7 +14,7 @@ export const SORT_BUTTON_HEIGHT = 36;
 
 /** Icon stroke per theme — mirrors the search bar's glyph colors. */
 function useGlyphColor() {
-  return useEffectiveColorScheme() === 'dark' ? '#ffffff' : '#171717';
+  return useTheme().text;
 }
 
 interface SortButtonProps {
@@ -45,7 +46,7 @@ export function SortButton({ label, open, onPress, accessibilityLabel, testID }:
       testID={testID}
       style={{ height: SORT_BUTTON_HEIGHT }}
       className="flex-row items-center gap-1 self-start active:opacity-70">
-      <Text className="text-2xl font-bold text-neutral-900 dark:text-white">{label}</Text>
+      <DisplayText className="text-2xl font-bold text-ink">{label}</DisplayText>
       <View style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
         <ChevronDownIcon color={glyph} size={22} />
       </View>
@@ -87,7 +88,7 @@ export function SortMenu({ options, selected, onSelect, onClose, top, left }: So
       />
       <View
         style={{ position: 'absolute', top, left, minWidth: 220 }}
-        className="overflow-hidden rounded-2xl bg-white shadow-md shadow-black/20 dark:bg-neutral-800">
+        className="overflow-hidden rounded-2xl bg-card shadow-md shadow-black/20">
         {options.map((opt, index) => {
           const isSelected = opt.key === selected;
           return (
@@ -97,14 +98,14 @@ export function SortMenu({ options, selected, onSelect, onClose, top, left }: So
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
               testID={`sort-option-${opt.key}`}
-              className={`flex-row items-center justify-between gap-3 px-4 py-3 active:bg-neutral-100 dark:active:bg-neutral-700 ${
-                index > 0 ? 'border-t border-neutral-100 dark:border-neutral-700' : ''
+              className={`flex-row items-center justify-between gap-3 px-4 py-3 active:bg-surface ${
+                index > 0 ? 'border-t border-border' : ''
               }`}>
               <Text
                 className={`text-base ${
                   isSelected
-                    ? 'font-semibold text-neutral-900 dark:text-white'
-                    : 'text-neutral-700 dark:text-neutral-300'
+                    ? 'font-semibold text-ink'
+                    : 'text-ink-2'
                 }`}
                 numberOfLines={1}>
                 {opt.label}

@@ -1,16 +1,12 @@
 import type { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
+import { useMemo } from 'react';
 
-// The two-phase hook, not RN's raw one: on the static web export the server
-// renders light, and raw useColorScheme reports 'dark' from the very first
-// client render — hydration then adopts the server's light inline styles while
-// the virtual tree already says dark, so nothing ever patches them. The
-// two-phase hook returns 'light' during hydration and flips after mount,
-// which re-renders every consumer with changed values and repairs the DOM.
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useResolvedScheme } from '@/hooks/use-theme';
+import { useMapSettings, type BasemapFamily } from '@/lib/map-settings';
 
-import { useAppearance } from '../lib/appearance';
 import darkStyle from './dark-style.json';
 import lightStyle from './positron-style.json';
+import { warmBasemap } from './warm-basemap';
 
 // Light: OpenMapTiles Positron, vendored to `positron-style.json` from
 // OpenFreeMap (its sources/sprite/glyphs are already keyless) and recolored —
@@ -46,6 +42,18 @@ const POLYGONS_BEFORE = 'building';
 const OVERLAY_BEFORE_LIGHT = 'waterway_line_label';
 const OVERLAY_BEFORE_DARK = 'highway_name_other';
 
+// Liberty — the detailed OpenMapTiles style huismus-web's landing map uses
+// (src/islands/TeaserMap.tsx). Referenced by URL rather than vendored, so the
+// app and the site can never drift apart on it; its tiles already come from
+// OpenFreeMap, so this adds no new host. Keyless and production-permitted.
+//
+// Liberty is a light style and OpenFreeMap ships no dark counterpart that
+// resembles it (its dark siblings are dark-matter and fiord, which look nothing
+// alike), so this family stays light in both themes — picking it is a deliberate
+// "I want the detailed map" choice. Both `beforeId` anchors below exist in it:
+// `building` at index 83 and `waterway_line_label` at 88, in that order.
+const MAP_STYLE_LIBERTY = 'https://tiles.openfreemap.org/styles/liberty';
+
 export interface MapStyleConfig {
   /** Style URL (light) or inline spec (dark) to pass to the Map's `mapStyle`. */
   mapStyle: string | StyleSpecification;
@@ -58,26 +66,67 @@ export interface MapStyleConfig {
 }
 
 /**
- * The app's effective theme, driven by the persisted appearance preference (see
- * {@link useAppearance}). `'system'` falls back to the OS color scheme. Shared
- * by the basemap ({@link useMapStyle}) and the choropleth overlay so both stay
- * in lock-step from a single source of truth.
+ * The app's effective theme. Re-exported under its original name for the map's
+ * many callers; {@link useResolvedScheme} is the definition, shared with the
+ * rest of the app's JS-computed colors (see hooks/use-theme.ts).
  */
-export function useEffectiveColorScheme(): 'light' | 'dark' {
-  const colorScheme = useColorScheme();
-  const { appearance } = useAppearance();
-  const effective = appearance === 'system' ? colorScheme : appearance;
-  return effective === 'dark' ? 'dark' : 'light';
+export const useEffectiveColorScheme = useResolvedScheme;
+
+/**
+ * Resolve a basemap family + theme to a concrete style.
+ *
+ * A family is a light/dark *pair*, not a single style: the appearance setting
+ * still picks the variant within it, so a dark app never opens onto a blinding
+ * light map. Liberty is the documented exception — see MAP_STYLE_LIBERTY.
+ *
+ * Split out of the hook so it can be exercised directly in tests.
+ */
+export function basemapFor(family: BasemapFamily, scheme: 'light' | 'dark'): MapStyleConfig {
+  const base = scheme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
+  const overlayBeforeId = scheme === 'dark' ? OVERLAY_BEFORE_DARK : OVERLAY_BEFORE_LIGHT;
+  const shared = { polygonsBeforeId: POLYGONS_BEFORE, scheme };
+
+  if (family === 'liberty') {
+    // Always the light spec's anchors — Liberty is light in both themes, and
+    // OVERLAY_BEFORE_DARK ('highway_name_other') does not exist in it, which
+    // would throw when the overlay layers are inserted.
+    return { ...shared, mapStyle: MAP_STYLE_LIBERTY, overlayBeforeId: OVERLAY_BEFORE_LIGHT };
+  }
+  if (family === 'warm') {
+    return { ...shared, mapStyle: warmBasemap(base, scheme), overlayBeforeId };
+  }
+  return { ...shared, mapStyle: base, overlayBeforeId };
 }
 
 /**
- * The basemap matching the app's effective theme. Dark theme → brightened
- * dark-matter, light → positron. Also returns the resolved `scheme` so the
- * overlay layers can match it without re-deriving the theme.
+ * Drop a `beforeId` the loaded style doesn't actually have.
+ *
+ * MapLibre throws outright when `beforeId` names a missing layer, which takes
+ * the whole map down rather than just mis-ordering one overlay. For the
+ * vendored specs `basemap.test.ts` proves the anchors exist, but Liberty is
+ * fetched from OpenFreeMap at runtime — the point of referencing it by URL is
+ * that it tracks upstream, so its layer list can change without this repo
+ * changing. `undefined` means "add on top", which loses the label ordering but
+ * keeps the map alive.
+ *
+ * `layerIds` is null until the style has loaded, in which case the declared
+ * anchor is passed through untouched — nothing has been added yet at that point.
+ */
+export function resolveAnchor(anchor: string, layerIds: Set<string> | null): string | undefined {
+  if (!layerIds) return anchor;
+  return layerIds.has(anchor) ? anchor : undefined;
+}
+
+/**
+ * The basemap for the chosen family (Settings → Map) at the app's effective
+ * theme. Also returns the resolved `scheme` so the overlay layers can match it
+ * without re-deriving the theme.
  */
 export function useMapStyle(): MapStyleConfig {
   const scheme = useEffectiveColorScheme();
-  const mapStyle = scheme === 'dark' ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
-  const overlayBeforeId = scheme === 'dark' ? OVERLAY_BEFORE_DARK : OVERLAY_BEFORE_LIGHT;
-  return { mapStyle, polygonsBeforeId: POLYGONS_BEFORE, overlayBeforeId, scheme };
+  const { basemap } = useMapSettings();
+  // The warm variants are rebuilt from the vendored spec on every call, so
+  // memoise: MapLibre diffs `mapStyle` by identity, and a fresh object each
+  // render would tear down and re-create every layer on the map.
+  return useMemo(() => basemapFor(basemap, scheme), [basemap, scheme]);
 }

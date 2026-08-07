@@ -10,10 +10,90 @@ div:has(> [data-pagesnap='always']) {
   scroll-snap-stop: always;
 }
 
+/* Web-only type. Native loads the same two families from assets/fonts via the
+   expo-font config plugin (see app.json) — @font-face means nothing there.
+   Web gets the variable latin subsets instead of the eight static TTFs:
+   ~108KB rather than ~443KB, and byte-identical to what huismus-web serves,
+   so the app and the marketing site render the same shapes. Served from
+   apps/mobile/public/, which Expo copies to the web export root verbatim.
+
+   Both sides cover the same `latin` range — the static TTFs are subset to it by
+   scripts/subset-fonts.py, which is what closed most of that gap (Inter alone
+   shipped 1.27MB of full-Unicode coverage). Widen one and widen the other, or a
+   name renders in Inter on the app and in the system face on the site. */
+@font-face {
+  font-family: 'Spline Sans';
+  src: url('/fonts/spline-sans-latin.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * Dageraad (light) & Gloed (dark) — the canonical design tokens, kept
+ * value-for-value in sync with huismus-web's src/styles/tokens.css so the app
+ * and the marketing site stay one brand. Spec §3; see docs/theme.html.
+ *
+ * Stored as space-separated RGB channels rather than hex because Tailwind reads
+ * them through `rgb(var(--x) / <alpha-value>)` (tailwind.config.js) — that's what
+ * lets `bg-card/80` and `border-border/60` compute an alpha. The hex each triple
+ * corresponds to is in the comment beside it.
+ *
+ * `.dark` is NativeWind's class strategy, driven by lib/appearance.ts rather
+ * than by prefers-color-scheme, so an explicit override in Settings beats the OS.
+ *
+ * The RN StyleSheet / SVG / MapLibre side can't read CSS variables, so
+ * constants/theme.ts carries the same values as plain hex. Change both together.
+ */
+:root {
+  --bg: 250 246 240; /* #FAF6F0 — page ground */
+  --surface: 241 233 222; /* #F1E9DE — tinted sections, chips */
+  --card: 255 255 255; /* #FFFFFF — cards, inputs */
+  --border: 230 220 206; /* #E6DCCE — hairlines */
+  --ink: 42 35 28; /* #2A231C — headings, text */
+  --ink-2: 111 99 84; /* #6F6354 — secondary text */
+  --accent: 215 68 46; /* #D7442E — primary buttons, pins, live dot */
+  --accent-strong: 188 40 40; /* #BC2828 — hover / pressed */
+  --accent-text: 179 48 28; /* #B3301C — links / eyebrows (AA on bg) */
+  --success: 62 124 79; /* #3E7C4F — energy labels, positive stats */
+  /* Fixed dark chrome — identical in both themes, because what sits on it (a
+     white wordmark, a store logo) is fixed too. huismus-web uses it for the
+     App Store / Play badges and the footer; the app has neither, so it is
+     unused here and mirrored only to keep this file a complete copy of
+     tokens.css. Same reason as `Gradients` in constants/theme.ts. */
+  --badge: 30 25 21; /* #1E1915 — store badges, footer */
+}
+
+.dark:root,
+:root.dark,
+.dark {
+  --bg: 22 17 13; /* #16110D */
+  --surface: 33 26 20; /* #211A14 */
+  --card: 38 31 24; /* #261F18 */
+  --border: 54 44 34; /* #362C22 */
+  --ink: 245 237 228; /* #F5EDE4 */
+  --ink-2: 169 156 140; /* #A99C8C */
+  --accent: 232 91 65; /* #E85B41 */
+  --accent-strong: 215 68 46; /* #D7442E */
+  --accent-text: 255 138 102; /* #FF8A66 */
+  --success: 127 181 140; /* #7FB58C */
+  --badge: 30 25 21; /* #1E1915 */
+}
+
 :root {
   --font-display:
-    Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
+    Spline Sans, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
     Segoe UI Symbol, Noto Color Emoji;
+  --font-body:
+    Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol,
+    Noto Color Emoji;
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PanResponder, View, type LayoutChangeEvent } from 'react-native';
 
-import { useEffectiveColorScheme } from '@/components/map-style';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 const THUMB = 24;
 const TRACK_H = 4;
@@ -51,12 +51,13 @@ export function RangeSlider({
   onDragStart,
   onDragEnd,
 }: RangeSliderProps) {
-  const isDark = useEffectiveColorScheme() === 'dark';
+  const theme = useTheme();
+  const brand = useBrand();
   const [width, setWidth] = useState(0);
 
-  const trackColor = isDark ? '#404040' : '#e5e5e5';
-  const activeColor = '#2563eb';
-  const barColor = isDark ? '#525252' : '#d4d4d4';
+  const trackColor = theme.border;
+  const activeColor = brand.accent;
+  const barColor = theme.border;
 
   const isRange = values.length === 2;
   const xFor = (v: number) => (max === min ? 0 : ((v - min) / (max - min)) * width);
@@ -184,7 +185,7 @@ export function RangeSlider({
                 width: THUMB,
                 height: THUMB,
                 borderRadius: THUMB / 2,
-                backgroundColor: '#ffffff',
+                backgroundColor: theme.card,
                 borderWidth: 2,
                 borderColor: activeColor,
                 shadowColor: '#000000',

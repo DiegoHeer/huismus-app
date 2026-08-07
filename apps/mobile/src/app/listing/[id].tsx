@@ -1,25 +1,17 @@
-import type { StyleSpecification } from '@maplibre/maplibre-gl-style-spec';
 import { formatPrice, relativeTimeSince, useListing } from '@huismus/data';
 import { useTranslation } from '@huismus/i18n';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { openBrowserAsync } from 'expo-web-browser';
 import { type ComponentType, useEffect } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Share,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Share, View } from 'react-native';
+import { DisplayText, Text } from '@huismus/ui';
 
 import { trackOutboundLink, withUtmParams } from '@/lib/analytics';
 import { listingWebUrl } from '@/lib/listing-share-url';
 import { toggleLike, useIsLiked } from '@/lib/likes';
 import { recordRecentView } from '@/lib/recent-views';
-import { Brand } from '@/constants/theme';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 import {
   AreaIcon,
   BathIcon,
@@ -32,15 +24,13 @@ import {
   TrowelIcon,
 } from '../../components/icons';
 import { LocationMap } from '../../components/location-map';
-// maptiler-basic GL style, with its key-gated MapTiler source/glyphs rewritten
-// to keyless OpenFreeMap endpoints. https://github.com/openmaptiles/maptiler-basic-gl-style
-import maptilerBasicStyle from '../../components/maptiler-basic-style.json';
 
 export default function ListingDetailScreen() {
+  const theme = useTheme();
+  const brand = useBrand();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: listing, isLoading, isError } = useListing(id);
   const { t, i18n } = useTranslation();
-  const scheme = useColorScheme();
   const liked = useIsLiked(id);
 
   // Snapshot the listing as recently viewed once it loads. Re-runs (and so
@@ -51,7 +41,7 @@ export default function ListingDetailScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white dark:bg-black">
+      <View className="flex-1 items-center justify-center bg-bg">
         <ActivityIndicator />
       </View>
     );
@@ -59,8 +49,8 @@ export default function ListingDetailScreen() {
 
   if (isError || !listing) {
     return (
-      <View className="flex-1 items-center justify-center bg-white p-6 dark:bg-black">
-        <Text className="text-center text-neutral-600 dark:text-neutral-300">
+      <View className="flex-1 items-center justify-center bg-bg p-6">
+        <Text className="text-center text-ink-2">
           {t('listing.loadError')}
         </Text>
       </View>
@@ -69,8 +59,7 @@ export default function ListingDetailScreen() {
 
   const cover = listing.images[0];
 
-  const isDark = scheme === 'dark';
-  const headerTint = isDark ? '#f5f5f5' : '#404040';
+  const headerTint = theme.textSecondary;
 
   // Native share sheet with the public web link for this listing. `url` is
   // honoured by iOS; Android only reads `message`, so the link is included in
@@ -150,7 +139,7 @@ export default function ListingDetailScreen() {
                 accessibilityLabel={t(liked ? 'listing.unlike' : 'listing.like')}
                 hitSlop={8}
                 className="h-9 w-9 items-center justify-center active:opacity-60">
-                <HeartIcon filled={liked} color={liked ? Brand.blue : headerTint} />
+                <HeartIcon filled={liked} color={liked ? brand.accent : headerTint} />
               </Pressable>
               <Pressable
                 onPress={onShare}
@@ -164,40 +153,40 @@ export default function ListingDetailScreen() {
           ),
         }}
       />
-      <ScrollView className="flex-1 bg-white dark:bg-black">
+      <ScrollView className="flex-1 bg-bg">
         {cover ? (
           <Image source={{ uri: cover.url }} style={{ width: '100%', height: 288 }} contentFit="cover" />
         ) : (
-          <View className="h-72 w-full bg-neutral-200 dark:bg-neutral-800" />
+          <View className="h-72 w-full bg-surface" />
         )}
         <View className="gap-3 p-4">
           <View className="flex-row items-center justify-between">
-            <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
+            <DisplayText className="text-3xl font-bold text-ink">
               {formatPrice(listing.price, listing.currency, i18n.language)}
-            </Text>
-            <Text className="text-sm font-medium uppercase text-blue-600 dark:text-blue-400">
+            </DisplayText>
+            <Text className="text-sm font-medium uppercase text-accent-text">
               {t(`listing.status.${listing.status}`)}
             </Text>
           </View>
 
-          <Text className="text-lg text-neutral-800 dark:text-neutral-200">{listing.title}</Text>
-          <Text className="text-sm text-neutral-500">
+          <Text className="text-lg text-ink">{listing.title}</Text>
+          <Text className="text-sm text-ink-2">
             {listing.address.line1}, {listing.address.postalCode} {listing.address.city}
           </Text>
           {listedAgo ? (
-            <Text className="text-xs text-neutral-400 dark:text-neutral-500">{listedAgo}</Text>
+            <Text className="text-xs text-ink-2">{listedAgo}</Text>
           ) : null}
 
-          {facts.length ? <FactsTable facts={facts} isDark={isDark} /> : null}
+          {facts.length ? <FactsTable facts={facts} /> : null}
 
 
           {listing.foundationRisk ? (
-            <View className="mt-2 gap-2 rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800">
-              <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+            <View className="mt-2 gap-2 rounded-2xl border border-border p-4">
+              <Text className="text-base font-semibold text-ink">
                 {t('listing.foundationRisk.title')}
               </Text>
               {listing.foundationRisk.label ? (
-                <Text className="text-sm text-neutral-700 dark:text-neutral-300">
+                <Text className="text-sm text-ink-2">
                   {listing.foundationRisk.label}
                 </Text>
               ) : null}
@@ -221,7 +210,7 @@ export default function ListingDetailScreen() {
           ) : null}
 
           {listing.description ? (
-            <Text className="text-base leading-6 text-neutral-700 dark:text-neutral-300">
+            <Text className="text-base leading-6 text-ink-2">
               {listing.description}
             </Text>
           ) : null}
@@ -236,7 +225,7 @@ export default function ListingDetailScreen() {
                     trackOutboundLink(source.url, source.name, i + 1);
                     void openBrowserAsync(withUtmParams(source.url));
                   }}
-                  className="flex-1 items-center rounded-full bg-blue-600 py-3 active:opacity-80">
+                  className="flex-1 items-center rounded-full bg-accent py-3 active:opacity-80">
                   <Text className="text-base font-semibold text-white text-center">
                     {t('listing.visitRealtor', { name: source.name })}
                   </Text>
@@ -245,11 +234,10 @@ export default function ListingDetailScreen() {
             </View>
           ) : null}
 
-          <View className="mt-1 h-64 w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800">
+          <View className="mt-1 h-64 w-full overflow-hidden rounded-2xl border border-border">
             <LocationMap
               latitude={listing.location.latitude}
               longitude={listing.location.longitude}
-              mapStyle={maptilerBasicStyle as unknown as StyleSpecification}
               interactive
             />
           </View>
@@ -272,8 +260,8 @@ type FactRow = {
  * value/label cell per fact. An odd fact count leaves the last row's right
  * cell empty.
  */
-function FactsTable({ facts, isDark }: { facts: FactRow[]; isDark: boolean }) {
-  const iconColor = isDark ? Brand.blueLight : Brand.blue;
+function FactsTable({ facts }: { facts: FactRow[] }) {
+  const iconColor = useBrand().accent;
   return (
     <View className="mt-2 flex-row flex-wrap">
       {facts.map((s) => {
@@ -285,11 +273,11 @@ function FactsTable({ facts, isDark }: { facts: FactRow[]; isDark: boolean }) {
               {s.badgeColor ? (
                 <EnergyLabelBar value={s.value} color={s.badgeColor} />
               ) : (
-                <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+                <Text className="text-base font-semibold text-ink">
                   {s.value}
                 </Text>
               )}
-              <Text className="text-xs text-neutral-500">{s.label}</Text>
+              <Text className="text-xs text-ink-2">{s.label}</Text>
             </View>
           </View>
         );
@@ -331,11 +319,11 @@ function Stat({ label, value, valueColor }: { label: string; value: string; valu
   return (
     <View className="gap-0.5">
       <Text
-        className="text-base font-semibold text-neutral-900 dark:text-white"
+        className="text-base font-semibold text-ink"
         style={valueColor ? { color: valueColor } : undefined}>
         {value}
       </Text>
-      <Text className="text-xs text-neutral-500">{label}</Text>
+      <Text className="text-xs text-ink-2">{label}</Text>
     </View>
   );
 }

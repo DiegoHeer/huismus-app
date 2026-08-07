@@ -1,23 +1,13 @@
 import { useTranslation } from '@huismus/i18n';
 import { useNavigation } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  type TextInputProps,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, type TextInputProps, View } from 'react-native';
+import { DisplayText, Text, TextInput } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { type AuthErrorCode } from '@/hooks/use-auth';
-
-/** Placeholder grey that reads on both light and dark inputs (neutral-400). */
-const PLACEHOLDER_COLOR = '#9ca3af';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 /**
  * i18n key for an auth failure code. The screens render `t(authErrorKey(code))`
@@ -82,7 +72,7 @@ export function AuthScaffold({
   children: ReactNode;
 }) {
   return (
-    <SafeAreaView edges={['bottom']} className="flex-1 bg-neutral-100 dark:bg-black">
+    <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -91,8 +81,8 @@ export function AuthScaffold({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <View className="gap-1.5">
-            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">{title}</Text>
-            {subtitle ? <Text className="text-base text-neutral-500">{subtitle}</Text> : null}
+            <DisplayText className="text-2xl font-bold text-ink">{title}</DisplayText>
+            {subtitle ? <Text className="text-base text-ink-2">{subtitle}</Text> : null}
           </View>
           {children}
         </ScrollView>
@@ -111,19 +101,20 @@ export function AuthField({
   error,
   ...inputProps
 }: { label: string; error?: string } & TextInputProps) {
+  const theme = useTheme();
   return (
     <View className="gap-1.5">
-      <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{label}</Text>
+      <Text className="text-sm font-medium text-ink-2">{label}</Text>
       <TextInput
-        placeholderTextColor={PLACEHOLDER_COLOR}
+        placeholderTextColor={theme.textSecondary}
         accessibilityLabel={label}
-        className={`rounded-xl border bg-white px-4 py-3 text-base text-neutral-900 dark:bg-neutral-900 dark:text-white ${
-          error ? 'border-red-500' : 'border-neutral-300 dark:border-neutral-700'
+        className={`rounded-xl border bg-card px-4 py-3 text-base text-ink ${
+          error ? 'border-accent' : 'border-border'
         }`}
         {...inputProps}
       />
       {error ? (
-        <Text className="text-sm text-red-600 dark:text-red-400">{error}</Text>
+        <Text className="text-sm text-accent-text">{error}</Text>
       ) : null}
     </View>
   );
@@ -144,7 +135,7 @@ export function PrimaryButton({
       testID={testID}
       onPress={onPress}
       accessibilityRole="button"
-      className="items-center rounded-xl bg-blue-600 py-3.5 active:opacity-80">
+      className="items-center rounded-xl bg-accent py-3.5 active:opacity-80">
       <Text className="text-base font-semibold text-white">{label}</Text>
     </Pressable>
   );
@@ -156,13 +147,14 @@ export function PrimaryButton({
  * carries the meaning.
  */
 export function SuccessBadge() {
+  const brand = useBrand();
   return (
     <View accessible={false} className="items-center py-2">
-      <View className="h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40">
+      <View className="h-20 w-20 items-center justify-center rounded-full bg-success/15">
         <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
           <Path
             d="M20 6 9 17l-5-5"
-            stroke="#16a34a"
+            stroke={brand.success}
             strokeWidth={2.5}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -178,9 +170,9 @@ export function OrDivider() {
   const { t } = useTranslation();
   return (
     <View className="flex-row items-center gap-3">
-      <View className="h-px flex-1 bg-neutral-300 dark:bg-neutral-700" />
-      <Text className="text-sm uppercase text-neutral-400">{t('auth.orDivider')}</Text>
-      <View className="h-px flex-1 bg-neutral-300 dark:bg-neutral-700" />
+      <View className="h-px flex-1 bg-border" />
+      <Text className="text-sm uppercase text-ink-2">{t('auth.orDivider')}</Text>
+      <View className="h-px flex-1 bg-border" />
     </View>
   );
 }
@@ -233,9 +225,9 @@ export function OAuthButton({
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       accessibilityLabel={t('auth.continueWithGoogle')}
-      className={`flex-row items-center justify-center gap-2.5 rounded-xl border border-neutral-300 bg-white py-3.5 active:opacity-70 dark:border-neutral-700 dark:bg-neutral-900 ${dimmed}`}>
+      className={`flex-row items-center justify-center gap-2.5 rounded-xl border border-border bg-card py-3.5 active:opacity-70 ${dimmed}`}>
       <GoogleMark />
-      <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+      <Text className="text-base font-semibold text-ink">
         {t('auth.continueWithGoogle')}
       </Text>
     </Pressable>
@@ -287,9 +279,9 @@ export function AuthSwitchLink({
 }) {
   return (
     <View className="flex-row items-center justify-center gap-1.5 pt-1">
-      <Text className="text-sm text-neutral-500">{prompt}</Text>
+      <Text className="text-sm text-ink-2">{prompt}</Text>
       <Pressable onPress={onPress} accessibilityRole="link" hitSlop={8} className="active:opacity-60">
-        <Text className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+        <Text className="text-sm font-semibold text-accent-text">
           {actionLabel}
         </Text>
       </Pressable>

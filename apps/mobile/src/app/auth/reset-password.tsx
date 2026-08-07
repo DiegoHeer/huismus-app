@@ -1,7 +1,8 @@
 import { useTranslation } from '@huismus/i18n';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@huismus/ui';
 
 import {
   authErrorKey,
@@ -138,7 +139,7 @@ export default function ResetPasswordScreen() {
           returnKeyType="go"
         />
         {formError ? (
-          <Text className="text-sm text-red-600 dark:text-red-400">{formError}</Text>
+          <Text className="text-sm text-accent-text">{formError}</Text>
         ) : null}
         <PrimaryButton
           label={submitting ? t('auth.submitting') : t('auth.resetCta')}

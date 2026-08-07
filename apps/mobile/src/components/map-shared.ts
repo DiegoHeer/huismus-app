@@ -19,12 +19,24 @@ export const BUILDINGS_3D_MIN_ZOOM = 15;
  */
 export function buildings3DPaint(scheme: 'light' | 'dark'): FillExtrusionLayerSpecification['paint'] {
   return {
-    'fill-extrusion-color': scheme === 'dark' ? '#52525b' : '#d4d4d8',
+    // A step up from the warm basemap's flat `building` fill, so the extrusion
+    // reads as the same buildings lifted rather than as a different layer.
+    'fill-extrusion-color': scheme === 'dark' ? '#4A3B2C' : '#E0D2BE',
     'fill-extrusion-height': ['get', 'render_height'],
     'fill-extrusion-base': ['get', 'render_min_height'],
     'fill-extrusion-opacity': 0.85,
   };
 }
+
+/**
+ * How far an already-viewed listing's pin fades. Blue had a pale second shade
+ * for this; red has no equally obvious pale twin, so the "seen" read is carried
+ * by alpha on the fill instead.
+ *
+ * Applied to the fill colour, never as `opacity` on the marker — see the note
+ * in `listing-map.tsx`. Shared so the native and web markers can't drift.
+ */
+export const VIEWED_PIN_ALPHA = 0.55;
 
 /**
  * Compact price shown inside a map marker:

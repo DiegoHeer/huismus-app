@@ -1,5 +1,6 @@
 import { useTranslation } from '@huismus/i18n';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@huismus/ui';
 
 import { InfoCard, Paragraph, SettingsContentScreen } from '@/components/settings-content';
 
@@ -35,8 +36,8 @@ export default function PrivacyPolicyScreen() {
   return (
     <SettingsContentScreen>
       <View className="gap-1 px-1">
-        <Text className="text-sm text-neutral-500">{t('privacyPolicyPage.lastUpdated')}</Text>
-        <Text className="text-sm text-neutral-500">{t('privacyPolicyPage.controller')}</Text>
+        <Text className="text-sm text-ink-2">{t('privacyPolicyPage.lastUpdated')}</Text>
+        <Text className="text-sm text-ink-2">{t('privacyPolicyPage.controller')}</Text>
       </View>
 
       <InfoCard>
