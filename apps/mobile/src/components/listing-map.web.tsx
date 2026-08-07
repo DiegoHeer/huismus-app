@@ -36,7 +36,8 @@ import {
   VIEWED_PIN_ALPHA,
 } from './map-shared';
 import {
-  MARKER_ANIM_MS,
+  MARKER_ENTER_MS,
+  MARKER_EXIT_MS,
   MARKER_JUMP_PX,
   useMarkerTransitions,
   type MarkerPhase,
@@ -90,8 +91,10 @@ function useMarkerKeyframes() {
  */
 function markerAnimation(phase: MarkerPhase, delay: number): string | undefined {
   if (phase === 'steady') return undefined;
-  const name = phase === 'entering' ? 'hm-marker-in' : 'hm-marker-out';
-  return `${name} ${MARKER_ANIM_MS}ms linear ${delay}ms both`;
+  const entering = phase === 'entering';
+  const name = entering ? 'hm-marker-in' : 'hm-marker-out';
+  const duration = entering ? MARKER_ENTER_MS : MARKER_EXIT_MS;
+  return `${name} ${duration}ms linear ${delay}ms both`;
 }
 
 /**

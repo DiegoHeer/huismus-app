@@ -44,7 +44,8 @@ import {
   VIEWED_PIN_ALPHA,
 } from './map-shared';
 import {
-  MARKER_ANIM_MS,
+  MARKER_ENTER_MS,
+  MARKER_EXIT_MS,
   MARKER_JUMP_PX,
   useMarkerTransitions,
   type MarkerPhase,
@@ -97,22 +98,22 @@ function MarkerPin({
     if (phase === 'entering') {
       opacity.value = withDelay(
         delay,
-        withTiming(1, { duration: MARKER_ANIM_MS, easing: Easing.linear }),
+        withTiming(1, { duration: MARKER_ENTER_MS, easing: Easing.linear }),
       );
       lift.value = withDelay(
         delay,
         withSequence(
           withTiming(-MARKER_JUMP_PX, {
-            duration: MARKER_ANIM_MS / 2,
+            duration: MARKER_ENTER_MS / 2,
             easing: Easing.out(Easing.quad),
           }),
-          withTiming(0, { duration: MARKER_ANIM_MS / 2, easing: Easing.in(Easing.quad) }),
+          withTiming(0, { duration: MARKER_ENTER_MS / 2, easing: Easing.in(Easing.quad) }),
         ),
       );
     } else if (phase === 'leaving') {
       opacity.value = withDelay(
         delay,
-        withTiming(0, { duration: MARKER_ANIM_MS, easing: Easing.linear }),
+        withTiming(0, { duration: MARKER_EXIT_MS, easing: Easing.linear }),
       );
     }
   }, [phase, delay, opacity, lift]);

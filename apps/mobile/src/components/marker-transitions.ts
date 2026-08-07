@@ -10,13 +10,20 @@ import { useEffect, useState } from 'react';
  * nothing to animate.
  */
 
-/** How long a marker's fade — and the jump that goes with it — runs, in ms. */
-export const MARKER_ANIM_MS = 50;
+/**
+ * How long an arriving marker's fade — and the jump that goes with it — runs,
+ * in ms. Longer than the exit on purpose: a pin appearing is worth watching,
+ * and the jump needs room to read as an arc rather than a twitch.
+ */
+export const MARKER_ENTER_MS = 150;
+
+/** How long a departing marker's fade runs, in ms. Quick — it is just cleanup. */
+export const MARKER_EXIT_MS = 50;
 
 /**
- * Upper bound on the random stagger before a marker starts animating. The
- * animation itself is far too short to perceive individually; the scatter is
- * what turns a swap into a ripple across the map rather than one hard cut.
+ * Upper bound on the random stagger before a marker starts animating. A single
+ * pin's animation is brief either way; the scatter is what turns a swap into a
+ * ripple across the map rather than one hard cut.
  */
 export const MARKER_STAGGER_MS = 100;
 
@@ -24,7 +31,7 @@ export const MARKER_STAGGER_MS = 100;
 export const MARKER_JUMP_PX = 14;
 
 /** Longest a leaving marker can still need: its own stagger plus the fade. */
-const LEAVE_LIFETIME_MS = MARKER_STAGGER_MS + MARKER_ANIM_MS;
+const LEAVE_LIFETIME_MS = MARKER_STAGGER_MS + MARKER_EXIT_MS;
 
 export type MarkerPhase = 'steady' | 'entering' | 'leaving';
 
