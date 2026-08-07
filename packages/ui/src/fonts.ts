@@ -13,7 +13,11 @@ import { Platform } from 'react-native';
  * (apps/mobile/src/global.css), so one name works on all three platforms. The
  * plugin's Android `fontDefinitions` form embeds all four weights under a
  * single family name, which is what makes `fontWeight` select the right file
- * instead of synthesising a bold.
+ * instead of synthesising a bold. iOS has no equivalent declaration and groups
+ * the four by their typographic family (`name` ID 16), which is why
+ * apps/mobile/src/__tests__/fonts.test.ts asserts those records survive — the
+ * TTFs are subset by apps/mobile/scripts/subset-fonts.py, and a subsetter run
+ * without `--name-IDs='*'` would strand Medium and SemiBold outside `Inter`.
  */
 export const Fonts = Platform.select({
   default: {

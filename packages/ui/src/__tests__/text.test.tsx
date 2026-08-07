@@ -6,7 +6,7 @@ import { StyleSheet, Text as RNText } from 'react-native';
 
 import { Fonts } from '../fonts';
 import { ListingCard } from '../listing-card';
-import { DisplayText, Text } from '../text';
+import { DisplayText, MaxFontScale, Text, TextInput } from '../text';
 
 /**
  * These pin the *mechanism*, not the family names.
@@ -64,6 +64,39 @@ describe('Text primitives', () => {
     const ref = { current: null as RNText | null };
     await render(<Text ref={ref}>ref</Text>);
     expect(ref.current).not.toBeNull();
+  });
+});
+
+describe('OS text-size caps', () => {
+  it('lets body copy reach the 200% WCAG 1.4.4 asks for', async () => {
+    const { getByText } = await render(<Text>body</Text>);
+    expect(getByText('body').props.maxFontSizeMultiplier).toBe(2);
+  });
+
+  it('holds display type below the body cap', async () => {
+    // Not legibility — a 30px title at the body cap clears 90px and pushes the
+    // rest of the page off screen, which is its own 1.4.4 failure.
+    const { getByText } = await render(<DisplayText>heading</DisplayText>);
+    expect(getByText('heading').props.maxFontSizeMultiplier).toBe(MaxFontScale.display);
+    expect(MaxFontScale.display).toBeLessThan(MaxFontScale.content);
+  });
+
+  it('caps a text input like body copy', async () => {
+    const { getByPlaceholderText } = await render(<TextInput placeholder="p" />);
+    expect(getByPlaceholderText('p').props.maxFontSizeMultiplier).toBe(MaxFontScale.content);
+  });
+
+  it('never disables scaling outright', () => {
+    // allowFontScaling is left untouched, so RN's default (true) stands. Turning
+    // it off is the one choice that makes the app refuse the setting entirely.
+    for (const cap of Object.values(MaxFontScale)) expect(cap).toBeGreaterThan(1);
+  });
+
+  it('lets a call site override the role default', async () => {
+    const { getByText } = await render(
+      <Text maxFontSizeMultiplier={MaxFontScale.fixed}>pin</Text>,
+    );
+    expect(getByText('pin').props.maxFontSizeMultiplier).toBe(MaxFontScale.fixed);
   });
 });
 

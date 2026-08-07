@@ -11,7 +11,7 @@ import {
 } from '@maplibre/maplibre-react-native';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Text } from '@huismus/ui';
+import { MaxFontScale, Text } from '@huismus/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -365,7 +365,12 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
             }}>
             <View style={styles.markerWrap}>
               <View style={[styles.marker, { backgroundColor: fill }]}>
-                <Text style={styles.markerText} numberOfLines={1}>
+                <Text
+                  style={styles.markerText}
+                  numberOfLines={1}
+                  // The bubble's tail and outline are drawn to a fixed size, so
+                  // the label can't take the body cap.
+                  maxFontSizeMultiplier={MaxFontScale.fixed}>
                   {priceLabel(listing)}
                 </Text>
               </View>

@@ -13,9 +13,14 @@ div:has(> [data-pagesnap='always']) {
 /* Web-only type. Native loads the same two families from assets/fonts via the
    expo-font config plugin (see app.json) — @font-face means nothing there.
    Web gets the variable latin subsets instead of the eight static TTFs:
-   ~106KB rather than ~1.5MB, and byte-identical to what huismus-web serves,
+   ~108KB rather than ~443KB, and byte-identical to what huismus-web serves,
    so the app and the marketing site render the same shapes. Served from
-   apps/mobile/public/, which Expo copies to the web export root verbatim. */
+   apps/mobile/public/, which Expo copies to the web export root verbatim.
+
+   Both sides cover the same `latin` range — the static TTFs are subset to it by
+   scripts/subset-fonts.py, which is what closed most of that gap (Inter alone
+   shipped 1.27MB of full-Unicode coverage). Widen one and widen the other, or a
+   name renders in Inter on the app and in the system face on the site. */
 @font-face {
   font-family: 'Spline Sans';
   src: url('/fonts/spline-sans-latin.woff2') format('woff2');

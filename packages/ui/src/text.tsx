@@ -37,8 +37,52 @@ import { Fonts } from './fonts';
 const bodyFont = { fontFamily: Fonts.body } as const;
 const displayFont = { fontFamily: Fonts.display } as const;
 
-export const Text = forwardRef<RNText, TextProps>(function Text({ style, ...rest }, ref) {
-  return <RNText ref={ref} style={[bodyFont, style]} {...rest} />;
+/**
+ * How far the OS text-size setting is allowed to scale each role.
+ *
+ * `allowFontScaling` is left on — refusing to grow at all is the one genuinely
+ * inaccessible choice — but unbounded is not the other option. React Native
+ * applies a single linear multiplier rather than iOS's per-text-style Dynamic
+ * Type ramps (it doesn't bridge `UIFontMetrics`), so the same factor that makes
+ * body copy readable at AX5 takes a 30px page title past 90px and breaks the
+ * layout around it. A cap per role is the substitute for the ramp.
+ *
+ * Pass `maxFontSizeMultiplier` explicitly to override; pass `undefined` and the
+ * role default applies.
+ */
+export const MaxFontScale = {
+  /**
+   * Body copy, labels, secondary text. 2× is the 200% WCAG 1.4.4 asks for, and
+   * this is the text that has to reach it.
+   */
+  content: 2,
+  /**
+   * Display type. It starts far above the readable floor, so the cap costs
+   * legibility nothing — whereas letting a title grow unbounded pushes content
+   * off screen, which is itself the "loss of content or functionality" 1.4.4
+   * prohibits.
+   */
+  display: 1.5,
+  /**
+   * Text sealed inside fixed geometry that cannot reflow — the map pin bubble,
+   * whose tail and outline are drawn to a set size. Deliberately the tightest
+   * cap; anything using it should be a glyph or a few characters.
+   */
+  fixed: 1.2,
+} as const;
+
+export const Text = forwardRef<RNText, TextProps>(function Text(
+  { style, maxFontSizeMultiplier, ...rest },
+  ref,
+) {
+  return (
+    <RNText
+      ref={ref}
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? MaxFontScale.content}
+      style={[bodyFont, style]}
+      {...rest}
+    />
+  );
 });
 
 /**
@@ -46,15 +90,29 @@ export const Text = forwardRef<RNText, TextProps>(function Text({ style, ...rest
  * rations display type the way it rations red; everything else is {@link Text}.
  */
 export const DisplayText = forwardRef<RNText, TextProps>(function DisplayText(
-  { style, ...rest },
+  { style, maxFontSizeMultiplier, ...rest },
   ref,
 ) {
-  return <RNText ref={ref} style={[displayFont, style]} {...rest} />;
+  return (
+    <RNText
+      ref={ref}
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? MaxFontScale.display}
+      style={[displayFont, style]}
+      {...rest}
+    />
+  );
 });
 
 export const TextInput = forwardRef<RNTextInput, TextInputProps>(function TextInput(
-  { style, ...rest },
+  { style, maxFontSizeMultiplier, ...rest },
   ref,
 ) {
-  return <RNTextInput ref={ref} style={[bodyFont, style]} {...rest} />;
+  return (
+    <RNTextInput
+      ref={ref}
+      maxFontSizeMultiplier={maxFontSizeMultiplier ?? MaxFontScale.content}
+      style={[bodyFont, style]}
+      {...rest}
+    />
+  );
 });
