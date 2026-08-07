@@ -542,6 +542,50 @@ describe('client (API mode)', () => {
     expect(cities[200]).toMatchObject({ code: '9999', geometry: { type: 'MultiPolygon' } });
   });
 
+  it('getCities requests its pages concurrently', async () => {
+    // Nothing can hit-test a tap to its city — and so nothing can load that
+    // city's neighborhoods — until this resolves, so the pages must not wait on
+    // each other. Both requests have to be out before either has answered.
+    const fullPage = Array.from({ length: 200 }, (_, i) => ({
+      code: String(i).padStart(4, '0'),
+      name: `City ${i}`,
+      geometry: [[[4.3, 52.0], [4.31, 52.0], [4.31, 52.01], [4.3, 52.0]]],
+    }));
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    (global.fetch as jest.Mock).mockImplementation(async () => {
+      await held;
+      return { ok: true, json: async () => fullPage };
+    });
+
+    const pending = getCitiesApi();
+    await Promise.resolve();
+
+    // Neither has answered yet, so a sequential walk would be stuck on one.
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    release();
+    await pending;
+  });
+
+  it('getCities stops when the endpoint ignores offset and repeats itself', async () => {
+    // The live endpoint does exactly this: it returns all 342 municipalities
+    // whatever offset you ask for. A batch must not become a fresh excuse to
+    // keep paging — the second page adds nothing new, so the walk ends there.
+    const everything = Array.from({ length: 342 }, (_, i) => ({
+      code: String(i).padStart(4, '0'),
+      name: `City ${i}`,
+      geometry: [[[4.3, 52.0], [4.31, 52.0], [4.31, 52.01], [4.3, 52.0]]],
+    }));
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => everything });
+
+    const cities = await getCitiesApi();
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(cities).toHaveLength(342);
+  });
+
   it('getCityNames fetches the lightweight /v1/cities list', async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,

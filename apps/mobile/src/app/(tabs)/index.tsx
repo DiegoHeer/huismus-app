@@ -354,6 +354,22 @@ export default function MapScreen() {
     [selectCityAt],
   );
 
+  // The auto-load above hit-tests against the country's municipality shapes,
+  // which on a cold start are very likely still downloading when the camera
+  // first settles — the residence query does not wait for them, so the homes
+  // land while the hit-test quietly finds nothing. Without this the map would
+  // then sit there with no neighborhoods until the user moved it again; here it
+  // simply runs the same auto-load the moment the shapes arrive.
+  //
+  // This is the "subscribe to an external system" case the rule allows, but it
+  // can't see that through `selectCityAt`'s setState (cf. the focus effect above).
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (cityIndex.length === 0 || selectedCity || mapZoom < AUTO_LOAD_AREAS_ZOOM) return;
+    selectCityAt(mapCenter, { deselectListing: false });
+  }, [cityIndex, selectedCity, mapZoom, mapCenter, selectCityAt]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
   // Picking a search result acts per kind:
   // - place: fly + hit-test the surrounding city (loads its neighborhoods). The
   //   hit-test handles a municipality (gemeente) too, which flies below the

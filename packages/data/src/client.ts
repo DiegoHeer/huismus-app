@@ -382,6 +382,14 @@ interface CityShapeResponse {
 const CITY_PAGE_SIZE = 200;
 
 /**
+ * Municipality pages requested at a time. Two covers the ~342 that exist, so the
+ * whole list normally arrives in one round trip instead of two back-to-back —
+ * which matters because nothing can hit-test a tap to its city, and therefore
+ * nothing can load that city's neighborhoods, until this finishes.
+ */
+const CITY_PAGE_BATCH = 2;
+
+/**
  * All Dutch municipality ("gemeente") boundaries, fetched from the shapes API
  * and transformed into {@link CityShape}. Returns an empty array when no backend
  * is configured. Boundaries never change, so the app caches
@@ -393,19 +401,38 @@ const CITY_PAGE_SIZE = 200;
  * and returns the full set (342 municipalities) on every call — a naive
  * "stop when page.length < limit" loop never terminates against it, which is what
  * left a cold-started app (empty city cache) unable to load any neighborhoods.
+ *
+ * Pages go out {@link CITY_PAGE_BATCH} at a time, but are still *consumed* in
+ * order and still stop at the first short or redundant one, so a batch costs no
+ * more requests than the sequential walk did — it just doesn't wait between them.
  */
 export async function getCities(): Promise<CityShape[]> {
   if (!API_URL) return [];
-  const byCode = new Map<string, CityShape>();
-  for (let offset = 0; ; offset += CITY_PAGE_SIZE) {
-    const page = await request<CityShapeResponse[]>(
+  const fetchPage = (offset: number) =>
+    request<CityShapeResponse[]>(
       `/v1/shapes/cities?limit=${CITY_PAGE_SIZE}&offset=${offset}&format=${GEOM_FORMAT}`,
     );
-    const before = byCode.size;
-    for (const c of page) {
-      byCode.set(c.code, { code: c.code, name: c.name, geometry: toAreaGeometry(c.geometry) });
+
+  const byCode = new Map<string, CityShape>();
+  for (let batch = 0; ; batch++) {
+    const pages = await Promise.all(
+      Array.from({ length: CITY_PAGE_BATCH }, (_, i) =>
+        fetchPage((batch * CITY_PAGE_BATCH + i) * CITY_PAGE_SIZE),
+      ),
+    );
+
+    let exhausted = false;
+    for (const page of pages) {
+      const before = byCode.size;
+      for (const c of page) {
+        byCode.set(c.code, { code: c.code, name: c.name, geometry: toAreaGeometry(c.geometry) });
+      }
+      if (page.length < CITY_PAGE_SIZE || byCode.size === before) {
+        exhausted = true;
+        break;
+      }
     }
-    if (page.length < CITY_PAGE_SIZE || byCode.size === before) break;
+    if (exhausted) break;
   }
   return [...byCode.values()];
 }
