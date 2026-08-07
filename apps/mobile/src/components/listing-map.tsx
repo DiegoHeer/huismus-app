@@ -10,9 +10,17 @@ import {
   RasterSource,
   VectorSource,
 } from '@maplibre/maplibre-react-native';
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import { StyleSheet, View, type ViewProps } from 'react-native';
 import { MaxFontScale, Text } from '@huismus/ui';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -35,6 +43,12 @@ import {
   priceLabel,
   VIEWED_PIN_ALPHA,
 } from './map-shared';
+import {
+  MARKER_ANIM_MS,
+  MARKER_JUMP_PX,
+  useMarkerTransitions,
+  type MarkerPhase,
+} from './marker-transitions';
 import { usePulseOpacity } from './use-pulse-opacity';
 import { buildAreaIndex, findAreaAt } from '../lib/area-hit-test';
 import { outlineColorFor } from '../lib/area-choropleth';
@@ -54,6 +68,62 @@ const COMPASS_MARGIN = 16;
 // same gesture and ignore it, so tapping a marker selects the listing without
 // also switching municipality. (The web map stops the click from propagating.)
 const MARKER_TAP_GRACE_MS = 300;
+
+/**
+ * A marker's bubble plus its arrival / departure animation (web mirror: the
+ * `hm-marker-in` / `hm-marker-out` keyframes in listing-map.web.tsx).
+ *
+ * Arriving is a ballistic jump: the pin springs off its anchor, decelerates to
+ * the top of the arc, then accelerates back down under "gravity" — which is why
+ * the two halves are eased in opposite directions rather than sharing one
+ * curve. Opacity runs linearly across the whole hop so the fade lands with it.
+ * Leaving is the fade alone; the pin holds its place while it goes.
+ */
+function MarkerPin({
+  phase,
+  delay,
+  children,
+}: {
+  phase: MarkerPhase;
+  delay: number;
+  children: ViewProps['children'];
+}) {
+  // An arriving pin must be invisible from its very first frame, through the
+  // stagger, until its turn comes — otherwise it flashes at full opacity first.
+  const opacity = useSharedValue(phase === 'entering' ? 0 : 1);
+  const lift = useSharedValue(0);
+
+  useEffect(() => {
+    if (phase === 'entering') {
+      opacity.value = withDelay(
+        delay,
+        withTiming(1, { duration: MARKER_ANIM_MS, easing: Easing.linear }),
+      );
+      lift.value = withDelay(
+        delay,
+        withSequence(
+          withTiming(-MARKER_JUMP_PX, {
+            duration: MARKER_ANIM_MS / 2,
+            easing: Easing.out(Easing.quad),
+          }),
+          withTiming(0, { duration: MARKER_ANIM_MS / 2, easing: Easing.in(Easing.quad) }),
+        ),
+      );
+    } else if (phase === 'leaving') {
+      opacity.value = withDelay(
+        delay,
+        withTiming(0, { duration: MARKER_ANIM_MS, easing: Easing.linear }),
+      );
+    }
+  }, [phase, delay, opacity, lift]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: lift.value }],
+  }));
+
+  return <Animated.View style={[styles.markerWrap, animatedStyle]}>{children}</Animated.View>;
+}
 
 /**
  * The tapped city's own outline, pulsing in opacity while its neighborhoods
@@ -182,6 +252,9 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
     () => new Set(recentViews.map((listing) => listing.id)),
     [recentViews],
   );
+  // Homes gained and lost since the last set, so each pin knows how to arrive or
+  // leave. Includes pins already gone from the data but still fading out.
+  const markers = useMarkerTransitions(listings);
 
   useImperativeHandle(ref, () => ({
     flyTo: (target) => {
@@ -379,7 +452,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
           )}
         </GeoJSONSource>
       )}
-      {listings.map((listing) => {
+      {markers.map(({ listing, phase, delay }) => {
         const fill = viewedIds.has(listing.id) ? viewedFill : brand.accent;
         return (
           <Marker
@@ -393,10 +466,12 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
             // Pressable inside a Marker (MarkerView) does not fire onPress
             // reliably on Android. https://github.com/maplibre/maplibre-react-native/issues/1018
             onPress={() => {
+              // A pin on its way out is a leftover, not a target.
+              if (phase === 'leaving') return;
               markerTapAtRef.current = Date.now();
               onSelect?.(listing.id);
             }}>
-            <View style={styles.markerWrap}>
+            <MarkerPin phase={phase} delay={delay}>
               <View style={[styles.marker, { backgroundColor: fill }]}>
                 <Text
                   style={styles.markerText}
@@ -408,7 +483,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
                 </Text>
               </View>
               <View style={[styles.markerArrow, { borderTopColor: fill }]} />
-            </View>
+            </MarkerPin>
           </Marker>
         );
       })}

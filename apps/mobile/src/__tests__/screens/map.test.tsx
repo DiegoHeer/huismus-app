@@ -324,6 +324,29 @@ describe('MapScreen viewport loading', () => {
     expect(queryByTestId('map-initial-loading')).toBeNull();
   });
 
+  it('keeps a home that dropped out of the results on the map while it fades', async () => {
+    // React unmounts a marker the frame its listing disappears, which leaves
+    // nothing to animate. The old pin has to outlive its data.
+    serveResidences([residence(1, 500_000)]);
+    const { getByTestId, getByText, queryByText } = await renderScreen();
+    const map = getByTestId('maplibre-map');
+
+    settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(getByText('€500k')).toBeTruthy());
+
+    // A viewport where that home no longer matches.
+    serveResidences([residence(2, 750_000)]);
+    settleCamera(map, [5.35, 52.3, 5.65, 52.43]);
+    await waitFor(() => expect(getByText('€750k')).toBeTruthy());
+
+    // Still mounted, mid-fade, alongside the new arrival.
+    expect(getByText('€500k')).toBeTruthy();
+
+    // And gone once the fade has had its window.
+    await waitFor(() => expect(queryByText('€500k')).toBeNull(), { timeout: 2000 });
+    expect(getByText('€750k')).toBeTruthy();
+  });
+
   it('shows the spinner when a new viewport loads over an empty map', async () => {
     // Nothing to look at instead, so the spinner is the only signal that the
     // map is working rather than simply empty.

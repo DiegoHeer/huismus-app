@@ -1,6 +1,6 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import type { AreaPolygon, Listing, MapBounds } from '@huismus/types';
+import type { AreaPolygon, MapBounds } from '@huismus/types';
 import {
   forwardRef,
   useCallback,
@@ -35,11 +35,64 @@ import {
   priceLabel,
   VIEWED_PIN_ALPHA,
 } from './map-shared';
+import {
+  MARKER_ANIM_MS,
+  MARKER_JUMP_PX,
+  useMarkerTransitions,
+  type MarkerPhase,
+} from './marker-transitions';
 import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { useRecentViews } from '../lib/recent-views';
 import { useBrand } from '@/hooks/use-theme';
 import { withAlpha } from '@/constants/theme';
+
+/**
+ * Entrance and exit keyframes for the markers. The entrance is a ballistic
+ * jump: the pin springs off its anchor, decelerates to the top of the arc, then
+ * accelerates back down under "gravity" — hence the two easings, `ease-out` up
+ * and `ease-in` down. Opacity runs linearly across the whole thing, so the fade
+ * and the hop finish together.
+ *
+ * Injected into the document rather than written inline because CSS keyframes
+ * have no inline form; every marker then just names the animation.
+ */
+const MARKER_KEYFRAMES = `
+@keyframes hm-marker-in {
+  0%   { opacity: 0; transform: translateY(0); animation-timing-function: ease-out; }
+  50%  { opacity: 0.5; transform: translateY(-${MARKER_JUMP_PX}px); animation-timing-function: ease-in; }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes hm-marker-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+`;
+
+const MARKER_KEYFRAMES_ID = 'hm-marker-keyframes';
+
+/** Add the keyframes to the document once, however many maps mount. */
+function useMarkerKeyframes() {
+  useEffect(() => {
+    if (document.getElementById(MARKER_KEYFRAMES_ID)) return;
+    const style = document.createElement('style');
+    style.id = MARKER_KEYFRAMES_ID;
+    style.textContent = MARKER_KEYFRAMES;
+    document.head.appendChild(style);
+  }, []);
+}
+
+/**
+ * The `animation` shorthand for a marker's phase. `both` fill matters in both
+ * directions: it holds an arriving pin invisible through its stagger (otherwise
+ * it would sit at full opacity until its turn came) and holds a departing one
+ * at zero once done, until the hook unmounts it.
+ */
+function markerAnimation(phase: MarkerPhase, delay: number): string | undefined {
+  if (phase === 'steady') return undefined;
+  const name = phase === 'entering' ? 'hm-marker-in' : 'hm-marker-out';
+  return `${name} ${MARKER_ANIM_MS}ms linear ${delay}ms both`;
+}
 
 /**
  * The tapped city's outline, pulsing in opacity while its neighborhoods load
@@ -192,6 +245,10 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
     () => new Set(recentViews.map((listing) => listing.id)),
     [recentViews],
   );
+  // Homes gained and lost since the last set, so each pin knows how to arrive or
+  // leave. Includes pins already gone from the data but still fading out.
+  const markers = useMarkerTransitions(listings);
+  useMarkerKeyframes();
 
   // A flyTo can arrive before react-map-gl has attached the map instance — the
   // boot-time preferred-city focus fires as soon as the cached city shapes
@@ -321,8 +378,9 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
           )}
         </Source>
       )}
-      {listings.map((listing: Listing) => {
+      {markers.map(({ listing, phase, delay }) => {
         const fill = viewedIds.has(listing.id) ? viewedFill : brand.accent;
+        const leaving = phase === 'leaving';
         return (
           <Marker
             key={listing.id}
@@ -337,7 +395,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
               // so tapping a marker only selects the listing. (Native suppresses
               // the map press for marker taps itself; this is the web equivalent.)
               e.originalEvent.stopPropagation();
-              onSelect?.(listing.id);
+              if (!leaving) onSelect?.(listing.id);
             }}>
             <div
               // Touch devices don't reliably fire the Marker's click handler;
@@ -347,7 +405,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
               onTouchEnd={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                onSelect?.(listing.id);
+                if (!leaving) onSelect?.(listing.id);
               }}
               style={{
                 display: 'flex',
@@ -355,6 +413,10 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
                 alignItems: 'center',
                 cursor: 'pointer',
                 touchAction: 'manipulation',
+                animation: markerAnimation(phase, delay),
+                // A pin on its way out is a leftover, not a target: it must not
+                // swallow a click meant for the map or a marker beneath it.
+                pointerEvents: leaving ? 'none' : undefined,
               }}>
               <div
                 style={{
