@@ -254,6 +254,96 @@ describe('MapScreen viewport loading', () => {
     await waitFor(() => expect(queryByTestId('map-initial-loading')).toBeNull());
   });
 
+  /** One geocoded residence summary, enough for `summaryToListing`. */
+  const residence = (id: number, price: number) => ({
+    id,
+    city: 'Amsterdam',
+    street: 'Teststraat',
+    house_number: id,
+    house_letter: null,
+    house_number_suffix: null,
+    postcode: '1011 AB',
+    slug: `teststraat-${id}`,
+    latitude: 52.37,
+    longitude: 4.89,
+    current_price_eur: price,
+    current_status: 'new',
+  });
+
+  const residencePage = (items: unknown[]) => ({
+    ok: true,
+    json: async () => ({ items, total: items.length, limit: 100, offset: 0, has_more: false }),
+  });
+
+  /** Respond to every residence request with one page holding `items`. */
+  const serveResidences = (items: unknown[]) => {
+    (global.fetch as jest.Mock).mockResolvedValue(residencePage(items));
+  };
+
+  /**
+   * Hold the next request open until `release()`. The mock otherwise resolves
+   * within the same tick, which leaves the in-flight state too brief to observe
+   * — and these tests are entirely about what the screen shows during it.
+   */
+  const holdNextRequest = (items: unknown[]) => {
+    let release!: () => void;
+    const pending = new Promise((resolve) => {
+      release = () => resolve(residencePage(items));
+    });
+    (global.fetch as jest.Mock).mockReturnValueOnce(pending);
+    return { release };
+  };
+
+  /** True once a viewport's request is actually in flight, not merely queued. */
+  const isFetchingAViewport = () =>
+    viewportQueries().some((query) => query.state.fetchStatus === 'fetching');
+
+  it('reloads a new viewport silently while markers are still on the map', async () => {
+    // Panning must not throw a spinner over a map the user is reading. The
+    // previous viewport's pins stay put (keepPrevious) and are simply replaced
+    // when the new ones land.
+    serveResidences([residence(1, 500_000)]);
+    const { getByTestId, getByText, queryByTestId } = await renderScreen();
+    const map = getByTestId('maplibre-map');
+
+    settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(getByText('€500k')).toBeTruthy());
+
+    const next = holdNextRequest([residence(2, 750_000)]);
+    settleCamera(map, [5.35, 52.3, 5.65, 52.43]);
+    await waitFor(() => expect(isFetchingAViewport()).toBe(true));
+
+    // Mid-flight, with the request provably still open: nothing covers the map,
+    // and the outgoing viewport's marker is still the one on screen.
+    expect(queryByTestId('map-initial-loading')).toBeNull();
+    expect(queryByTestId('map-background-loading')).toBeNull();
+    expect(getByText('€500k')).toBeTruthy();
+
+    next.release();
+    await waitFor(() => expect(getByText('€750k')).toBeTruthy());
+    expect(queryByTestId('map-initial-loading')).toBeNull();
+  });
+
+  it('shows the spinner when a new viewport loads over an empty map', async () => {
+    // Nothing to look at instead, so the spinner is the only signal that the
+    // map is working rather than simply empty.
+    const { getByTestId, queryByTestId } = await renderScreen();
+    const map = getByTestId('maplibre-map');
+
+    settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(residenceUrls()).toHaveLength(1));
+    // Settled and empty is not loading — no spinner over a map that is simply
+    // showing no homes here.
+    expect(queryByTestId('map-initial-loading')).toBeNull();
+
+    const next = holdNextRequest([]);
+    settleCamera(map, [5.35, 52.3, 5.65, 52.43]);
+
+    await waitFor(() => expect(getByTestId('map-initial-loading')).toBeTruthy());
+    next.release();
+    await waitFor(() => expect(queryByTestId('map-initial-loading')).toBeNull());
+  });
+
   it('says so when more homes match the viewport than it can draw', async () => {
     // The page cap is otherwise invisible: 300 pins look the same whether that
     // is every home in the area or a slice of four thousand.

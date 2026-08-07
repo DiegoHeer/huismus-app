@@ -146,6 +146,14 @@ export default function MapScreen() {
     }
     return base;
   }, [snapshotsActive, favoritesActive, recentActive, listings, likes, recentViews, searchedListing]);
+  // A residence load is only worth a spinner when the map has nothing to draw.
+  // Once there are markers on screen — including the previous viewport's, which
+  // `keepPrevious` holds through the fetch — panning refreshes them silently: an
+  // overlay thrown over a map the user is still reading costs more than a moment
+  // of slightly stale pins. Covers the pre-camera wait too, where the query is
+  // disabled and so reports neither `isLoading` nor `isFetching`.
+  const residencesLoading =
+    !snapshotsActive && shownListings.length === 0 && (!cameraReady || isLoading || isFetching);
   // The active map overlay (noise, air quality, …) — one at a time: tapping an
   // overlay pill swaps to it, tapping the active one turns it off.
   const [overlayId, setOverlayId] = useState<OverlayId | null>(null);
@@ -259,11 +267,15 @@ export default function MapScreen() {
   // placeholder; otherwise the field keeps its default "Search" hint.
   const cityName = selectedCity && areas.length > 0 ? selectedCity.name : undefined;
 
+  // A tapped city's neighborhoods are on their way. Cached cities resolve
+  // instantly, so this rarely shows.
+  const areasLoading = !!selectedCity && areasFetching;
+
   // While the tapped city's neighborhoods load, pulse its outline as a loading
   // hint. Cleared the moment they arrive or another city is picked (both flip
   // this back to null), so the overlay never lingers.
   const loadingCityPolygon: AreaPolygon | null =
-    selectedCity && areasFetching
+    areasLoading && selectedCity
       ? { id: selectedCity.code, color: brand.accent, geometry: selectedCity.geometry }
       : null;
 
@@ -449,12 +461,11 @@ export default function MapScreen() {
         </View>
         {/* Legend for the active overlay, explaining the colors it paints. */}
         {overlay && <OverlayLegend overlay={overlay} zoom={mapZoom} />}
-        {/* Spinner centered below the pills for either background load: a tapped
-            city's neighborhoods (cached cities resolve instantly, so it rarely
-            shows), or the residences for a newly panned/zoomed viewport — during
-            which the previous viewport's markers stay on the map. One pill covers
-            both, so the two can never stack. */}
-        {((selectedCity && areasFetching) || (isFetching && !isLoading && !snapshotsActive)) && (
+        {/* Spinner centered below the pills while a tapped city's neighborhoods
+            load. Residences deliberately don't take this slot: reloading them
+            for a new viewport happens silently behind the markers already on
+            the map (see `residencesLoading`). */}
+        {areasLoading && (
           <View
             testID="map-background-loading"
             className="mt-3 self-center rounded-full bg-card p-2.5 shadow-md shadow-black/20"
@@ -463,10 +474,12 @@ export default function MapScreen() {
           </View>
         )}
         {/* More homes match the viewport than the map can draw, so say so rather
-            than let the cap read as "that's all there is". Suppressed while a
-            fetch is in flight (the spinner above has the slot, and the two must
-            never stack) and while a snapshot pill sources the map from disk. */}
-        {omittedHomes && !isFetching && !snapshotsActive && (
+            than let the cap read as "that's all there is". Held back while a
+            fetch is in flight — the counts would be the *previous* viewport's,
+            and reading a stale total mid-pan is worse than reading none — and
+            while either a snapshot pill sources the map from disk or the pill
+            above has this slot. */}
+        {omittedHomes && !isFetching && !snapshotsActive && !areasLoading && (
           <View
             testID="map-capped-results"
             className="mt-3 self-center rounded-full bg-card px-3 py-1.5 shadow-md shadow-black/20"
@@ -495,13 +508,10 @@ export default function MapScreen() {
           />
         </View>
       )}
-      {/* The spinner tracks the server query — irrelevant (and misleading)
-          while a snapshot pill sources the map from disk instead.
-          `!cameraReady` is part of the first-load state too: until the map
-          reports a camera the query is disabled, and a disabled query is
-          `isPending` with `isFetching` false, so `isLoading` is false. Without
-          this the screen would sit on an empty map showing nothing at all. */}
-      {(isLoading || !cameraReady) && !snapshotsActive && (
+      {/* The only spinner residences get, and only while there is nothing on the
+          map to look at instead — the first load, or a pan into an area whose
+          predecessor was empty too. */}
+      {residencesLoading && (
         <View
           testID="map-initial-loading"
           className="absolute inset-0 items-center justify-center"
