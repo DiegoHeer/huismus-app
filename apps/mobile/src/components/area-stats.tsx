@@ -1,9 +1,9 @@
 import { useTranslation } from '@huismus/i18n';
 import type { NeighborhoodStats } from '@huismus/types';
 import { Image } from 'expo-image';
-import { useColorScheme } from 'nativewind';
 import { useMemo, type ReactNode } from 'react';
-import { Text, View, type DimensionValue } from 'react-native';
+import { View, type DimensionValue } from 'react-native';
+import { DisplayText, Text } from '@huismus/ui';
 import Svg, { Circle } from 'react-native-svg';
 
 import {
@@ -13,6 +13,7 @@ import {
   type StatFormat,
   type StatSegment,
 } from '@/lib/neighborhood-stats';
+import { useResolvedScheme } from '@/hooks/use-theme';
 
 /**
  * Party logo assets keyed by the slug emitted from `neighborhood-stats`. Metro
@@ -46,13 +47,48 @@ const PARTY_LOGOS: Record<string, number> = {
   'vrede-voor-dieren': require('../../assets/images/party-logos/vrede-voor-dieren.png'),
 };
 
-// Chart palettes mirror the design mockup. SEQ is a light→dark sequential ramp
-// (age, construction year); CAT is a categorical set (household, tenure, type,
-// origin). These are data colors, so they're constants, not theme-aware.
-const SEQ = ['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8', '#1e3a8a'];
-const CAT = ['#2563eb', '#0891b2', '#f59e0b', '#9333ea'];
-const ACCENT = '#2563eb';
-const BUILD_YEAR_COLORS = [SEQ[3], SEQ[1]]; // before 2000 (dark) → from 2000 (light)
+/*
+ * Chart palettes, per theme. `seq` is an ordinal ramp on the brand hue (age
+ * bands, construction year); `cat` is a categorical set (household, tenure,
+ * dwelling type, origin); `accent` fills the single-series bars; `track` is the
+ * unfilled remainder behind every bar and the donut ring.
+ *
+ * `track` is a step *away* from the card rather than `surface`, which is only
+ * ~1.03:1 against `card` in Gloed — a `bg-surface` track would leave the empty
+ * part of a bar invisible and make it read as though it ended at its last
+ * segment.
+ *
+ * Theme-aware rather than constant: these marks sit on `bg-card`, which is
+ * #FFFFFF in Dageraad and #261F18 in Gloed, and one palette cannot be legible
+ * on both. Each set was checked against its own surface for the lightness
+ * band, chroma floor, colour-vision separation and contrast — the categorical
+ * sets clear an adjacent-pair CVD ΔE of 9.0 (dark) / 11.1 (light), and both
+ * ramps are single-hue, monotone in lightness, and clear 2:1 at the end
+ * nearest the surface. Re-validate if you touch a value.
+ *
+ * `cat` deliberately spreads hue rather than staying inside the warm family:
+ * four warm tones adjacent in a donut are indistinguishable under protanopia
+ * and deuteranopia. Brand red leads; the rest are stepped to match it.
+ */
+const CHARTS = {
+  light: {
+    seq: ['#EAA08A', '#E17B60', '#D04A2F', '#A5331F', '#6E2013'],
+    cat: ['#D7442E', '#1B8A72', '#C98500', '#6B4E9E'],
+    accent: '#D7442E',
+    track: '#EFE4D6',
+  },
+  dark: {
+    seq: ['#8E3423', '#B8482F', '#D9694E', '#EC9179', '#F8BFAC'],
+    cat: ['#E85B41', '#27967A', '#BC8A12', '#8A79D6'],
+    accent: '#E85B41',
+    track: '#3A2E24',
+  },
+} as const;
+
+/** The chart palette for the active theme. */
+function useCharts() {
+  return CHARTS[useResolvedScheme()];
+}
 
 const DONUT = { size: 132, r: 52, c: 66, sw: 17 };
 const CIRC = 2 * Math.PI * DONUT.r;
@@ -98,23 +134,23 @@ function formatStat(fmt: Fmt, value: number | null, format: StatFormat): string 
 
 function TileBox({ label, value }: { label: string; value: string }) {
   return (
-    <View className="min-w-[46%] flex-1 rounded-2xl border border-neutral-200 bg-white px-4 py-3 dark:border-neutral-700/60 dark:bg-neutral-800/80">
+    <View className="min-w-[46%] flex-1 rounded-2xl border border-border bg-card px-4 py-3 dark:border-border/60 dark:bg-card/80">
       <Text
         numberOfLines={1}
-        className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+        className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">
         {label}
       </Text>
-      <Text className="mt-1 text-2xl font-bold text-neutral-900 dark:text-white">{value}</Text>
+      <DisplayText className="mt-1 text-2xl font-bold text-ink">{value}</DisplayText>
     </View>
   );
 }
 
 function StatCard({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <View className="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-700/60 dark:bg-neutral-800/50">
-      <Text className="text-[15px] font-semibold text-neutral-900 dark:text-white">{title}</Text>
+    <View className="rounded-2xl border border-border bg-card p-4 dark:border-border/60 dark:bg-card/50">
+      <Text className="text-[15px] font-semibold text-ink">{title}</Text>
       {hint ? (
-        <Text className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{hint}</Text>
+        <Text className="mt-0.5 text-xs text-ink-2">{hint}</Text>
       ) : null}
       <View className="mt-3">{children}</View>
     </View>
@@ -133,9 +169,9 @@ function Legend({
       {items.map((it) => (
         <View key={it.label} className="flex-row items-center gap-2">
           <View className="h-3 w-3 rounded-sm" style={{ backgroundColor: it.color }} />
-          <Text className="text-xs text-neutral-600 dark:text-neutral-300">
+          <Text className="text-xs text-ink-2">
             {it.label}{' '}
-            <Text className="font-bold text-neutral-900 dark:text-white">{it.percent}%</Text>
+            <Text className="font-bold text-ink">{it.percent}%</Text>
           </Text>
         </View>
       ))}
@@ -144,8 +180,15 @@ function Legend({
 }
 
 /** Stacked horizontal bar for independent or normalized part-to-whole shares. */
-function SegmentedBar({ segments, colors }: { segments: StatSegment[]; colors: string[] }) {
+function SegmentedBar({
+  segments,
+  colors,
+}: {
+  segments: StatSegment[];
+  colors: readonly string[];
+}) {
   const { t } = useTranslation();
+  const { track } = useCharts();
   const legendItems = segments.map((seg, i) => ({
     label: t(`area.stats.${seg.labelKey}`),
     percent: seg.percent,
@@ -153,7 +196,9 @@ function SegmentedBar({ segments, colors }: { segments: StatSegment[]; colors: s
   }));
   return (
     <View>
-      <View className="h-7 flex-row overflow-hidden rounded-lg bg-neutral-200 dark:bg-neutral-700">
+      <View
+        className="h-7 flex-row overflow-hidden rounded-lg"
+        style={{ backgroundColor: track }}>
         {segments.map((seg, i) => (
           <View
             key={seg.labelKey}
@@ -168,13 +213,14 @@ function SegmentedBar({ segments, colors }: { segments: StatSegment[]; colors: s
 
 /** Centered horizontal bars; widths are relative to the largest bucket. */
 function AgeBars({ rows }: { rows: AgeRow[] }) {
+  const { seq } = useCharts();
   const { t } = useTranslation();
   const max = Math.max(...rows.map((r) => r.percent), 1);
   return (
     <View className="gap-3">
       {rows.map((row, i) => (
         <View key={row.labelKey} className="flex-row items-center gap-3">
-          <Text className="w-16 text-right text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+          <Text className="w-16 text-right text-xs font-semibold text-ink-2">
             {t(`area.stats.${row.labelKey}`)}
           </Text>
           <View className="h-5 flex-1 justify-center">
@@ -183,11 +229,11 @@ function AgeBars({ rows }: { rows: AgeRow[] }) {
               style={{
                 width: widthPct((row.percent / max) * 100),
                 minWidth: 4,
-                backgroundColor: SEQ[SEQ.length - 1 - i] ?? SEQ[0],
+                backgroundColor: seq[seq.length - 1 - i] ?? seq[0],
               }}
             />
           </View>
-          <Text className="w-9 text-xs font-bold text-neutral-900 dark:text-white">
+          <Text className="w-9 text-xs font-bold text-ink">
             {row.percent}%
           </Text>
         </View>
@@ -201,6 +247,7 @@ function AgeBars({ rows }: { rows: AgeRow[] }) {
  * scaled so the winning party fills the row, and the percentage of the vote.
  */
 function PartyVotes({ parties, fmt }: { parties: ElectionPartyRow[]; fmt: Fmt }) {
+  const { accent } = useCharts();
   const max = Math.max(...parties.map((p) => p.share), 1);
   return (
     <View className="gap-2.5">
@@ -213,11 +260,11 @@ function PartyVotes({ parties, fmt }: { parties: ElectionPartyRow[]; fmt: Fmt })
               contentFit="contain"
             />
           ) : (
-            <View className="h-[22px] w-[22px] rounded-full bg-neutral-200 dark:bg-neutral-700" />
+            <View className="h-[22px] w-[22px] rounded-full bg-surface" />
           )}
           <Text
             numberOfLines={1}
-            className="w-20 text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+            className="w-20 text-xs font-semibold text-ink-2">
             {party.label}
           </Text>
           <View className="h-3 flex-1 justify-center">
@@ -226,11 +273,11 @@ function PartyVotes({ parties, fmt }: { parties: ElectionPartyRow[]; fmt: Fmt })
               style={{
                 width: widthPct((party.share / max) * 100),
                 minWidth: 4,
-                backgroundColor: ACCENT,
+                backgroundColor: accent,
               }}
             />
           </View>
-          <Text className="w-14 text-right text-xs font-bold text-neutral-900 dark:text-white">
+          <Text className="w-14 text-right text-xs font-bold text-ink">
             {fmt.percent1(party.share)}
           </Text>
         </View>
@@ -241,8 +288,7 @@ function PartyVotes({ parties, fmt }: { parties: ElectionPartyRow[]; fmt: Fmt })
 
 /** SVG donut whose arcs are drawn with stroke-dasharray, plus a center stat. */
 function Donut({ segments, center }: { segments: StatSegment[]; center?: string }) {
-  const { colorScheme } = useColorScheme();
-  const track = colorScheme === 'dark' ? '#3f3f46' : '#eceef1';
+  const { cat, track } = useCharts();
   const arcs = segments.map((seg, i) => {
     const len = (seg.weight / 100) * CIRC;
     // Cumulative length of the preceding arcs, so each arc starts where the last
@@ -251,7 +297,7 @@ function Donut({ segments, center }: { segments: StatSegment[]; center?: string 
     const offset = segments
       .slice(0, i)
       .reduce((sum, prev) => sum + (prev.weight / 100) * CIRC, 0);
-    return { len, offset, color: CAT[i % CAT.length]!, key: seg.labelKey };
+    return { len, offset, color: cat[i % cat.length]!, key: seg.labelKey };
   });
   return (
     <View style={{ width: DONUT.size, height: DONUT.size }}>
@@ -281,7 +327,7 @@ function Donut({ segments, center }: { segments: StatSegment[]; center?: string 
       </Svg>
       {center ? (
         <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white">{center}</Text>
+          <DisplayText className="text-2xl font-bold text-ink">{center}</DisplayText>
         </View>
       ) : null}
     </View>
@@ -289,18 +335,21 @@ function Donut({ segments, center }: { segments: StatSegment[]; center?: string 
 }
 
 function ShareBar({ label, value, fmt }: { label: string; value: number; fmt: Fmt }) {
+  const { accent, track } = useCharts();
   return (
     <View>
       <View className="flex-row items-baseline justify-between">
-        <Text className="text-[13px] text-neutral-700 dark:text-neutral-300">{label}</Text>
-        <Text className="text-[13px] font-bold text-neutral-900 dark:text-white">
+        <Text className="text-[13px] text-ink-2">{label}</Text>
+        <Text className="text-[13px] font-bold text-ink">
           {fmt.percent1(value)}
         </Text>
       </View>
-      <View className="mt-1.5 h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+      <View
+        className="mt-1.5 h-3 overflow-hidden rounded-full"
+        style={{ backgroundColor: track }}>
         <View
           className="h-3 rounded-full"
-          style={{ width: widthPct(value), backgroundColor: ACCENT }}
+          style={{ width: widthPct(value), backgroundColor: accent }}
         />
       </View>
     </View>
@@ -310,8 +359,8 @@ function ShareBar({ label, value, fmt }: { label: string; value: number; fmt: Fm
 function MissingState() {
   const { t } = useTranslation();
   return (
-    <View className="h-12 items-center justify-center rounded-lg border border-dashed border-neutral-300 bg-neutral-100 dark:border-neutral-600 dark:bg-neutral-800">
-      <Text className="text-xs italic text-neutral-500 dark:text-neutral-400">
+    <View className="h-12 items-center justify-center rounded-lg border border-dashed border-border bg-surface">
+      <Text className="text-xs italic text-ink-2">
         {t('area.stats.missing')}
       </Text>
     </View>
@@ -334,13 +383,16 @@ export interface AreaStatsProps {
  * district heating always renders so the "not disclosed" state stays visible.
  */
 export function AreaStats({ stats }: AreaStatsProps) {
+  const { cat, seq } = useCharts();
+  // Before 2000 takes the deeper step, from 2000 the lighter one.
+  const buildYear = [seq[3]!, seq[1]!];
   const { t } = useTranslation();
   const fmt = useFmt();
   const view = useMemo(() => deriveNeighborhoodStats(stats), [stats]);
 
   if (!view || !stats) {
     return (
-      <Text className="mt-2 text-base leading-6 text-neutral-600 dark:text-neutral-300">
+      <Text className="mt-2 text-base leading-6 text-ink-2">
         {t('area.noStats')}
       </Text>
     );
@@ -349,8 +401,8 @@ export function AreaStats({ stats }: AreaStatsProps) {
   return (
     <View className="mt-3 gap-3">
       <View className="flex-row">
-        <View className="self-start rounded-full bg-blue-50 px-2.5 py-1 dark:bg-blue-950">
-          <Text className="text-xs font-semibold text-blue-600 dark:text-blue-300">
+        <View className="self-start rounded-full bg-accent/10 px-2.5 py-1">
+          <Text className="text-xs font-semibold text-accent-text">
             {`CBS ${stats.statsYear}`}
           </Text>
         </View>
@@ -385,10 +437,10 @@ export function AreaStats({ stats }: AreaStatsProps) {
                 items={view.household.segments.map((seg, i) => ({
                   label: t(`area.stats.${seg.labelKey}`),
                   percent: seg.percent,
-                  color: CAT[i % CAT.length]!,
+                  color: cat[i % cat.length]!,
                 }))}
               />
-              <Text className="mt-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+              <Text className="mt-2 text-[11px] text-ink-2">
                 {t('area.stats.householdSizeUnit')}
               </Text>
             </View>
@@ -398,7 +450,7 @@ export function AreaStats({ stats }: AreaStatsProps) {
 
       {view.tenure ? (
         <StatCard title={t('area.stats.tenureTitle')} hint={t('area.stats.tenureHint')}>
-          <SegmentedBar segments={view.tenure} colors={CAT} />
+          <SegmentedBar segments={view.tenure} colors={cat} />
         </StatCard>
       ) : null}
 
@@ -406,13 +458,13 @@ export function AreaStats({ stats }: AreaStatsProps) {
         <StatCard
           title={t('area.stats.dwellingTypeTitle')}
           hint={t('area.stats.dwellingTypeHint')}>
-          <SegmentedBar segments={view.dwellingType} colors={CAT} />
+          <SegmentedBar segments={view.dwellingType} colors={cat} />
         </StatCard>
       ) : null}
 
       {view.origin ? (
         <StatCard title={t('area.stats.originTitle')} hint={t('area.stats.originHint')}>
-          <SegmentedBar segments={view.origin} colors={CAT} />
+          <SegmentedBar segments={view.origin} colors={cat} />
         </StatCard>
       ) : null}
 
@@ -428,7 +480,7 @@ export function AreaStats({ stats }: AreaStatsProps) {
 
       {view.buildYear ? (
         <StatCard title={t('area.stats.buildYearTitle')} hint={t('area.stats.buildYearHint')}>
-          <SegmentedBar segments={view.buildYear} colors={BUILD_YEAR_COLORS} />
+          <SegmentedBar segments={view.buildYear} colors={buildYear} />
         </StatCard>
       ) : null}
 
@@ -476,9 +528,9 @@ export function AreaStats({ stats }: AreaStatsProps) {
         title={t('area.stats.districtHeatingTitle')}
         hint={t('area.stats.districtHeatingHint')}>
         {view.districtHeating != null ? (
-          <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <DisplayText className="text-2xl font-bold text-ink">
             {`${Math.round(view.districtHeating)}%`}
-          </Text>
+          </DisplayText>
         ) : (
           <MissingState />
         )}

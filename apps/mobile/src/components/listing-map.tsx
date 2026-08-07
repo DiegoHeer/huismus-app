@@ -10,8 +10,9 @@ import {
   RasterSource,
   VectorSource,
 } from '@maplibre/maplibre-react-native';
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { MaxFontScale, Text } from '@huismus/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -32,12 +33,15 @@ import {
   DEFAULT_CENTER,
   INITIAL_ZOOM,
   priceLabel,
+  VIEWED_PIN_ALPHA,
 } from './map-shared';
 import { usePulseOpacity } from './use-pulse-opacity';
+import { buildAreaIndex, findAreaAt } from '../lib/area-hit-test';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { type MapOverlay } from '../lib/map-overlays';
 import { useRecentViews } from '../lib/recent-views';
-import { Brand } from '../constants/theme';
+import { useBrand } from '@/hooks/use-theme';
+import { withAlpha } from '@/constants/theme';
 
 // The search bar overlays the top of the map, so park the compass in the
 // bottom-left corner instead — clear of both the search field and the listing
@@ -148,6 +152,13 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   },
   ref,
 ) {
+  const brand = useBrand();
+  // Already-seen listings fade their fill only. Putting the alpha in the colour
+  // rather than `opacity` on the marker keeps the white outline and the price
+  // label at full strength — they are what make a pin readable over arbitrary
+  // tiles — and stops the bubble and its tail double-blending where they
+  // overlap, which `markerArrow`'s -1px tuck exists to hide.
+  const viewedFill = withAlpha(brand.accent, VIEWED_PIN_ALPHA);
   const cameraRef = useRef<CameraRef>(null);
   // The region-change event carries the visible bounds, but the initial framing
   // arrives via onDidFinishLoadingMap, which doesn't — so hold a map ref to ask
@@ -192,6 +203,26 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
     return first ? [first.longitude, first.latitude] : [DEFAULT_CENTER.longitude, DEFAULT_CENTER.latitude];
   }, [polygons, listings]);
 
+  // Bounding boxes for resolving a tap to the neighborhood actually under the
+  // finger — the native press event's own `features` can't do it (see
+  // `area-hit-test.ts`). Rebuilt only when the overlay set or its colors change.
+  const areaIndex = useMemo(() => buildAreaIndex(polygons ?? []), [polygons]);
+
+  // True for the press a marker tap fires underneath itself (see
+  // markerTapAtRef). Guards both the map's handler and the area overlay's, so a
+  // marker tap neither switches municipality nor selects the buurt below it.
+  const withinMarkerGrace = useCallback(
+    () => Date.now() - markerTapAtRef.current < MARKER_TAP_GRACE_MS,
+    [],
+  );
+
+  // A press on the bare map: hit-test it against the cities. Shared by the map's
+  // own handler and the area source's fall-through.
+  const pressMap = useCallback(
+    (lngLat: [number, number]) => onMapPress?.({ longitude: lngLat[0], latitude: lngLat[1] }),
+    [onMapPress],
+  );
+
   return (
     <Map
       style={StyleSheet.absoluteFill}
@@ -199,11 +230,8 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
       // A press not consumed by an area overlay falls through to here; hit-test
       // it against the cities. `lngLat` is a [longitude, latitude] tuple.
       onPress={(e) => {
-        // Ignore the press a marker tap fires underneath itself (see
-        // markerTapAtRef) — a marker tap must not also switch municipality.
-        if (Date.now() - markerTapAtRef.current < MARKER_TAP_GRACE_MS) return;
-        const [longitude, latitude] = e.nativeEvent.lngLat;
-        onMapPress?.({ longitude, latitude });
+        if (withinMarkerGrace()) return;
+        pressMap(e.nativeEvent.lngLat);
       }}
       ref={mapViewRef}
       // Once a pan/zoom settles, report the viewport centre, zoom and bounds so
@@ -308,9 +336,21 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         <GeoJSONSource
           id="area-polygons"
           data={toFeatureCollection(polygons)}
+          // Resolve the tap from its coordinate, NOT from `features`: the native
+          // hit test returns every feature within a 44 pt/dp box of the touch,
+          // in render order, so `features[0]` is an arbitrary neighbor — visibly
+          // so when zoomed out, where that box spans several buurten. See
+          // `area-hit-test.ts`. A tap inside the box but outside every
+          // neighborhood is a press on the bare map, matching web's behavior.
           onPress={(e) => {
-            const id = e.nativeEvent.features[0]?.properties?.id;
-            if (typeof id === 'string') onSelectPolygon?.(id);
+            if (withinMarkerGrace()) return;
+            const { lngLat } = e.nativeEvent;
+            const id = findAreaAt(lngLat, areaIndex);
+            if (id) {
+              onSelectPolygon?.(id);
+              return;
+            }
+            pressMap(lngLat);
           }}>
           <Layer
             id="area-polygons-fill"
@@ -340,7 +380,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         </GeoJSONSource>
       )}
       {listings.map((listing) => {
-        const viewed = viewedIds.has(listing.id);
+        const fill = viewedIds.has(listing.id) ? viewedFill : brand.accent;
         return (
           <Marker
             key={listing.id}
@@ -357,12 +397,17 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
               onSelect?.(listing.id);
             }}>
             <View style={styles.markerWrap}>
-              <View style={[styles.marker, viewed && styles.markerViewed]}>
-                <Text style={styles.markerText} numberOfLines={1}>
+              <View style={[styles.marker, { backgroundColor: fill }]}>
+                <Text
+                  style={styles.markerText}
+                  numberOfLines={1}
+                  // The bubble's tail and outline are drawn to a fixed size, so
+                  // the label can't take the body cap.
+                  maxFontSizeMultiplier={MaxFontScale.fixed}>
                   {priceLabel(listing)}
                 </Text>
               </View>
-              <View style={[styles.markerArrow, viewed && styles.markerArrowViewed]} />
+              <View style={[styles.markerArrow, { borderTopColor: fill }]} />
             </View>
           </Marker>
         );
@@ -378,15 +423,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   marker: {
-    backgroundColor: Brand.blue,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#ffffff',
-  },
-  markerViewed: {
-    backgroundColor: Brand.blueLight,
   },
   // Downward triangle tail that turns the bubble into a pin. Pulled up 1px so it
   // tucks under the bubble's white border, leaving no seam between the two.
@@ -399,10 +440,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 6,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: Brand.blue,
-  },
-  markerArrowViewed: {
-    borderTopColor: Brand.blueLight,
   },
   markerText: {
     color: '#ffffff',

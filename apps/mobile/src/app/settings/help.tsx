@@ -1,5 +1,6 @@
 import { useTranslation } from '@huismus/i18n';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@huismus/ui';
 
 import { SettingsContentScreen } from '@/components/settings-content';
 
@@ -16,28 +17,28 @@ export default function HelpSettingsScreen() {
 
   return (
     <SettingsContentScreen>
-      <Text className="px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+      <Text className="px-1 text-xs font-semibold uppercase tracking-wide text-ink-2">
         {t('helpPage.faqTitle')}
       </Text>
 
-      <View className="rounded-2xl bg-white px-4 shadow-sm dark:bg-neutral-900">
+      <View className="rounded-2xl bg-card px-4 shadow-sm">
         {FAQ_IDS.map((id, index) => (
           <View
             key={id}
             className={`py-4 ${
-              index > 0 ? 'border-t border-neutral-100 dark:border-neutral-800' : ''
+              index > 0 ? 'border-t border-border' : ''
             }`}>
-            <Text className="mb-1.5 text-base font-semibold text-neutral-900 dark:text-white">
+            <Text className="mb-1.5 text-base font-semibold text-ink">
               {t(`helpPage.faq.${id}.q`)}
             </Text>
-            <Text className="text-base leading-6 text-neutral-600 dark:text-neutral-300">
+            <Text className="text-base leading-6 text-ink-2">
               {t(`helpPage.faq.${id}.a`)}
             </Text>
           </View>
         ))}
       </View>
 
-      <Text className="px-1 text-sm text-neutral-500">{t('helpPage.comingSoon')}</Text>
+      <Text className="px-1 text-sm text-ink-2">{t('helpPage.comingSoon')}</Text>
     </SettingsContentScreen>
   );
 }

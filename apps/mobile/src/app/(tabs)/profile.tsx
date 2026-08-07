@@ -2,15 +2,17 @@ import { useTranslation } from '@huismus/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { type ReactElement, type ReactNode } from 'react';
-import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
+import { DisplayText, Text } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
+import { ContrastIcon, GlobeIcon } from '@/components/icons';
 import { useAuth, type AuthUser } from '@/hooks/use-auth';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppearance } from '@/lib/appearance';
 import { resetOnboarding } from '@/lib/onboarding';
 import { activeLanguage, APPEARANCE_OPTIONS, LANGUAGE_LABELS } from '@/lib/settings-options';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 interface IconProps {
   size?: number;
@@ -137,10 +139,10 @@ function TrashIcon({ size, color }: IconProps) {
 }
 
 export default function ProfileScreen() {
+  const brand = useBrand();
   const { t } = useTranslation();
   const { user, isAuthenticated, signOut } = useAuth();
   const router = useRouter();
-  const scheme = useColorScheme();
 
   // Signing out is destructive (it drops back to the guest state), so confirm
   // instead of acting on the first tap. react-native-web's Alert.alert is a
@@ -161,12 +163,12 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-neutral-100 dark:bg-black">
+    <SafeAreaView edges={['top']} className="flex-1 bg-bg">
       <View className="px-4 pb-2 pt-2">
-        <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+        <DisplayText className="text-2xl font-bold text-ink">
           {t('profile.title')}
-        </Text>
-        <Text className="text-sm text-neutral-500">{t('profile.subtitle')}</Text>
+        </DisplayText>
+        <Text className="text-sm text-ink-2">{t('profile.subtitle')}</Text>
       </View>
 
       <ScrollView
@@ -184,8 +186,8 @@ export default function ProfileScreen() {
           <Pressable
             onPress={confirmSignOut}
             accessibilityRole="button"
-            className="items-center rounded-2xl bg-white py-3 shadow-sm active:opacity-70 dark:bg-neutral-900">
-            <Text className="text-base font-semibold text-red-600 dark:text-red-400">
+            className="items-center rounded-2xl bg-card py-3 shadow-sm active:opacity-70">
+            <Text className="text-base font-semibold text-accent-text">
               {t('profile.signOut')}
             </Text>
           </Pressable>
@@ -195,9 +197,9 @@ export default function ProfileScreen() {
           <Pressable
             onPress={() => router.push('/settings/delete-account')}
             accessibilityRole="button"
-            className="flex-row items-center justify-center gap-2 rounded-2xl bg-white py-3 shadow-sm active:opacity-70 dark:bg-neutral-900">
-            <TrashIcon size={18} color={scheme === 'dark' ? '#f87171' : '#dc2626'} />
-            <Text className="text-base font-semibold text-red-600 dark:text-red-400">
+            className="flex-row items-center justify-center gap-2 rounded-2xl bg-card py-3 shadow-sm active:opacity-70">
+            <TrashIcon size={18} color={brand.text} />
+            <Text className="text-base font-semibold text-accent-text">
               {t('profile.deleteAccount')}
             </Text>
           </Pressable>
@@ -209,11 +211,11 @@ export default function ProfileScreen() {
 
 function IdentityCard({ user }: { user: AuthUser }) {
   return (
-    <View className="flex-row items-center gap-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
+    <View className="flex-row items-center gap-3 rounded-2xl bg-card p-4 shadow-sm">
       <Avatar user={user} />
       <View className="flex-1">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">{user.name}</Text>
-        <Text numberOfLines={1} className="text-sm text-neutral-500">
+        <Text className="text-lg font-semibold text-ink">{user.name}</Text>
+        <Text numberOfLines={1} className="text-sm text-ink-2">
           {user.email}
         </Text>
       </View>
@@ -225,23 +227,23 @@ function GuestCard() {
   const { t } = useTranslation();
   const router = useRouter();
   return (
-    <View className="gap-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
+    <View className="gap-3 rounded-2xl bg-card p-4 shadow-sm">
+      <Text className="text-lg font-semibold text-ink">
         {t('profile.guestTitle')}
       </Text>
-      <Text className="text-sm text-neutral-500">{t('profile.guestSubtitle')}</Text>
+      <Text className="text-sm text-ink-2">{t('profile.guestSubtitle')}</Text>
       <View className="mt-1 flex-row gap-3">
         <Pressable
           onPress={() => router.push('/auth/login')}
           accessibilityRole="button"
-          className="flex-1 items-center rounded-xl bg-blue-600 py-3 active:opacity-80">
+          className="flex-1 items-center rounded-xl bg-accent py-3 active:opacity-80">
           <Text className="text-base font-semibold text-white">{t('profile.logIn')}</Text>
         </Pressable>
         <Pressable
           onPress={() => router.push('/auth/register')}
           accessibilityRole="button"
-          className="flex-1 items-center rounded-xl border border-neutral-300 py-3 active:opacity-60 dark:border-neutral-700">
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+          className="flex-1 items-center rounded-xl border border-border py-3 active:opacity-60">
+          <Text className="text-base font-semibold text-ink">
             {t('profile.register')}
           </Text>
         </Pressable>
@@ -254,8 +256,8 @@ function PreferencesCard() {
   const { t } = useTranslation();
 
   return (
-    <View className="gap-4 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+    <View className="gap-4 rounded-2xl bg-card p-4 shadow-sm">
+      <Text className="text-xs font-semibold uppercase tracking-wide text-ink-2">
         {t('profile.preferences')}
       </Text>
 
@@ -273,8 +275,8 @@ function AccountCard() {
   const router = useRouter();
 
   return (
-    <View className="gap-4 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+    <View className="gap-4 rounded-2xl bg-card p-4 shadow-sm">
+      <Text className="text-xs font-semibold uppercase tracking-wide text-ink-2">
         {t('profile.account')}
       </Text>
 
@@ -313,8 +315,8 @@ function SupportCard() {
   }
 
   return (
-    <View className="gap-4 rounded-2xl bg-white p-4 shadow-sm dark:bg-neutral-900">
-      <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+    <View className="gap-4 rounded-2xl bg-card p-4 shadow-sm">
+      <Text className="text-xs font-semibold uppercase tracking-wide text-ink-2">
         {t('profile.support')}
       </Text>
 
@@ -344,22 +346,23 @@ function SupportCard() {
 }
 
 /**
- * A tappable settings row: leading stroked SVG icon, label, and a trailing
- * chevron. `onPress` is optional — without it the row is inert but still gives
- * press feedback.
+ * A tappable settings row: leading stroked SVG icon, label, an optional trailing
+ * value, and a chevron. `onPress` is optional — without it the row is inert but
+ * still gives press feedback.
  */
 function MenuRow({
   icon: Icon,
   label,
+  value,
   onPress,
 }: {
   icon: (props: IconProps) => ReactElement;
   label: string;
+  value?: ReactNode;
   onPress?: () => void;
 }) {
-  const scheme = useColorScheme();
-  // Match the row label: neutral-900 in light, white in dark.
-  const iconColor = scheme === 'dark' ? '#ffffff' : '#171717';
+  // Match the row label.
+  const iconColor = useTheme().text;
   return (
     <Pressable
       onPress={onPress}
@@ -367,9 +370,12 @@ function MenuRow({
       className="flex-row items-center justify-between py-3 active:opacity-60">
       <View className="flex-row items-center gap-3">
         <Icon color={iconColor} />
-        <Text className="text-lg text-neutral-900 dark:text-white">{label}</Text>
+        <Text className="text-lg text-ink">{label}</Text>
       </View>
-      <Text className="text-xl text-neutral-400">›</Text>
+      <View className="flex-row items-center gap-1.5">
+        {value}
+        <Text className="text-xl text-ink-2">›</Text>
+      </View>
     </Pressable>
   );
 }
@@ -383,41 +389,41 @@ function LanguageField() {
   const router = useRouter();
 
   return (
-    <Pressable
+    <MenuRow
+      icon={GlobeIcon}
+      label={t('profile.language')}
+      value={<Text className="text-lg text-ink-2">{LANGUAGE_LABELS[activeLanguage(i18n)]}</Text>}
       onPress={() => router.push('/settings/language')}
-      accessibilityRole="button"
-      className="flex-row items-center justify-between py-3 active:opacity-60">
-      <Text className="text-lg text-neutral-900 dark:text-white">{t('profile.language')}</Text>
-      <View className="flex-row items-center gap-1.5">
-        <Text className="text-lg text-neutral-500">{LANGUAGE_LABELS[activeLanguage(i18n)]}</Text>
-        <Text className="text-xl text-neutral-400">›</Text>
-      </View>
-    </Pressable>
+    />
   );
 }
 
 /**
- * Appearance selector row: shows the active appearance and opens a full-screen
- * selection page (`app/settings/appearance.tsx`) on press.
+ * Appearance selector row: shows the active appearance — its glyph plus label —
+ * and opens a full-screen selection page (`app/settings/appearance.tsx`) on press.
  */
 function AppearanceField() {
   const { t } = useTranslation();
   const router = useRouter();
   const { appearance } = useAppearance();
+  // The glyph sits beside the trailing label, so it takes the same muted token.
+  const valueColor = useTheme().textSecondary;
 
   const active = APPEARANCE_OPTIONS.find((entry) => entry.value === appearance)!;
+  const ActiveIcon = active.icon;
 
   return (
-    <Pressable
+    <MenuRow
+      icon={ContrastIcon}
+      label={t('profile.appearance')}
+      value={
+        <View className="flex-row items-center gap-1.5">
+          <ActiveIcon color={valueColor} size={18} />
+          <Text className="text-lg text-ink-2">{t(active.labelKey)}</Text>
+        </View>
+      }
       onPress={() => router.push('/settings/appearance')}
-      accessibilityRole="button"
-      className="flex-row items-center justify-between py-3 active:opacity-60">
-      <Text className="text-lg text-neutral-900 dark:text-white">{t('profile.appearance')}</Text>
-      <View className="flex-row items-center gap-1.5">
-        <Text className="text-lg text-neutral-500">{`${active.emoji} ${t(active.labelKey)}`}</Text>
-        <Text className="text-xl text-neutral-400">›</Text>
-      </View>
-    </Pressable>
+    />
   );
 }
 
@@ -441,8 +447,8 @@ function Avatar({ user }: { user: AuthUser }) {
   }
 
   return (
-    <View className="h-14 w-14 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-      <Text className="text-lg font-semibold text-blue-700 dark:text-blue-200">{initials}</Text>
+    <View className="h-14 w-14 items-center justify-center rounded-full bg-accent/15">
+      <Text className="text-lg font-semibold text-accent-text">{initials}</Text>
     </View>
   );
 }

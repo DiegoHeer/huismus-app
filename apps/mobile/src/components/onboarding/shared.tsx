@@ -1,9 +1,9 @@
 import { type ReactNode } from 'react';
-import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, View } from 'react-native';
+import { DisplayText, Text } from '@huismus/ui';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-import { useEffectiveColorScheme } from '@/components/map-style';
-import { Brand } from '@/constants/theme';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 /**
  * Shared building blocks for the intro tour pages: a consistent page scaffold
@@ -17,7 +17,7 @@ const STROKE = { strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round'
 /** Tinted rounded badge holding a page's hero glyph. */
 export function HeroBadge({ children }: { children: ReactNode }) {
   return (
-    <View className="h-24 w-24 items-center justify-center rounded-3xl bg-blue-50 dark:bg-blue-950">
+    <View className="h-24 w-24 items-center justify-center rounded-3xl bg-accent/10">
       {children}
     </View>
   );
@@ -77,11 +77,11 @@ export function LegalLinksRow({
   return (
     <View className="flex-row items-center justify-center gap-3">
       <Pressable onPress={onPrivacyPress} accessibilityRole="link" hitSlop={8}>
-        <Text className="text-xs text-neutral-400 dark:text-neutral-600">{privacyLabel}</Text>
+        <Text className="text-xs text-ink-2">{privacyLabel}</Text>
       </Pressable>
-      <Text className="text-xs text-neutral-300 dark:text-neutral-700">·</Text>
+      <Text className="text-xs text-border">·</Text>
       <Pressable onPress={onTermsPress} accessibilityRole="link" hitSlop={8}>
-        <Text className="text-xs text-neutral-400 dark:text-neutral-600">{termsLabel}</Text>
+        <Text className="text-xs text-ink-2">{termsLabel}</Text>
       </Pressable>
     </View>
   );
@@ -101,10 +101,10 @@ export function OnboardingHeader({
     <View className="items-center gap-4 pt-2">
       <HeroBadge>{icon}</HeroBadge>
       <View className="gap-2">
-        <Text className="text-center text-2xl font-bold text-neutral-900 dark:text-white">
+        <DisplayText className="text-center text-2xl font-bold text-ink">
           {title}
-        </Text>
-        <Text className="text-center text-base leading-6 text-neutral-500 dark:text-neutral-400">
+        </DisplayText>
+        <Text className="text-center text-base leading-6 text-ink-2">
           {subtitle}
         </Text>
       </View>
@@ -127,8 +127,8 @@ export function ProgressDots({
   progress: Animated.AnimatedInterpolation<number> | Animated.Value;
   label: string;
 }) {
-  const isDark = useEffectiveColorScheme() === 'dark';
-  const inactive = isDark ? '#3f3f46' : '#d4d4d4';
+  const inactive = useTheme().border;
+  const { accent } = useBrand();
   return (
     <View className="flex-row items-center gap-2" accessibilityLabel={label}>
       {Array.from({ length: count }).map((_, i) => (
@@ -144,7 +144,7 @@ export function ProgressDots({
             borderRadius: 4,
             backgroundColor: progress.interpolate({
               inputRange: [i - 1, i, i + 1],
-              outputRange: [inactive, Brand.blue, inactive],
+              outputRange: [inactive, accent, inactive],
               extrapolate: 'clamp',
             }),
           }}
@@ -169,7 +169,7 @@ export function PrimaryButton({
       testID={testID}
       onPress={onPress}
       accessibilityRole="button"
-      className="items-center justify-center rounded-xl bg-blue-600 px-7 py-3.5 active:opacity-80">
+      className="items-center justify-center rounded-xl bg-accent px-7 py-3.5 active:opacity-80">
       <Text className="text-base font-semibold text-white">{label}</Text>
     </Pressable>
   );
@@ -192,14 +192,14 @@ export function TextButton({
       accessibilityRole="button"
       hitSlop={8}
       className="px-2 py-2 active:opacity-60">
-      <Text className="text-base font-medium text-neutral-500 dark:text-neutral-400">{label}</Text>
+      <Text className="text-base font-medium text-ink-2">{label}</Text>
     </Pressable>
   );
 }
 
 // --- Hero glyphs -------------------------------------------------------------
-// Feather/Lucide-style stroked SVGs, tinted brand-blue, mirroring the icon
-// approach used elsewhere (profile.tsx, filter-pills.tsx).
+// Feather/Lucide-style stroked SVGs, tinted with the brand accent, mirroring
+// the icon approach used elsewhere (profile.tsx, filter-pills.tsx).
 
 function HeroSvg({ size = 44, children }: { size?: number; children: ReactNode }) {
   return (
@@ -209,10 +209,14 @@ function HeroSvg({ size = 44, children }: { size?: number; children: ReactNode }
   );
 }
 
-const HERO = Brand.blue;
+/** Hero-glyph stroke: the brand accent for the active theme. */
+function useHeroTint() {
+  return useBrand().accent;
+}
 
 /** House — the welcome page. */
 export function HomeGlyph({ size }: { size?: number }) {
+  const HERO = useHeroTint();
   return (
     <HeroSvg size={size}>
       <Path d="M3 10.5 12 3l9 7.5" stroke={HERO} {...STROKE} />
@@ -224,6 +228,7 @@ export function HomeGlyph({ size }: { size?: number }) {
 
 /** Map pin on a folded map — the "map & insights" feature. */
 export function MapPinGlyph({ size }: { size?: number }) {
+  const HERO = useHeroTint();
   return (
     <HeroSvg size={size}>
       <Path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11z" stroke={HERO} {...STROKE} />
@@ -234,6 +239,7 @@ export function MapPinGlyph({ size }: { size?: number }) {
 
 /** Slider controls — the "powerful filters" feature. */
 export function SlidersGlyph({ size }: { size?: number }) {
+  const HERO = useHeroTint();
   return (
     <HeroSvg size={size}>
       <Path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h8M16 18h4" stroke={HERO} {...STROKE} />
@@ -246,6 +252,7 @@ export function SlidersGlyph({ size }: { size?: number }) {
 
 /** Skyline of buildings — the city picker. */
 export function BuildingsGlyph({ size }: { size?: number }) {
+  const HERO = useHeroTint();
   return (
     <HeroSvg size={size}>
       <Rect x={3} y={9} width={7} height={12} rx={1} stroke={HERO} {...STROKE} />
@@ -257,6 +264,7 @@ export function BuildingsGlyph({ size }: { size?: number }) {
 
 /** Person with a plus — the create-account page. */
 export function AccountGlyph({ size }: { size?: number }) {
+  const HERO = useHeroTint();
   return (
     <HeroSvg size={size}>
       <Circle cx={10} cy={8} r={3.5} stroke={HERO} {...STROKE} />

@@ -1,10 +1,11 @@
 import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { DisplayText, Text } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useBrand } from '@/hooks/use-theme';
 
 const STROKE = { strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
@@ -28,18 +29,18 @@ function CheckCircleIcon({ size = 44, color }: { size?: number; color: string })
 export default function AccountDeletedScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const scheme = useColorScheme();
+  const brand = useBrand();
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-neutral-100 dark:bg-black">
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-bg">
       <View className="flex-1 items-center justify-center gap-5 px-8">
-        <View className="h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-950">
-          <CheckCircleIcon size={44} color={scheme === 'dark' ? '#4ade80' : '#16a34a'} />
+        <View className="h-20 w-20 items-center justify-center rounded-full bg-success/15">
+          <CheckCircleIcon size={44} color={brand.success} />
         </View>
-        <Text className="text-center text-2xl font-bold text-neutral-900 dark:text-white">
+        <DisplayText className="text-center text-2xl font-bold text-ink">
           {t('deleteAccountPage.successTitle')}
-        </Text>
-        <Text className="text-center text-base leading-6 text-neutral-500">
+        </DisplayText>
+        <Text className="text-center text-base leading-6 text-ink-2">
           {t('deleteAccountPage.successSubtitle')}
         </Text>
       </View>
@@ -49,7 +50,7 @@ export default function AccountDeletedScreen() {
           testID="account-deleted-continue"
           onPress={() => router.replace('/')}
           accessibilityRole="button"
-          className="items-center rounded-full bg-blue-600 py-4 active:opacity-80">
+          className="items-center rounded-full bg-accent py-4 active:opacity-80">
           <Text className="text-base font-semibold text-white">
             {t('deleteAccountPage.successCta')}
           </Text>

@@ -16,31 +16,55 @@ import {
   useRootNavigationState,
   useSegments,
 } from 'expo-router';
-import { useEffect } from 'react';
-import { Platform, useColorScheme } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Importing these hooks also runs their module side-effects at boot: applying
 // any saved appearance override, and hydrating the analytics opt-out flag.
 import { useScreenView } from '@/lib/analytics';
-import { useAppearance } from '@/lib/appearance';
+import '@/lib/appearance';
+import { Brand, Colors } from '@/constants/theme';
+import { useResolvedScheme } from '@/hooks/use-theme';
 import { useOnboarding } from '@/lib/onboarding';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { isSharedListingRoute } from '@/app/[locale]/listing/[slug]/[id]';
 
+/**
+ * React Navigation's stock DefaultTheme/DarkTheme are its own blue-on-grey. The
+ * native header, card backgrounds and back-chevron tint all read from this, so
+ * without an override the chrome around every pushed screen stays off-brand
+ * while the screen itself is Dageraad/Gloed.
+ */
+function navigationTheme(scheme: 'light' | 'dark') {
+  const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const colors = Colors[scheme];
+  return {
+    ...base,
+    colors: {
+      ...base.colors,
+      primary: Brand[scheme].accent,
+      background: colors.background,
+      card: colors.background,
+      text: colors.text,
+      border: colors.border,
+      notification: Brand[scheme].accent,
+    },
+  };
+}
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const { appearance } = useAppearance();
   const { t } = useTranslation();
 
   // Auto-track a Plausible pageview on every route-pattern change (no-op unless
   // analytics is enabled and the user hasn't opted out).
   useScreenView();
 
-  // Resolve the effective theme from the stored preference ('system' follows the
-  // OS), then invert it for the status bar: dark icons on light, light on dark.
-  const effectiveScheme = appearance === 'system' ? colorScheme : appearance;
+  // Invert the effective theme for the status bar: dark icons on light, light
+  // on dark. useResolvedScheme already folds the stored preference over the OS.
+  const effectiveScheme = useResolvedScheme();
   const statusBarStyle = effectiveScheme === 'dark' ? 'light' : 'dark';
+  const navTheme = useMemo(() => navigationTheme(effectiveScheme), [effectiveScheme]);
 
   // First-run gate: once we know (post-hydration) the intro tour hasn't been
   // completed, send the user into it. Native only — the web export is the
@@ -73,7 +97,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <I18nextProvider i18n={i18n}>
         <DataProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <ThemeProvider value={navTheme}>
             <StatusBar style={statusBarStyle} />
             <AnimatedSplashOverlay />
             <Stack

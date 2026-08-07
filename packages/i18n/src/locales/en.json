@@ -87,7 +87,19 @@
   "mapSettingsPage": {
     "title": "Map",
     "buildings3D": "3D buildings",
-    "buildings3DDescription": "Show buildings in 3D on the map."
+    "buildings3DDescription": "Show buildings in 3D on the map.",
+    "basemapTitle": "Map style",
+    "basemapDescription": "Sets how the map itself is drawn. Light or dark follows your appearance setting.",
+    "basemap": {
+      "standard": "Standard",
+      "warm": "Warm",
+      "liberty": "Detailed"
+    },
+    "basemapHint": {
+      "standard": "Quiet greys.",
+      "warm": "Warm paper and charcoal, matching the app.",
+      "liberty": "More detail and colour. Always light."
+    }
   },
   "deleteAccountPage": {
     "title": "Are you sure you want to delete your account?",
@@ -113,6 +125,11 @@
     "subtitle": "Tell us what you think or report a problem.",
     "label": "Your feedback",
     "placeholder": "Share your thoughts…",
+    "limitReached": "You've reached the {{max}}-character limit.",
+    "sentimentLabel": "How was your experience?",
+    "sentimentPositive": "Good",
+    "sentimentNeutral": "Okay",
+    "sentimentNegative": "Bad",
     "submit": "Send feedback",
     "submitting": "Sending…",
     "sent": "Feedback sent",

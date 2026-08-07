@@ -1,7 +1,16 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import type { AreaPolygon, Listing, MapBounds } from '@huismus/types';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { Layer, Map, type MapRef, Marker, Source, useMap } from 'react-map-gl/maplibre';
 
 import type { MapOverlay } from '../lib/map-overlays';
@@ -17,18 +26,20 @@ import {
   selectedFilter,
   toFeatureCollection,
 } from './area-polygons';
-import { useMapStyle } from './map-style';
+import { resolveAnchor, useMapStyle } from './map-style';
 import {
   BUILDINGS_3D_MIN_ZOOM,
   buildings3DPaint,
   DEFAULT_CENTER,
   INITIAL_ZOOM,
   priceLabel,
+  VIEWED_PIN_ALPHA,
 } from './map-shared';
 import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { useRecentViews } from '../lib/recent-views';
-import { Brand } from '../constants/theme';
+import { useBrand } from '@/hooks/use-theme';
+import { withAlpha } from '@/constants/theme';
 
 /**
  * The tapped city's outline, pulsing in opacity while its neighborhoods load
@@ -158,8 +169,24 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   },
   ref,
 ) {
+  const brand = useBrand();
+  // Alpha on the fill, not `opacity` on the marker — see listing-map.tsx.
+  const viewedFill = withAlpha(brand.accent, VIEWED_PIN_ALPHA);
   const mapRef = useRef<MapRef | null>(null);
   const { mapStyle, polygonsBeforeId, overlayBeforeId, scheme } = useMapStyle();
+  // Layer ids of the style that's actually loaded, so the polygon anchor can
+  // be checked against it rather than trusted — see `resolveAnchor`. Kept as a
+  // joined key so a repeated `styledata` event (they fire as sources settle,
+  // not just on load) doesn't hand back a fresh Set and re-render on every one.
+  const [styleLayerKey, setStyleLayerKey] = useState<string | null>(null);
+  const polygonsAnchor = useMemo(
+    () =>
+      resolveAnchor(
+        polygonsBeforeId,
+        styleLayerKey === null ? null : new Set(styleLayerKey.split(' ')),
+      ),
+    [polygonsBeforeId, styleLayerKey],
+  );
   const { recentViews } = useRecentViews();
   const viewedIds = useMemo(
     () => new Set(recentViews.map((listing) => listing.id)),
@@ -228,6 +255,12 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
           bounds: webBounds(e.target),
         });
       }}
+      // Fires on the initial load and again after every style swap (basemap
+      // family or theme), which is exactly when the anchors need re-checking.
+      onStyleData={(e) => {
+        const ids = (e.target.getStyle()?.layers ?? []).map((layer) => layer.id).join(' ');
+        setStyleLayerKey((prev) => (prev === ids ? prev : ids));
+      }}
       // Once a pan/zoom settles, report the viewport centre, zoom and bounds so
       // the screen can auto-load a city's neighborhoods when zoomed in far
       // enough, and reload the residences inside the new viewport.
@@ -254,27 +287,30 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
           paint={buildings3DPaint(scheme)}
         />
       )}
+      {/* DataOverlay resolves this against the live style itself — it has to
+          re-anchor mid-swap, when React already holds the incoming style's id
+          but the map still shows the outgoing one. */}
       {overlay && <DataOverlay overlay={overlay} anchor={overlayBeforeId} />}
-      {loadingPolygon && <PulsingCityOverlay polygon={loadingPolygon} beforeId={polygonsBeforeId} />}
+      {loadingPolygon && <PulsingCityOverlay polygon={loadingPolygon} beforeId={polygonsAnchor} />}
       {polygons && polygons.length > 0 && (
         <Source id="area-polygons" type="geojson" data={toFeatureCollection(polygons)}>
           <Layer
             id="area-polygons-fill"
             type="fill"
-            beforeId={polygonsBeforeId}
+            beforeId={polygonsAnchor}
             paint={{ 'fill-color': ['get', 'color'], 'fill-opacity': fillOpacityFor(selectedPolygonId) }}
           />
           <Layer
             id="area-polygons-outline"
             type="line"
-            beforeId={polygonsBeforeId}
+            beforeId={polygonsAnchor}
             paint={{ 'line-color': outlineColorFor(scheme), 'line-width': outlineWidthFor(selectedPolygonId) }}
           />
           {selectedPolygonId && (
             <Layer
               id="area-polygons-selected"
               type="line"
-              beforeId={polygonsBeforeId}
+              beforeId={polygonsAnchor}
               filter={selectedFilter(selectedPolygonId)}
               paint={{
                 'line-color': SELECTED_DASH_COLOR,
@@ -286,7 +322,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         </Source>
       )}
       {listings.map((listing: Listing) => {
-        const viewed = viewedIds.has(listing.id);
+        const fill = viewedIds.has(listing.id) ? viewedFill : brand.accent;
         return (
           <Marker
             key={listing.id}
@@ -322,7 +358,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
               }}>
               <div
                 style={{
-                  background: viewed ? Brand.blueLight : Brand.blue,
+                  background: fill,
                   color: '#fff',
                   fontSize: 12,
                   fontWeight: 700,
@@ -342,7 +378,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
                   marginTop: -1,
                   borderLeft: '5px solid transparent',
                   borderRight: '5px solid transparent',
-                  borderTop: `6px solid ${viewed ? Brand.blueLight : Brand.blue}`,
+                  borderTop: `6px solid ${fill}`,
                 }}
               />
             </div>

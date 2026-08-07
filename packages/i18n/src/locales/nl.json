@@ -87,7 +87,19 @@
   "mapSettingsPage": {
     "title": "Kaart",
     "buildings3D": "3D-gebouwen",
-    "buildings3DDescription": "Toon gebouwen in 3D op de kaart."
+    "buildings3DDescription": "Toon gebouwen in 3D op de kaart.",
+    "basemapTitle": "Kaartstijl",
+    "basemapDescription": "Bepaalt hoe de kaart zelf getekend wordt. Licht of donker volgt je weergave-instelling.",
+    "basemap": {
+      "standard": "Standaard",
+      "warm": "Warm",
+      "liberty": "Gedetailleerd"
+    },
+    "basemapHint": {
+      "standard": "Rustige grijstinten.",
+      "warm": "Warm papier en houtskool, passend bij de app.",
+      "liberty": "Meer detail en kleur. Altijd licht."
+    }
   },
   "deleteAccountPage": {
     "title": "Weet je zeker dat je je account wilt verwijderen?",
@@ -113,6 +125,11 @@
     "subtitle": "Laat ons weten wat je vindt of meld een probleem.",
     "label": "Je feedback",
     "placeholder": "Deel je gedachten…",
+    "limitReached": "Je hebt de limiet van {{max}} tekens bereikt.",
+    "sentimentLabel": "Hoe was je ervaring?",
+    "sentimentPositive": "Goed",
+    "sentimentNeutral": "Neutraal",
+    "sentimentNegative": "Slecht",
     "submit": "Feedback verzenden",
     "submitting": "Verzenden…",
     "sent": "Feedback verzonden",

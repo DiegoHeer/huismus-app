@@ -2,8 +2,9 @@ import { useTranslation } from '@huismus/i18n';
 import type { Listing } from '@huismus/types';
 import { Pressable } from 'react-native';
 
+import { Colors } from '../constants/theme';
 import { HeartIcon } from './icons';
-import { Brand } from '../constants/theme';
+import { useBrand } from '@/hooks/use-theme';
 import { toggleLike, useIsLiked } from '../lib/likes';
 
 /**
@@ -16,6 +17,7 @@ import { toggleLike, useIsLiked } from '../lib/likes';
  */
 export function LikeButton({ listing }: { listing: Listing }) {
   const { t } = useTranslation();
+  const brand = useBrand();
   const liked = useIsLiked(listing.id);
   return (
     <Pressable
@@ -25,7 +27,7 @@ export function LikeButton({ listing }: { listing: Listing }) {
       accessibilityLabel={t(liked ? 'listing.unlike' : 'listing.like')}
       hitSlop={8}
       className="h-11 w-11 items-center justify-center rounded-full bg-white shadow active:opacity-70">
-      <HeartIcon filled={liked} color={liked ? Brand.blue : '#404040'} />
+      <HeartIcon filled={liked} color={liked ? brand.accent : Colors.light.textSecondary} />
     </Pressable>
   );
 }

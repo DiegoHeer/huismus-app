@@ -2,7 +2,9 @@ import { formatPrice } from '@huismus/data';
 import type { Listing } from '@huismus/types';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
+
+import { Text } from './text';
 
 export interface ListingCardProps {
   listing: Listing;
@@ -25,36 +27,36 @@ export function ListingCard({ listing, onPress, likeButton }: ListingCardProps) 
   const { t, i18n } = useTranslation();
   const cover = listing.images[0];
   return (
-    <View className="mb-3 overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-neutral-900">
+    <View className="mb-3 overflow-hidden rounded-2xl bg-card shadow-sm">
       <Pressable onPress={onPress} className="active:opacity-80">
         {cover ? (
           <Image source={{ uri: cover.url }} className="h-44 w-full" resizeMode="cover" />
         ) : (
-          <View className="h-44 w-full bg-neutral-200 dark:bg-neutral-800" />
+          <View className="h-44 w-full bg-surface" />
         )}
         <View className="gap-1 p-3">
           <View className="flex-row items-center justify-between">
-            <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
+            <Text className="text-lg font-semibold text-ink">
               {formatPrice(listing.price, listing.currency, i18n.language)}
             </Text>
-            <Text className="text-xs font-medium uppercase text-blue-600 dark:text-blue-400">
+            <Text className="text-xs font-medium uppercase text-accent-text">
               {t(`listing.status.${listing.status}`)}
             </Text>
           </View>
-          <Text numberOfLines={1} className="text-sm text-neutral-700 dark:text-neutral-300">
+          <Text numberOfLines={1} className="text-sm text-ink-2">
             {listing.title}
           </Text>
-          <Text numberOfLines={1} className="text-xs text-neutral-500">
+          <Text numberOfLines={1} className="text-xs text-ink-2">
             {listing.address.line1}, {listing.address.city}
           </Text>
           <View className="mt-1 flex-row gap-4">
-            <Text className="text-xs text-neutral-500">
+            <Text className="text-xs text-ink-2">
               {t('listing.beds', { count: listing.bedrooms })}
             </Text>
-            <Text className="text-xs text-neutral-500">
+            <Text className="text-xs text-ink-2">
               {t('listing.baths', { count: listing.bathrooms })}
             </Text>
-            <Text className="text-xs text-neutral-500">
+            <Text className="text-xs text-ink-2">
               {t('listing.area', { value: listing.areaSqm })}
             </Text>
           </View>

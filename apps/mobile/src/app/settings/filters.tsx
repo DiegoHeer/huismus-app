@@ -3,7 +3,8 @@ import { useTranslation } from '@huismus/i18n';
 import type { BuildingType } from '@huismus/types';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '@huismus/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FilterSection, SelectPills, Stepper } from '@/components/filter-controls';
@@ -11,6 +12,7 @@ import { RangeSlider } from '@/components/range-slider';
 import { useSliderDragLock } from '@/hooks/use-slider-drag-lock';
 import { deferNavigation } from '@/lib/navigation';
 import { trackFiltersApplied } from '@/lib/analytics';
+import { useBrand } from '@/hooks/use-theme';
 import {
   AREA_DOMAIN,
   BUILDING_TYPES,
@@ -54,6 +56,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
  * drives both the map's visible listings and the search bar's count badge.
  */
 export default function FiltersScreen() {
+  const brand = useBrand();
   const { t } = useTranslation();
   const router = useRouter();
   const navigation = useNavigation();
@@ -80,13 +83,13 @@ export default function FiltersScreen() {
     navigation.setOptions({
       headerRight: () => (
         <Pressable onPress={() => setDraft(DEFAULT_FILTERS)} hitSlop={8} accessibilityRole="button">
-          <Text style={{ color: '#2563eb' }} className="text-base font-semibold">
+          <Text style={{ color: brand.text }} className="text-base font-semibold">
             {t('filtersPage.reset')}
           </Text>
         </Pressable>
       ),
     });
-  }, [navigation, t]);
+  }, [navigation, t, brand.text]);
 
   // "Show N homes" reflects the true server-side match count for the staged
   // draft. Debounce so dragging a slider doesn't fire a request per frame; the
@@ -140,7 +143,7 @@ export default function FiltersScreen() {
   }
 
   return (
-    <View className="flex-1 bg-neutral-100 dark:bg-black">
+    <View className="flex-1 bg-bg">
       <ScrollView
         testID="filters-scroll"
         contentContainerStyle={{ padding: 16, paddingBottom: 24, gap: 16 }}
@@ -160,7 +163,7 @@ export default function FiltersScreen() {
             selected={[draft.mode]}
             onToggle={(key) => update({ mode: key as ListingMode, minPrice: null, maxPrice: null })}
           />
-          <Text className="text-center text-sm text-neutral-500 dark:text-neutral-400">
+          <Text className="text-center text-sm text-ink-2">
             {t('filtersPage.rentComingSoon')}
           </Text>
         </View>
@@ -302,11 +305,11 @@ export default function FiltersScreen() {
 
       <View
         style={{ paddingBottom: insets.bottom + 12 }}
-        className="border-t border-neutral-200 bg-white px-4 pt-3 dark:border-neutral-800 dark:bg-neutral-900">
+        className="border-t border-border bg-card px-4 pt-3">
         <Pressable
           onPress={apply}
           accessibilityRole="button"
-          className="items-center rounded-xl bg-blue-600 py-3.5 active:opacity-80">
+          className="items-center rounded-xl bg-accent py-3.5 active:opacity-80">
           <Text className="text-base font-semibold text-white">
             {matchCount === undefined
               ? t('filtersPage.showHomesLoading')

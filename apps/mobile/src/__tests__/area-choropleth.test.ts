@@ -9,12 +9,12 @@ import {
 import { RAW_FIELDS } from '@/lib/neighborhood-stats';
 
 // Ramp endpoints, asserted directly so a ramp change is a deliberate test edit.
-const LIGHT_LOW = '#eff6ff'; // few inhabitants → almost white
-const LIGHT_HIGH = '#1e3a8a'; // many inhabitants → dark blue
-const DARK_LOW = '#172554'; // few → deep, near the dark basemap
-const DARK_HIGH = '#bfdbfe'; // many → bright
-const NO_DATA_LIGHT = '#cbd5e1';
-const NO_DATA_DARK = '#475569';
+const LIGHT_LOW = '#fbeae2'; // few inhabitants → pale warm tint
+const LIGHT_HIGH = '#8a2a19'; // many inhabitants → deep red
+const DARK_LOW = '#3b160e'; // few → deep, near the dark basemap
+const DARK_HIGH = '#f6c0ac'; // many → bright coral
+const NO_DATA_LIGHT = '#dbcfc0';
+const NO_DATA_DARK = '#4a3d31';
 
 function area(id: string): AreaPolygon {
   return {
@@ -72,8 +72,8 @@ describe('selectInhabitants', () => {
 
 describe('outlineColorFor', () => {
   it('returns a theme-appropriate constant', () => {
-    expect(outlineColorFor('light')).toBe('#1e3a8a');
-    expect(outlineColorFor('dark')).toBe('#bfdbfe');
+    expect(outlineColorFor('light')).toBe('#8a2a19');
+    expect(outlineColorFor('dark')).toBe('#f6c0ac');
   });
 });
 
@@ -132,7 +132,7 @@ describe('colorAreasByStat', () => {
     const allEqual = colorAreasByStat([area('a'), area('b')], statsMap(stat('a', 5000), stat('b', 5000)), {
       scheme: 'light',
     });
-    const mid = interpolateRamp(['#eff6ff', '#bfdbfe', '#60a5fa', '#2563eb', '#1e3a8a'], 0.5);
+    const mid = interpolateRamp(['#fbeae2', '#f3c6b2', '#e58c6e', '#ce4c30', '#8a2a19'], 0.5);
     expect(single[0]!.color).toBe(mid);
     expect(allEqual[0]!.color).toBe(mid);
     expect(allEqual[1]!.color).toBe(mid);

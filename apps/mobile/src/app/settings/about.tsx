@@ -1,5 +1,6 @@
 import { useTranslation } from '@huismus/i18n';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@huismus/ui';
 
 import { APP_VERSION } from '@/constants/app';
 import { InfoCard, Paragraph, SettingsContentScreen } from '@/components/settings-content';
@@ -20,10 +21,10 @@ export default function AboutSettingsScreen() {
 
       <InfoCard>
         <View className="flex-row items-center justify-between">
-          <Text className="text-base text-neutral-900 dark:text-white">
+          <Text className="text-base text-ink">
             {t('aboutPage.version')}
           </Text>
-          <Text className="text-base text-neutral-500">{APP_VERSION}</Text>
+          <Text className="text-base text-ink-2">{APP_VERSION}</Text>
         </View>
       </InfoCard>
     </SettingsContentScreen>

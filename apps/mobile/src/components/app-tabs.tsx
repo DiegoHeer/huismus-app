@@ -18,7 +18,7 @@ export default function AppTabs() {
       // the app instead of hopping there.
       backBehavior="none"
       backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
+      indicatorColor={colors.surface}
       labelStyle={{ selected: { color: colors.text } }}>
       <NativeTabs.Trigger name="explore">
         <NativeTabs.Trigger.Label>{t('tabs.listings')}</NativeTabs.Trigger.Label>

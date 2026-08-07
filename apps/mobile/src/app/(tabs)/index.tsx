@@ -3,7 +3,8 @@ import { useTranslation } from '@huismus/i18n';
 import type { AreaPolygon, Listing, MapBounds } from '@huismus/types';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
+import { Text } from '@huismus/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { areasCenter } from '@/components/area-polygons';
@@ -16,6 +17,7 @@ import { DEFAULT_CENTER, INITIAL_ZOOM } from '@/components/map-shared';
 import { useEffectiveColorScheme } from '@/components/map-style';
 import { OverlayLegend } from '@/components/overlay-legend';
 import { Brand } from '@/constants/theme';
+import { useBrand } from '@/hooks/use-theme';
 import { trackOverlayEnabled } from '@/lib/analytics';
 import { loadAreas, loadCities, loadStats } from '@/lib/area-cache';
 import { colorAreasByStat, rampFor, selectInhabitants, statDomain } from '@/lib/area-choropleth';
@@ -55,6 +57,7 @@ const NO_LISTINGS: Listing[] = [];
 
 export default function MapScreen() {
   const { t } = useTranslation();
+  const brand = useBrand();
   const { filters } = useFilters();
   const { data: cities = [] } = useCities(loadCities);
   const insets = useSafeAreaInsets();
@@ -197,7 +200,10 @@ export default function MapScreen() {
     setSelectedCity({ code: city.code, name: pendingFocus.name, geometry: city.geometry });
     setSelectedAreaId(null);
     setSelectedId(null);
-    const center = areasCenter([{ id: city.code, color: Brand.blue, geometry: city.geometry }]);
+    // `color` is never painted here — areasCenter only reads geometry.
+    const center = areasCenter([
+      { id: city.code, color: Brand.light.accent, geometry: city.geometry },
+    ]);
     if (center) mapRef.current?.flyTo({ ...center, zoom: 11 });
   }, [pendingFocus, cities]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -258,7 +264,7 @@ export default function MapScreen() {
   // this back to null), so the overlay never lingers.
   const loadingCityPolygon: AreaPolygon | null =
     selectedCity && areasFetching
-      ? { id: selectedCity.code, color: Brand.blue, geometry: selectedCity.geometry }
+      ? { id: selectedCity.code, color: brand.accent, geometry: selectedCity.geometry }
       : null;
 
   // Selecting a marker shows its preview card, which counts as a view — record
@@ -393,7 +399,7 @@ export default function MapScreen() {
   );
 
   return (
-    <View className="flex-1 bg-neutral-100 dark:bg-black">
+    <View className="flex-1 bg-bg">
       <ListingMap
         ref={mapRef}
         listings={shownListings}
@@ -451,7 +457,7 @@ export default function MapScreen() {
         {((selectedCity && areasFetching) || (isFetching && !isLoading && !snapshotsActive)) && (
           <View
             testID="map-background-loading"
-            className="mt-3 self-center rounded-full bg-white p-2.5 shadow-md shadow-black/20 dark:bg-neutral-800"
+            className="mt-3 self-center rounded-full bg-card p-2.5 shadow-md shadow-black/20"
             pointerEvents="none">
             <ActivityIndicator />
           </View>
@@ -463,9 +469,9 @@ export default function MapScreen() {
         {omittedHomes && !isFetching && !snapshotsActive && (
           <View
             testID="map-capped-results"
-            className="mt-3 self-center rounded-full bg-white px-3 py-1.5 shadow-md shadow-black/20 dark:bg-neutral-800"
+            className="mt-3 self-center rounded-full bg-card px-3 py-1.5 shadow-md shadow-black/20"
             pointerEvents="none">
-            <Text className="text-xs text-neutral-600 dark:text-neutral-300">
+            <Text className="text-xs text-ink-2">
               {t('map.cappedResults', {
                 shown: listings.length.toLocaleString(),
                 total: (data?.total ?? 0).toLocaleString(),
