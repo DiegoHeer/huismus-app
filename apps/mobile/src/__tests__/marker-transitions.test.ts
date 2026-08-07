@@ -2,7 +2,9 @@ import type { Listing } from '@huismus/types';
 
 import {
   initialMarkerState,
-  MARKER_STAGGER_MS,
+  MARKER_ENTER_DELAY_MAX_MS,
+  MARKER_ENTER_DELAY_MIN_MS,
+  MARKER_EXIT_STAGGER_MS,
   reconcileMarkers,
   type MarkerPhase,
   type MarkerTransitionState,
@@ -54,16 +56,21 @@ describe('reconcileMarkers', () => {
     expect(next.rendered[0]!.phase).toBe('leaving');
   });
 
-  it('staggers arrivals and departures within the window', () => {
+  it('staggers arrivals and departures within their own windows', () => {
+    // The two directions scatter over different ranges — arrivals trickle in
+    // over a wide window, departures clear out quickly behind them.
     const next = reconcileMarkers(seeded(['a']), [listing('b'), listing('c')]);
 
     for (const entry of next.rendered) {
-      expect(entry.delay).toBeGreaterThanOrEqual(0);
-      expect(entry.delay).toBeLessThan(MARKER_STAGGER_MS);
+      if (entry.phase === 'entering') {
+        expect(entry.delay).toBeGreaterThanOrEqual(MARKER_ENTER_DELAY_MIN_MS);
+        expect(entry.delay).toBeLessThan(MARKER_ENTER_DELAY_MAX_MS);
+      } else {
+        expect(entry.delay).toBeGreaterThanOrEqual(0);
+        expect(entry.delay).toBeLessThan(MARKER_EXIT_STAGGER_MS);
+      }
     }
-    // Two rolls of the same die landing identically is possible but the pins
-    // must at least each get their own, not one shared value.
-    expect(next.rendered).toHaveLength(3);
+    expect(phases(next)).toEqual({ a: 'leaving', b: 'entering', c: 'entering' });
   });
 
   it('shows the first set without animating it', () => {

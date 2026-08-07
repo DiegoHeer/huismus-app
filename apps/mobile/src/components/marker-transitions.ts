@@ -21,17 +21,22 @@ export const MARKER_ENTER_MS = 150;
 export const MARKER_EXIT_MS = 50;
 
 /**
- * Upper bound on the random stagger before a marker starts animating. A single
- * pin's animation is brief either way; the scatter is what turns a swap into a
- * ripple across the map rather than one hard cut.
+ * Random window each arriving marker waits in before it starts, in ms. The
+ * scatter is what turns a swap into a ripple across the map rather than one
+ * hard cut, and it is wide here so the arrival reads as homes trickling in.
+ * The floor keeps the first pin from landing on top of the fade-out.
  */
-export const MARKER_STAGGER_MS = 100;
+export const MARKER_ENTER_DELAY_MIN_MS = 50;
+export const MARKER_ENTER_DELAY_MAX_MS = 400;
+
+/** Upper bound on the random delay before a departing marker starts, in ms. */
+export const MARKER_EXIT_STAGGER_MS = 100;
 
 /** Peak height of the entrance jump, in px above the marker's resting anchor. */
 export const MARKER_JUMP_PX = 14;
 
 /** Longest a leaving marker can still need: its own stagger plus the fade. */
-const LEAVE_LIFETIME_MS = MARKER_STAGGER_MS + MARKER_EXIT_MS;
+const LEAVE_LIFETIME_MS = MARKER_EXIT_STAGGER_MS + MARKER_EXIT_MS;
 
 export type MarkerPhase = 'steady' | 'entering' | 'leaving';
 
@@ -54,8 +59,13 @@ export interface MarkerTransitionState {
   seeded: boolean;
 }
 
-function stagger(): number {
-  return Math.random() * MARKER_STAGGER_MS;
+function enterDelay(): number {
+  const spread = MARKER_ENTER_DELAY_MAX_MS - MARKER_ENTER_DELAY_MIN_MS;
+  return MARKER_ENTER_DELAY_MIN_MS + Math.random() * spread;
+}
+
+function exitDelay(): number {
+  return Math.random() * MARKER_EXIT_STAGGER_MS;
 }
 
 function steady(listing: Listing): MarkerTransition {
@@ -89,13 +99,13 @@ export function reconcileMarkers(
     // Already there: keep the phase so an entrance in flight isn't restarted,
     // but take the newer listing — price and viewed state can have changed.
     if (existing) return existing.listing === listing ? existing : { ...existing, listing };
-    return seeded ? { listing, phase: 'entering', delay: stagger() } : steady(listing);
+    return seeded ? { listing, phase: 'entering', delay: enterDelay() } : steady(listing);
   });
 
   // Missing from the new answer: hold it on the map long enough to fade out.
   for (const entry of present.values()) {
     if (!nextIds.has(entry.listing.id)) {
-      rendered.push({ listing: entry.listing, phase: 'leaving', delay: stagger() });
+      rendered.push({ listing: entry.listing, phase: 'leaving', delay: exitDelay() });
     }
   }
   // Pins already fading keep their place until the sweep below drops them.
