@@ -48,7 +48,8 @@ GitOps-style via `realty-ai-platform`. The app cannot compensate for any of them
 Values for the four `APPLE_*` vars are prepared at
 `~/.config/realty-ai/apple-signin/staging.env` (mode 600, not in any repo). `APPLE_PRIVATE_KEY`
 is the `.p8` on one line with `\n` escapes; `settings/base.py` unescapes it, so either form
-works.
+works. Hand-off instructions for whoever deploys it — including how to verify the key actually
+signs — are in [`backend/apple-signin-config.md`](./backend/apple-signin-config.md).
 
 **Also required, and not an env var:** the address in `DEFAULT_FROM_EMAIL`
 (`noreply@huismusapp.com`) must be registered under **Certificates, Identifiers & Profiles →
