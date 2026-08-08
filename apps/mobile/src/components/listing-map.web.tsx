@@ -33,7 +33,7 @@ import {
   DEFAULT_CENTER,
   INITIAL_ZOOM,
   priceLabel,
-  VIEWED_PIN_ALPHA,
+  viewedPinFill,
 } from './map-shared';
 import {
   MARKER_ENTER_MS,
@@ -46,7 +46,6 @@ import { usePulseOpacity } from './use-pulse-opacity';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { useRecentViews } from '../lib/recent-views';
 import { useBrand } from '@/hooks/use-theme';
-import { withAlpha } from '@/constants/theme';
 
 /**
  * Entrance and exit keyframes for the markers. The entrance is a ballistic
@@ -226,10 +225,10 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   ref,
 ) {
   const brand = useBrand();
-  // Alpha on the fill, not `opacity` on the marker — see listing-map.tsx.
-  const viewedFill = withAlpha(brand.accent, VIEWED_PIN_ALPHA);
   const mapRef = useRef<MapRef | null>(null);
   const { mapStyle, polygonsBeforeId, overlayBeforeId, scheme } = useMapStyle();
+  // A different colour, not a faded one — see listing-map.tsx.
+  const viewedFill = viewedPinFill(scheme);
   // Layer ids of the style that's actually loaded, so the polygon anchor can
   // be checked against it rather than trusted — see `resolveAnchor`. Kept as a
   // joined key so a repeated `styledata` event (they fire as sources settle,

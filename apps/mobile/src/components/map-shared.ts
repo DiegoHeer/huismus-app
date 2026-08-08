@@ -47,14 +47,31 @@ export function buildings3DPaint(scheme: 'light' | 'dark'): FillExtrusionLayerSp
 }
 
 /**
- * How far an already-viewed listing's pin fades. Blue had a pale second shade
- * for this; red has no equally obvious pale twin, so the "seen" read is carried
- * by alpha on the fill instead.
+ * Fill for an already-viewed listing's pin — a warm taupe against the brand red
+ * of an unseen one. A solid colour rather than the brand accent at reduced
+ * alpha: a translucent pin picks up whatever tile happens to sit behind it, so
+ * "seen" looked like a different shade on every basemap, and over busy ground it
+ * read as a rendering glitch rather than a state.
  *
- * Applied to the fill colour, never as `opacity` on the marker — see the note
- * in `listing-map.tsx`. Shared so the native and web markers can't drift.
+ * Two values because one cannot carry the white label on both basemaps. The
+ * light one is `Colors.light.textSecondary`, the palette's own "supporting"
+ * ink, which is exactly the meaning wanted. Its dark counterpart (#A99C8C) is
+ * too pale for white text (2.7:1), so the dark map gets a deeper taupe of the
+ * same family: 5.1:1, and light enough to stay visible on a dark basemap.
+ *
+ * These are map chrome, not brand tokens — `constants/theme.ts` is kept
+ * value-for-value in sync with huismus-web's tokens.css, so nothing new belongs
+ * there. Shared here so the native and web markers can't drift.
  */
-export const VIEWED_PIN_ALPHA = 0.55;
+export const VIEWED_PIN_FILL = {
+  light: '#6F6354',
+  dark: '#7A6C5B',
+} as const;
+
+/** {@link VIEWED_PIN_FILL} for the basemap currently showing. */
+export function viewedPinFill(scheme: 'light' | 'dark'): string {
+  return VIEWED_PIN_FILL[scheme];
+}
 
 /**
  * Compact price shown inside a map marker:

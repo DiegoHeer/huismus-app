@@ -41,7 +41,7 @@ import {
   DEFAULT_CENTER,
   INITIAL_ZOOM,
   priceLabel,
-  VIEWED_PIN_ALPHA,
+  viewedPinFill,
 } from './map-shared';
 import {
   MARKER_ENTER_MS,
@@ -56,7 +56,6 @@ import { outlineColorFor } from '../lib/area-choropleth';
 import { type MapOverlay } from '../lib/map-overlays';
 import { useRecentViews } from '../lib/recent-views';
 import { useBrand } from '@/hooks/use-theme';
-import { withAlpha } from '@/constants/theme';
 
 // The search bar overlays the top of the map, so park the compass in the
 // bottom-left corner instead — clear of both the search field and the listing
@@ -224,12 +223,6 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   ref,
 ) {
   const brand = useBrand();
-  // Already-seen listings fade their fill only. Putting the alpha in the colour
-  // rather than `opacity` on the marker keeps the white outline and the price
-  // label at full strength — they are what make a pin readable over arbitrary
-  // tiles — and stops the bubble and its tail double-blending where they
-  // overlap, which `markerArrow`'s -1px tuck exists to hide.
-  const viewedFill = withAlpha(brand.accent, VIEWED_PIN_ALPHA);
   const cameraRef = useRef<CameraRef>(null);
   // The region-change event carries the visible bounds, but the initial framing
   // arrives via onDidFinishLoadingMap, which doesn't — so hold a map ref to ask
@@ -248,6 +241,14 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   const markerTapAtRef = useRef(0);
   const insets = useSafeAreaInsets();
   const { mapStyle, polygonsBeforeId, overlayBeforeId, scheme } = useMapStyle();
+  // Already-seen listings swap fill colour — never opacity, and never a
+  // translucent fill. Both would let the basemap through, which changes what
+  // "seen" looks like from one tile to the next; a solid taupe reads the same
+  // everywhere. Keeping it off `opacity` also leaves the white outline and the
+  // price label at full strength — they are what make a pin readable over
+  // arbitrary tiles — and stops the bubble and its tail double-blending where
+  // they overlap, which `markerArrow`'s -1px tuck exists to hide.
+  const viewedFill = viewedPinFill(scheme);
   const { recentViews } = useRecentViews();
   const viewedIds = useMemo(
     () => new Set(recentViews.map((listing) => listing.id)),
