@@ -32,6 +32,7 @@ import {
   buildings3DPaint,
   DEFAULT_CENTER,
   INITIAL_ZOOM,
+  PIN_TAIL,
   priceLabel,
   viewedPinFill,
 } from './map-shared';
@@ -433,18 +434,45 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
                 }}>
                 {priceLabel(listing)}
               </div>
-              {/* Downward triangle tail that turns the bubble into a pin. Pulled
-                  up 1px so it tucks under the bubble's white border seam. */}
+              {/* Downward triangle tail that turns the bubble into a pin, drawn
+                  as a white triangle with the fill laid over it so the bubble's
+                  outline carries on around the point (see PIN_TAIL). Pulled up
+                  1px so it tucks under the bubble's white border: the outline
+                  meets white-on-white, leaving no seam between the two. */}
               <div
                 style={{
-                  width: 0,
-                  height: 0,
+                  position: 'relative',
+                  width: (PIN_TAIL.halfWidth + PIN_TAIL.border) * 2,
+                  height: PIN_TAIL.height + PIN_TAIL.border,
                   marginTop: -1,
-                  borderLeft: '5px solid transparent',
-                  borderRight: '5px solid transparent',
-                  borderTop: `6px solid ${fill}`,
-                }}
-              />
+                }}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: 0,
+                    height: 0,
+                    borderLeft: `${PIN_TAIL.halfWidth + PIN_TAIL.border}px solid transparent`,
+                    borderRight: `${PIN_TAIL.halfWidth + PIN_TAIL.border}px solid transparent`,
+                    borderTop: `${PIN_TAIL.height + PIN_TAIL.border}px solid #fff`,
+                  }}
+                />
+                {/* Inset by the outline's width, so the white shows evenly
+                    down both slopes. */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: PIN_TAIL.border,
+                    width: 0,
+                    height: 0,
+                    borderLeft: `${PIN_TAIL.halfWidth}px solid transparent`,
+                    borderRight: `${PIN_TAIL.halfWidth}px solid transparent`,
+                    borderTop: `${PIN_TAIL.height}px solid ${fill}`,
+                  }}
+                />
+              </div>
             </div>
           </Marker>
         );

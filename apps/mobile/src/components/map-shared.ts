@@ -74,6 +74,28 @@ export function viewedPinFill(scheme: 'light' | 'dark'): string {
 }
 
 /**
+ * Geometry of the pin's tail — the downward triangle under the price bubble.
+ *
+ * The triangle is the usual trick of a box with two transparent side borders
+ * and one coloured top one, which gives a shape but no stroke of its own. So the
+ * tail is drawn twice: a white triangle a little larger, and the fill on top of
+ * it, leaving {@link PIN_TAIL.border} of white showing along both slopes — the
+ * bubble's 1px outline carried on around the point.
+ *
+ * The outline is deliberately wider than 1: it is measured perpendicular to a
+ * slope, and these slopes are steep, so a 1px horizontal inset would read as
+ * about 0.8px. Shared so the native and web markers can't drift.
+ */
+export const PIN_TAIL = {
+  /** Half the fill triangle's width, i.e. one side border. */
+  halfWidth: 5,
+  /** The fill triangle's height, i.e. its top border. */
+  height: 6,
+  /** How far the white triangle extends past the fill on every side. */
+  border: 1.5,
+} as const;
+
+/**
  * Compact price shown inside a map marker:
  * - ≥ €1M  → millions with up to 2 decimals, e.g. 1,252,000 → "€1.25M"
  * - ≥ €1k  → thousands, e.g. 450,000 → "€450k"

@@ -40,6 +40,7 @@ import {
   buildings3DPaint,
   DEFAULT_CENTER,
   INITIAL_ZOOM,
+  PIN_TAIL,
   priceLabel,
   viewedPinFill,
 } from './map-shared';
@@ -484,7 +485,10 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
                   {priceLabel(listing)}
                 </Text>
               </View>
-              <View style={[styles.markerArrow, { borderTopColor: fill }]} />
+              <View style={styles.markerArrowWrap}>
+                <View style={styles.markerArrowOutline} />
+                <View style={[styles.markerArrowFill, { borderTopColor: fill }]} />
+              </View>
             </MarkerPin>
           </Marker>
         );
@@ -506,15 +510,39 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ffffff',
   },
-  // Downward triangle tail that turns the bubble into a pin. Pulled up 1px so it
-  // tucks under the bubble's white border, leaving no seam between the two.
-  markerArrow: {
+  // Downward triangle tail that turns the bubble into a pin, drawn as a white
+  // triangle with the fill laid over it so the bubble's outline carries on
+  // around the point (see PIN_TAIL). Sized to the white one, since that is the
+  // larger. Pulled up 1px so it tucks under the bubble's white border: the
+  // outline meets white-on-white, leaving no seam between the two.
+  markerArrowWrap: {
+    width: (PIN_TAIL.halfWidth + PIN_TAIL.border) * 2,
+    height: PIN_TAIL.height + PIN_TAIL.border,
+    marginTop: -1,
+  },
+  markerArrowOutline: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
     width: 0,
     height: 0,
-    marginTop: -1,
-    borderLeftWidth: 5,
-    borderRightWidth: 5,
-    borderTopWidth: 6,
+    borderLeftWidth: PIN_TAIL.halfWidth + PIN_TAIL.border,
+    borderRightWidth: PIN_TAIL.halfWidth + PIN_TAIL.border,
+    borderTopWidth: PIN_TAIL.height + PIN_TAIL.border,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#ffffff',
+  },
+  // Inset by the outline's width, so the white shows evenly down both slopes.
+  markerArrowFill: {
+    position: 'absolute',
+    top: 0,
+    left: PIN_TAIL.border,
+    width: 0,
+    height: 0,
+    borderLeftWidth: PIN_TAIL.halfWidth,
+    borderRightWidth: PIN_TAIL.halfWidth,
+    borderTopWidth: PIN_TAIL.height,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
   },
