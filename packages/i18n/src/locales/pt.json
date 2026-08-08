@@ -28,7 +28,6 @@
     "appearance_dark": "Escuro",
     "account": "Conta",
     "notifications": "Notificações",
-    "subscription": "Subscrição",
     "support": "Apoio",
     "privacy": "Privacidade e segurança",
     "help": "Ajuda e apoio",
@@ -78,16 +77,25 @@
       }
     }
   },
-  "subscriptionPage": {
-    "comingSoon": "Subscrição e métodos de pagamento em breve."
-  },
   "notificationsPage": {
     "comingSoon": "Definições de notificações em breve."
   },
   "mapSettingsPage": {
     "title": "Mapa",
     "buildings3D": "Edifícios em 3D",
-    "buildings3DDescription": "Mostrar edifícios em 3D no mapa."
+    "buildings3DDescription": "Mostrar edifícios em 3D no mapa.",
+    "basemapTitle": "Estilo do mapa",
+    "basemapDescription": "Define como o mapa é desenhado. Claro ou escuro segue a sua definição de aparência.",
+    "basemap": {
+      "standard": "Padrão",
+      "warm": "Quente",
+      "liberty": "Detalhado"
+    },
+    "basemapHint": {
+      "standard": "Cinzentos discretos.",
+      "warm": "Papel quente e carvão, a condizer com a app.",
+      "liberty": "Mais detalhe e cor. Sempre claro."
+    }
   },
   "deleteAccountPage": {
     "title": "Tem a certeza de que quer eliminar a sua conta?",

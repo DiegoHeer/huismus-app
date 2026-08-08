@@ -1,9 +1,9 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '@huismus/ui';
 import Svg, { Path } from 'react-native-svg';
 
 import type { Icon } from '@/components/icons';
-import { Brand } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 export interface SettingsOption {
   /** Stable identity, used for selection comparison and as the React key. */
@@ -36,16 +36,15 @@ export function SettingsOptionsScreen({
   selectedKey: string;
   onSelect: (key: string) => void;
 }) {
-  const scheme = useColorScheme();
-  // Accent matching the app's `text-blue-600 dark:text-blue-400` convention.
-  const checkColor = scheme === 'dark' ? Brand.blueLight : Brand.blue;
-  // Leading glyphs track the label: neutral-900 in light, white in dark.
-  const iconColor = scheme === 'dark' ? '#ffffff' : '#171717';
+  // Matches the app's `text-accent-text` convention.
+  const checkColor = useBrand().accent;
+  // Leading glyphs track the label, so they read the same `ink` token it does.
+  const iconColor = useTheme().text;
 
   return (
-    <View className="flex-1 bg-neutral-100 dark:bg-black">
+    <View className="flex-1 bg-bg">
       <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
-        <View className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-neutral-900">
+        <View className="overflow-hidden rounded-2xl bg-card shadow-sm">
           {options.map((option, index) => {
             const selected = option.key === selectedKey;
             const Icon = option.icon;
@@ -56,11 +55,11 @@ export function SettingsOptionsScreen({
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 className={`flex-row items-center justify-between px-4 py-4 active:opacity-60 ${
-                  index > 0 ? 'border-t border-neutral-100 dark:border-neutral-800' : ''
+                  index > 0 ? 'border-t border-border' : ''
                 }`}>
                 <View className="flex-row items-center gap-3">
                   {Icon ? <Icon color={iconColor} /> : null}
-                  <Text className="text-lg text-neutral-900 dark:text-white">{option.label}</Text>
+                  <Text className="text-lg text-ink">{option.label}</Text>
                 </View>
                 {selected ? <CheckIcon color={checkColor} /> : null}
               </Pressable>

@@ -6,18 +6,18 @@ import {
   Keyboard,
   Pressable,
   StyleSheet,
-  Text,
-  TextInput,
   View,
   type NativeSyntheticEvent,
+  type TextInput as RNTextInput,
   type TextInputSubmitEditingEventData,
 } from 'react-native';
+import { Text, TextInput } from '@huismus/ui';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { useEffectiveColorScheme } from '@/components/map-style';
 import { useFadingText } from '@/components/use-fading-text';
 import { trackSearch, type SearchMethod } from '@/lib/analytics';
 import { useRecentSearches } from '@/lib/recent-searches';
+import { useTheme } from '@/hooks/use-theme';
 import {
   resolvePick,
   resolveTyped,
@@ -309,17 +309,17 @@ function SuggestionRow({
     <Pressable
       onPress={() => onPick(item)}
       accessibilityRole="button"
-      className={`flex-row items-center gap-2 px-4 py-3 active:bg-neutral-100 dark:active:bg-neutral-700 ${
-        bordered ? 'border-t border-neutral-100 dark:border-neutral-700' : ''
+      className={`flex-row items-center gap-2 px-4 py-3 active:bg-surface ${
+        bordered ? 'border-t border-border' : ''
       }`}>
       <SuggestionIcon item={item} />
       <Text
-        className={`flex-1 text-base text-neutral-900 dark:text-white ${isCity ? 'font-semibold' : ''}`}
+        className={`flex-1 text-base text-ink ${isCity ? 'font-semibold' : ''}`}
         numberOfLines={1}>
         {primary}
       </Text>
       {secondary.length > 0 && (
-        <Text className="shrink-0 text-base text-neutral-400" numberOfLines={1}>
+        <Text className="shrink-0 text-base text-ink-2" numberOfLines={1}>
           {secondary}
         </Text>
       )}
@@ -355,9 +355,9 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
   // driven by the effective theme. `filterColor` strokes the glyph and the
   // count; `filterPillBg` fills the pill and each knob's ring centre, so the
   // rings read as cut-outs in the pill.
-  const scheme = useEffectiveColorScheme();
-  const filterColor = scheme === 'dark' ? '#ffffff' : '#171717';
-  const filterPillBg = scheme === 'dark' ? '#404040' : '#e5e5e5';
+  const theme = useTheme();
+  const filterColor = theme.text;
+  const filterPillBg = theme.surface;
   // The visible placeholder is an overlay <Text> (a native placeholder can't
   // animate): when the hint changes — the map screen swaps in the selected
   // city's name — the old text fades out, holds, and the new one fades in.
@@ -376,7 +376,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
   // managed — we deliberately don't hide on blur so a recent stays tappable.
   const [focused, setFocused] = useState(false);
 
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<RNTextInput>(null);
   // Abort an in-flight resolve (submit / suggestion pick) if a newer one starts.
   const inFlight = useRef<AbortController | null>(null);
   // Separate controller + timer for the debounced suggest stream.
@@ -531,7 +531,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
 
   return (
     <View>
-      <View className="flex-row items-center rounded-full bg-white py-1 pl-6 pr-1 shadow-md shadow-black/20 dark:bg-neutral-800">
+      <View className="flex-row items-center rounded-full bg-card py-1 pl-6 pr-1 shadow-md shadow-black/20">
         {/* Left affordance: a search glyph that focuses the field, swapping to a
             back arrow while focused that collapses the search (mirrors the
             backdrop-tap dismiss). */}
@@ -546,7 +546,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
         <View className="flex-1">
           <TextInput
             ref={inputRef}
-            className="text-xl py-2 text-base text-neutral-900 dark:text-white"
+            className="text-xl py-2 text-base text-ink"
             value={query}
             onChangeText={handleChange}
             onSubmitEditing={handleSubmit}
@@ -573,7 +573,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
               pointerEvents="none">
               <Text
                 className="text-xl text-base"
-                style={{ color: '#9ca3af' }}
+                style={{ color: theme.textSecondary }}
                 numberOfLines={1}>
                 {displayedPlaceholder}
               </Text>
@@ -589,7 +589,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
             accessibilityRole="button"
             accessibilityLabel={t('search.clear')}
             className="mr-4">
-            <Text className="ml-2 text-lg text-neutral-400">✕</Text>
+            <Text className="ml-2 text-lg text-ink-2">✕</Text>
           </Pressable>
         ) : null}
         {/* Filters affordance: a grey pill inset from the bar, holding the
@@ -611,13 +611,13 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
       </View>
 
       {focused && query.trim().length === 0 && recentSearches.length > 0 && (
-        <View className="mt-1 overflow-hidden rounded-2xl bg-white shadow-md shadow-black/20 dark:bg-neutral-800">
+        <View className="mt-1 overflow-hidden rounded-2xl bg-card shadow-md shadow-black/20">
           <View className="flex-row items-center justify-between px-4 pb-1 pt-3">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <Text className="text-xs font-semibold uppercase tracking-wide text-ink-2">
               {t('search.recentTitle')}
             </Text>
             <Pressable onPress={clearRecentSearches} hitSlop={8} accessibilityRole="button">
-              <Text className="text-xs font-medium text-blue-600 dark:text-blue-400">
+              <Text className="text-xs font-medium text-accent-text">
                 {t('search.clearRecent')}
               </Text>
             </Pressable>
@@ -626,14 +626,14 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
             <View
               key={resultKey(item)}
               className={`flex-row items-center ${
-                index > 0 ? 'border-t border-neutral-100 dark:border-neutral-700' : ''
+                index > 0 ? 'border-t border-border' : ''
               }`}>
               <Pressable
                 onPress={() => handlePickRecent(item)}
                 accessibilityRole="button"
-                className="flex-1  text-lg  flex-row items-center gap-2 px-4 py-3 active:bg-neutral-100 dark:active:bg-neutral-700">
+                className="flex-1  text-lg  flex-row items-center gap-2 px-4 py-3 active:bg-surface">
                 <ClockIcon />
-                <Text className="flex-1 text-base text-neutral-900 dark:text-white" numberOfLines={1}>
+                <Text className="flex-1 text-base text-ink" numberOfLines={1}>
                   {resultLabel(item)}
                 </Text>
               </Pressable>
@@ -643,7 +643,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
                 accessibilityRole="button"
                 accessibilityLabel={t('search.removeRecent')}
                 className="px-4 text-lg py-3 active:opacity-60">
-                <Text className="text-base text-neutral-400">✕</Text>
+                <Text className="text-base text-ink-2">✕</Text>
               </Pressable>
             </View>
           ))}
@@ -651,7 +651,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
       )}
 
       {open && suggestions.length > 0 && (
-        <View className="mt-1 overflow-hidden rounded-2xl bg-white shadow-md shadow-black/20 dark:bg-neutral-800">
+        <View className="mt-1 overflow-hidden rounded-2xl bg-card shadow-md shadow-black/20">
           {suggestions.map((item, index) => (
             <SuggestionRow
               key={`${item.kind}|${item.id}`}
@@ -664,7 +664,7 @@ export const LocationSearch = forwardRef<LocationSearchRef, LocationSearchProps>
       )}
 
       {error && (
-        <Text className="mt-1 px-3 text-sm text-red-500" accessibilityRole="alert">
+        <Text className="mt-1 px-3 text-sm text-accent-text" accessibilityRole="alert">
           {error}
         </Text>
       )}

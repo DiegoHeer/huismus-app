@@ -1,10 +1,10 @@
 import { useTranslation } from '@huismus/i18n';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
+import { Text } from '@huismus/ui';
 import Svg, { Path } from 'react-native-svg';
 
 import { InfoCard, Paragraph, SettingsContentScreen } from '@/components/settings-content';
-import { Brand } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 import { useAnalyticsOptOut } from '@/lib/analytics';
 import { openLegalDocument } from '@/lib/legal-links';
 
@@ -33,10 +33,11 @@ function PaperIcon({ color }: { color: string }) {
  * links out to the full legal documents on the website.
  */
 export default function PrivacySettingsScreen() {
+  const theme = useTheme();
   const { t, i18n } = useTranslation();
+  const brand = useBrand();
   const { optedOut, setOptedOut } = useAnalyticsOptOut();
-  const scheme = useColorScheme();
-  const iconColor = scheme === 'dark' ? '#ffffff' : '#171717';
+  const iconColor = theme.text;
 
   return (
     <SettingsContentScreen>
@@ -52,17 +53,17 @@ export default function PrivacySettingsScreen() {
       <InfoCard title={t('privacyPage.optOutTitle')}>
         <View className="flex-row items-center justify-between gap-3">
           <View className="flex-1">
-            <Text className="text-lg text-neutral-900 dark:text-white">
+            <Text className="text-lg text-ink">
               {t('privacyPage.optOutLabel')}
             </Text>
-            <Text className="text-sm text-neutral-500">
+            <Text className="text-sm text-ink-2">
               {t('privacyPage.optOutDescription')}
             </Text>
           </View>
           <Switch
             value={!optedOut}
             onValueChange={(enabled) => setOptedOut(!enabled)}
-            trackColor={{ true: Brand.blue }}
+            trackColor={{ true: brand.accent }}
           />
         </View>
       </InfoCard>
@@ -74,23 +75,23 @@ export default function PrivacySettingsScreen() {
           className="flex-row items-center justify-between active:opacity-60">
           <View className="flex-row items-center gap-3">
             <PaperIcon color={iconColor} />
-            <Text className="text-lg text-neutral-900 dark:text-white">
+            <Text className="text-lg text-ink">
               {t('legal.privacyPolicy')}
             </Text>
           </View>
-          <Text className="text-xl text-neutral-400">›</Text>
+          <Text className="text-xl text-ink-2">›</Text>
         </Pressable>
         <Pressable
           onPress={() => openLegalDocument('terms-of-use', i18n.language)}
           accessibilityRole="link"
-          className="flex-row items-center justify-between border-t border-neutral-100 pt-3 active:opacity-60 dark:border-neutral-800">
+          className="flex-row items-center justify-between border-t border-border pt-3 active:opacity-60">
           <View className="flex-row items-center gap-3">
             <PaperIcon color={iconColor} />
-            <Text className="text-lg text-neutral-900 dark:text-white">
+            <Text className="text-lg text-ink">
               {t('legal.termsOfUse')}
             </Text>
           </View>
-          <Text className="text-xl text-neutral-400">›</Text>
+          <Text className="text-xl text-ink-2">›</Text>
         </Pressable>
       </InfoCard>
     </SettingsContentScreen>

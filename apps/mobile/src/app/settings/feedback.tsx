@@ -7,19 +7,15 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Text,
-  TextInput,
-  useColorScheme,
   View,
 } from 'react-native';
+import { Text, TextInput } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { NeutralFaceIcon, ThumbsDownIcon, ThumbsUpIcon } from '@/components/icons';
 import { APP_VERSION } from '@/constants/app';
-
-/** Placeholder grey that reads on both light and dark inputs (neutral-400). */
-const PLACEHOLDER_COLOR = '#9ca3af';
+import { useBrand, useTheme } from '@/hooks/use-theme';
 
 /**
  * Hard cap on the message. Purely a client-side courtesy — `POST /v1/feedback`
@@ -98,6 +94,7 @@ function CheckIcon({ color }: { color: string }) {
  * auth screens (see `components/auth-ui.tsx`).
  */
 export default function FeedbackScreen() {
+  const theme = useTheme();
   const { t, i18n } = useTranslation();
   const [text, setText] = useState('');
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
@@ -143,7 +140,7 @@ export default function FeedbackScreen() {
   }
 
   return (
-    <SafeAreaView edges={['bottom']} className="flex-1 bg-neutral-100 dark:bg-black">
+    <SafeAreaView edges={['bottom']} className="flex-1 bg-bg">
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -151,10 +148,10 @@ export default function FeedbackScreen() {
           contentContainerStyle={{ padding: 16, gap: 16 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          <Text className="text-base text-neutral-500">{t('feedback.subtitle')}</Text>
+          <Text className="text-base text-ink-2">{t('feedback.subtitle')}</Text>
 
           <View className="gap-1.5">
-            <Text className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            <Text className="text-sm font-medium text-ink-2">
               {t('feedback.label')}
             </Text>
             <TextInput
@@ -168,16 +165,16 @@ export default function FeedbackScreen() {
               editable={status !== 'sending'}
               maxLength={MAX_MESSAGE_LENGTH}
               placeholder={t('feedback.placeholder')}
-              placeholderTextColor={PLACEHOLDER_COLOR}
+              placeholderTextColor={theme.textSecondary}
               accessibilityLabel={t('feedback.label')}
               style={{ minHeight: 160, textAlignVertical: 'top' }}
-              className="rounded-xl border border-neutral-300 bg-white px-4 py-3 text-base text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+              className="rounded-xl border border-border bg-card px-4 py-3 text-base text-ink"
             />
             {/* No running counter — the cap only becomes visible once it bites. */}
             {atLimit ? (
               <Text
                 accessibilityLiveRegion="polite"
-                className="text-sm text-neutral-500 dark:text-neutral-400">
+                className="text-sm text-ink-2">
                 {t('feedback.limitReached', { max: MAX_MESSAGE_LENGTH })}
               </Text>
             ) : null}
@@ -197,7 +194,7 @@ export default function FeedbackScreen() {
           {status === 'error' ? (
             <Text
               accessibilityRole="alert"
-              className="text-center text-sm text-red-600 dark:text-red-400">
+              className="text-center text-sm text-accent-text">
               {t('feedback.error')}
             </Text>
           ) : null}
@@ -223,10 +220,10 @@ function SentimentPicker({
   onChange: (next: Sentiment) => void;
 }) {
   const { t } = useTranslation();
-  const scheme = useColorScheme();
-  const dark = scheme === 'dark';
-  const activeIcon = dark ? '#60a5fa' : '#2563eb';
-  const idleIcon = dark ? '#a3a3a3' : '#737373';
+  // A selected pill is an in-place state affordance standing in for a CTA, so
+  // it draws on the red budget; an idle one is muted body text.
+  const activeIcon = useBrand().accent;
+  const idleIcon = useTheme().textSecondary;
 
   return (
     // No visible heading — the glyphs carry the meaning. `sentimentLabel` stays
@@ -249,8 +246,8 @@ function SentimentPicker({
             accessibilityState={{ checked: selected, disabled }}
             className={`flex-1 flex-row items-center justify-center gap-2 rounded-xl border py-3 ${
               selected
-                ? 'border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-950'
-                : 'border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900'
+                ? 'border-accent bg-accent/10'
+                : 'border-border bg-card'
             } ${disabled ? 'opacity-50' : 'active:opacity-80'}`}>
             <Icon color={selected ? activeIcon : idleIcon} />
           </Pressable>
@@ -281,7 +278,7 @@ function SubmitButton({
       <View
         accessibilityRole="button"
         accessibilityState={{ disabled: true }}
-        className="flex-row items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5">
+        className="flex-row items-center justify-center gap-2 rounded-xl bg-success py-3.5">
         <CheckIcon color="#ffffff" />
         <Text className="text-base font-semibold text-white">{t('feedback.sent')}</Text>
       </View>
@@ -297,7 +294,7 @@ function SubmitButton({
       disabled={disabled || sending}
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || sending, busy: sending }}
-      className={`flex-row items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 ${
+      className={`flex-row items-center justify-center gap-2 rounded-xl bg-accent py-3.5 ${
         disabled && !sending ? 'opacity-50' : 'active:opacity-80'
       }`}>
       {sending ? <ActivityIndicator color="#ffffff" /> : null}

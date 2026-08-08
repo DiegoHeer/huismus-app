@@ -7,7 +7,6 @@ import AboutSettingsScreen from '@/app/settings/about';
 import HelpSettingsScreen from '@/app/settings/help';
 import NotificationsSettingsScreen from '@/app/settings/notifications';
 import PrivacySettingsScreen from '@/app/settings/privacy';
-import SubscriptionSettingsScreen from '@/app/settings/subscription';
 
 function renderScreen(node: ReactElement) {
   const i18n = initI18n('en');
@@ -38,13 +37,6 @@ describe('HelpSettingsScreen', () => {
     expect(getByText('Frequently asked questions')).toBeTruthy();
     expect(getByText('How do I search for homes?')).toBeTruthy();
     expect(getByText('More support features coming soon.')).toBeTruthy();
-  });
-});
-
-describe('SubscriptionSettingsScreen', () => {
-  it('shows the coming-soon placeholder', async () => {
-    const { getByText } = await renderScreen(<SubscriptionSettingsScreen />);
-    expect(getByText('Subscription and payment methods coming soon.')).toBeTruthy();
   });
 });
 

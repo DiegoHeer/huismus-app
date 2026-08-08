@@ -2,16 +2,8 @@ import { useCityNames } from '@huismus/data';
 import { useTranslation } from '@huismus/i18n';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Animated,
-  Dimensions,
-  Platform,
-  Pressable,
-  Text,
-  View,
-  type GestureResponderEvent,
-  type ScrollView,
-} from 'react-native';
+import { Animated, Dimensions, Platform, Pressable, View, type GestureResponderEvent, type ScrollView } from 'react-native';
+import { Text } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ModePills, PriceRangeField, type PriceRange } from '@/components/filter-controls';
@@ -417,8 +409,8 @@ export function OnboardingFlow() {
       />
       {isAuthenticated && user ? (
         <View className="gap-3">
-          <View className="items-center rounded-2xl bg-blue-50 p-4 dark:bg-blue-950">
-            <Text className="text-base font-medium text-blue-700 dark:text-blue-300">
+          <View className="items-center rounded-2xl bg-accent/10 p-4">
+            <Text className="text-base font-medium text-accent-text">
               {t('onboarding.account.signedInAs', { name: user.name })}
             </Text>
           </View>
@@ -439,8 +431,8 @@ export function OnboardingFlow() {
             testID="onboarding-log-in"
             onPress={() => router.push('/auth/login')}
             accessibilityRole="button"
-            className="items-center rounded-xl border border-neutral-300 py-3.5 active:opacity-60 dark:border-neutral-700">
-            <Text className="text-base font-semibold text-neutral-900 dark:text-white">
+            className="items-center rounded-xl border border-border py-3.5 active:opacity-60">
+            <Text className="text-base font-semibold text-ink">
               {t('onboarding.account.logIn')}
             </Text>
           </Pressable>
@@ -449,7 +441,7 @@ export function OnboardingFlow() {
             onPress={finish}
             accessibilityRole="button"
             className="items-center py-3.5 active:opacity-60">
-            <Text className="text-base font-medium text-neutral-500 dark:text-neutral-400">
+            <Text className="text-base font-medium text-ink-2">
               {t('onboarding.account.getStartedWithoutAccount')}
             </Text>
           </Pressable>
@@ -459,7 +451,7 @@ export function OnboardingFlow() {
   ];
 
   return (
-    <View className="flex-1 bg-white dark:bg-black">
+    <View className="flex-1 bg-bg">
       <SafeAreaView edges={['top', 'bottom']} className="flex-1">
         {/* Top bar: just the persistent "Skip tour". */}
         <View className="h-12 flex-row items-center justify-end px-4">
@@ -565,13 +557,13 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <View className="flex-row items-start gap-4 rounded-2xl bg-neutral-50 p-4 dark:bg-neutral-900">
-      <View className="h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950">
+    <View className="flex-row items-start gap-4 rounded-2xl bg-surface p-4">
+      <View className="h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
         {icon}
       </View>
       <View className="flex-1 gap-1">
-        <Text className="text-base font-semibold text-neutral-900 dark:text-white">{title}</Text>
-        <Text className="text-sm leading-5 text-neutral-500 dark:text-neutral-400">
+        <Text className="text-base font-semibold text-ink">{title}</Text>
+        <Text className="text-sm leading-5 text-ink-2">
           {description}
         </Text>
       </View>

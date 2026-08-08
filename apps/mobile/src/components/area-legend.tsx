@@ -1,6 +1,7 @@
 import { useTranslation } from '@huismus/i18n';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Text } from '@huismus/ui';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -131,9 +132,9 @@ export function AreaLegend({ min, max, value, ramp }: AreaLegendData) {
             <Animated.View style={[styles.pillAnchor, pillStyle]}>
               {/* -50% shifts the pill so it centers on the anchored point. */}
               <View
-                className="rounded-full bg-white px-2 py-0.5 dark:bg-neutral-800"
+                className="rounded-full bg-card px-2 py-0.5"
                 style={styles.centerOnAnchor}>
-                <Text className="text-[11px] font-bold text-neutral-900 dark:text-white">
+                <Text className="text-[11px] font-bold text-ink">
                   {nf.format(displayValue!)}
                 </Text>
               </View>
@@ -144,7 +145,7 @@ export function AreaLegend({ min, max, value, ramp }: AreaLegendData) {
         {/* Gradient track + value marker. A black (light) / white (dark) border
             sets the bar off against the map and the pale end of the ramp. */}
         <View
-          className="rounded-full border border-black dark:border-white"
+          className="rounded-full border border-ink"
           onLayout={(e: LayoutChangeEvent) => setTrackW(e.nativeEvent.layout.width)}
           style={styles.track}>
           <Svg width="100%" height="100%">
@@ -164,7 +165,7 @@ export function AreaLegend({ min, max, value, ramp }: AreaLegendData) {
           {showMarker ? (
             <Animated.View style={[styles.markerLine, lineStyle]}>
               {/* White core + dark edge so the line reads on both ends of the ramp. */}
-              <View className="flex-1 rounded-full border-x border-neutral-900/50 bg-white" />
+              <View className="flex-1 rounded-full border-x border-ink/50 bg-white" />
             </Animated.View>
           ) : null}
         </View>
@@ -172,13 +173,13 @@ export function AreaLegend({ min, max, value, ramp }: AreaLegendData) {
         {/* Scale row: min at the left end, the legend label centered between,
             max at the right end — all on one line. */}
         <View className="mt-1 flex-row items-center justify-between">
-          <Text className="text-[10px] font-medium text-neutral-900 dark:text-neutral-100">
+          <Text className="text-[10px] font-medium text-ink">
             {nf.format(min)}
           </Text>
-          <Text className="text-[11px] font-semibold uppercase tracking-wide text-neutral-900 dark:text-neutral-100">
+          <Text className="text-[11px] font-semibold uppercase tracking-wide text-ink">
             {t('area.stats.inhabitants')}
           </Text>
-          <Text className="text-[10px] font-medium text-neutral-900 dark:text-neutral-100">
+          <Text className="text-[10px] font-medium text-ink">
             {nf.format(max)}
           </Text>
         </View>

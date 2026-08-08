@@ -42,7 +42,7 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
   return (
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
-        type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
+        type={isFocused ? 'card' : 'surface'}
         style={styles.tabButtonView}>
         <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
           {children}
@@ -56,7 +56,7 @@ export function CustomTabList(props: TabListProps) {
   const { t } = useTranslation();
 
   return (
-    <ThemedView {...props} type="backgroundElement" style={styles.bar}>
+    <ThemedView {...props} type="surface" style={styles.bar}>
       <ThemedText type="smallBold" style={styles.brandText}>
         {t('common.appName')}
       </ThemedText>

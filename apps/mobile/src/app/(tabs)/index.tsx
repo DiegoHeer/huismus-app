@@ -15,6 +15,7 @@ import { DEFAULT_CENTER } from '@/components/map-shared';
 import { useEffectiveColorScheme } from '@/components/map-style';
 import { OverlayLegend } from '@/components/overlay-legend';
 import { Brand } from '@/constants/theme';
+import { useBrand } from '@/hooks/use-theme';
 import { trackOverlayEnabled } from '@/lib/analytics';
 import { loadAreas, loadCities, loadStats } from '@/lib/area-cache';
 import { colorAreasByStat, rampFor, selectInhabitants, statDomain } from '@/lib/area-choropleth';
@@ -40,6 +41,7 @@ const AUTO_LOAD_AREAS_ZOOM = 12;
 const SEARCH_SOURCES = ['homes', 'buurten', 'places'] as const;
 
 export default function MapScreen() {
+  const brand = useBrand();
   const { filters } = useFilters();
   const { data: cities = [] } = useCities(loadCities);
   const insets = useSafeAreaInsets();
@@ -153,7 +155,10 @@ export default function MapScreen() {
     setSelectedCity({ code: city.code, name: pendingFocus.name, geometry: city.geometry });
     setSelectedAreaId(null);
     setSelectedId(null);
-    const center = areasCenter([{ id: city.code, color: Brand.blue, geometry: city.geometry }]);
+    // `color` is never painted here — areasCenter only reads geometry.
+    const center = areasCenter([
+      { id: city.code, color: Brand.light.accent, geometry: city.geometry },
+    ]);
     if (center) mapRef.current?.flyTo({ ...center, zoom: 11 });
   }, [pendingFocus, cities]);
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -214,7 +219,7 @@ export default function MapScreen() {
   // this back to null), so the overlay never lingers.
   const loadingCityPolygon: AreaPolygon | null =
     selectedCity && areasFetching
-      ? { id: selectedCity.code, color: Brand.blue, geometry: selectedCity.geometry }
+      ? { id: selectedCity.code, color: brand.accent, geometry: selectedCity.geometry }
       : null;
 
   // Selecting a marker shows its preview card, which counts as a view — record
@@ -325,7 +330,7 @@ export default function MapScreen() {
   );
 
   return (
-    <View className="flex-1 bg-neutral-100 dark:bg-black">
+    <View className="flex-1 bg-bg">
       <ListingMap
         ref={mapRef}
         listings={shownListings}
@@ -379,7 +384,7 @@ export default function MapScreen() {
             below the pills. Cached cities resolve instantly, so it rarely shows. */}
         {selectedCity && areasFetching && (
           <View
-            className="mt-3 self-center rounded-full bg-white p-2.5 shadow-md shadow-black/20 dark:bg-neutral-800"
+            className="mt-3 self-center rounded-full bg-card p-2.5 shadow-md shadow-black/20"
             pointerEvents="none">
             <ActivityIndicator />
           </View>

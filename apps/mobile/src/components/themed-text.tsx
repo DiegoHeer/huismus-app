@@ -1,4 +1,5 @@
-import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
+import { Platform, StyleSheet, type TextProps } from 'react-native';
+import { Text } from '@huismus/ui';
 
 import { Fonts, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -47,11 +48,13 @@ const styles = StyleSheet.create({
     fontWeight: 500,
   },
   title: {
+    fontFamily: Fonts.display,
     fontSize: 48,
     fontWeight: 600,
     lineHeight: 52,
   },
   subtitle: {
+    fontFamily: Fonts.display,
     fontSize: 32,
     lineHeight: 44,
     fontWeight: 600,
@@ -63,7 +66,6 @@ const styles = StyleSheet.create({
   linkPrimary: {
     lineHeight: 30,
     fontSize: 14,
-    color: '#3c87f7',
   },
   code: {
     fontFamily: Fonts.mono,
