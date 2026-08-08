@@ -37,6 +37,16 @@ export interface UseListingsOptions {
   keepPrevious?: boolean;
   /** How long a result stays fresh, in ms. Defaults to React Query's 0. */
   staleTime?: number;
+  /**
+   * Whether mounting refetches a result that is cached but has gone stale.
+   *
+   * The map turns this off. Its screen unmounts on a tab switch, and coming
+   * back should put the user's viewport back exactly as they left it — a
+   * refetch there would spend a request purely because time passed, which is
+   * the opposite of what returning to a tab should cost. A genuine pan is
+   * unaffected: that is a different key, and it fetches.
+   */
+  refetchOnMount?: boolean;
 }
 
 /**
@@ -56,6 +66,7 @@ export function useListings(query: ListingQuery = {}, options: UseListingsOption
     placeholderData: options.keepPrevious ? keepPreviousData : undefined,
     enabled: options.enabled ?? true,
     staleTime: options.staleTime,
+    refetchOnMount: options.refetchOnMount,
   });
 }
 

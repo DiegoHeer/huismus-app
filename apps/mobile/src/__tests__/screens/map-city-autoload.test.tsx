@@ -6,6 +6,7 @@ import { I18nextProvider } from 'react-i18next';
 
 import MapScreen from '@/app/(tabs)/index';
 import { loadAreas, loadCities, loadStats } from '@/lib/area-cache';
+import { clearMapCamera } from '@/lib/map-camera';
 
 // The camera-idle auto-load hit-tests the viewport centre against the country's
 // municipality shapes. Those are a large download, and the residence query
@@ -42,6 +43,8 @@ const AMSTERDAM: CityShape = {
 
 afterEach(() => {
   queryClient.clear();
+  // Outlives the screen by design, so it has to be reset between cases.
+  clearMapCamera();
   jest.clearAllMocks();
   (loadStats as jest.Mock).mockResolvedValue([]);
   mockLoadAreas.mockResolvedValue([]);

@@ -22,6 +22,7 @@ import { colorAreasByStat, rampFor, selectInhabitants, statDomain } from '@/lib/
 import { buildCityIndex, findCityAt } from '@/lib/city-hit-test';
 import { countActiveFilters, filtersToQuery, useFilters } from '@/lib/filters';
 import { useLikes } from '@/lib/likes';
+import { rememberedMapCamera, rememberMapCamera } from '@/lib/map-camera';
 import { clearMapFocus, useMapFocus } from '@/lib/map-focus';
 import { overlayById, type OverlayId } from '@/lib/map-overlays';
 import { useMapSettings } from '@/lib/map-settings';
@@ -29,7 +30,7 @@ import { normalizeStats } from '@/lib/neighborhood-stats';
 import { zoomForType } from '@/lib/pdok';
 import { recordRecentView, useRecentViews } from '@/lib/recent-views';
 import type { Origin, SearchResult } from '@/lib/search';
-import { boundsEqual, quantizeBounds } from '@/lib/viewport';
+import { boundsEqual, cameraMoved, quantizeBounds, type CameraPose } from '@/lib/viewport';
 
 // Zoom level at or above which the map auto-loads the neighborhoods under its
 // centre. The initial framing sits at zoom 11 (no city selected yet); zooming
@@ -91,17 +92,38 @@ export default function MapScreen() {
   // sort otherwise drive the query — the server returns only matching, geocoded
   // homes (capped at the page size), which the map renders directly.
   const soldActive = activeFilters.has('sold');
+  // The framing the user left behind, if they have been here before this
+  // mount — a tab switch unmounts this screen. Read once, so every piece of
+  // camera state below starts where it left off instead of at the national
+  // default. Crucially that includes `viewport`, which means the residence
+  // query is keyed correctly on the very first render and React Query answers
+  // it from cache: the pins are simply already there, no request, and nothing
+  // to animate in (see lib/map-camera).
+  // Read through a lazy initialiser, which runs exactly once per mount and is
+  // then a constant — a ref would be the same idea but reading `.current`
+  // during render is precisely what makes refs unreliable.
+  const [restored] = useState(rememberedMapCamera);
   // The rectangle the residence query is scoped to: the visible viewport,
   // widened and snapped to a grid (see lib/viewport). Null until the map reports
   // its first framing, which it does on load — so the very first fetch is
   // already viewport-scoped rather than a fixed page of the whole country.
-  const [viewport, setViewport] = useState<MapBounds | null>(null);
+  const [viewport, setViewport] = useState<MapBounds | null>(restored?.viewport ?? null);
+  // Mirrors `viewport` so the camera-idle handler can read the current value
+  // without taking it as a dependency, which would rebuild the handler — and so
+  // re-render the map — on every pan.
+  const viewportRef = useRef(viewport);
+  // The last camera position accepted as a move, to tell a real gesture from
+  // the container resizing under a stationary camera.
+  const lastPoseRef = useRef<CameraPose | null>(
+    restored ? { longitude: restored.longitude, latitude: restored.latitude, zoom: restored.zoom } : null,
+  );
   // Whether the map has reported a camera position at all. The query waits for
   // this rather than for `viewport` itself: if a platform ever fails to report
   // bounds, the map falls back to an unscoped page of homes instead of showing
   // none at all. In the normal case both land in the same render, so the very
-  // first request already carries the bbox.
-  const [cameraReady, setCameraReady] = useState(false);
+  // first request already carries the bbox. A restored framing counts: the
+  // camera it describes is the one the map is about to open on.
+  const [cameraReady, setCameraReady] = useState(restored != null);
   const query = useMemo(() => {
     const base = filtersToQuery(filters);
     return {
@@ -119,6 +141,11 @@ export default function MapScreen() {
     enabled: cameraReady,
     keepPrevious: true,
     staleTime: VIEWPORT_STALE_TIME_MS,
+    // Coming back to the tab must put back exactly what was left. A cached
+    // result that has since gone stale still shows instantly, and refetching it
+    // on mount would spend the very request this restore exists to avoid — for
+    // freshness nobody asked for. A real pan still fetches: that is a new key.
+    refetchOnMount: false,
   });
   const listings = data?.listings ?? NO_LISTINGS;
   // A home picked from the search bar. Injected into `shownListings` (deduped) so
@@ -161,11 +188,13 @@ export default function MapScreen() {
   const overlay = overlayById(overlayId);
   // Viewport zoom as of the last camera settle — drives the legend's "zoom in"
   // hint for overlays that only render at building-level zooms.
-  const [mapZoom, setMapZoom] = useState(INITIAL_ZOOM);
+  const [mapZoom, setMapZoom] = useState(restored?.zoom ?? INITIAL_ZOOM);
   // Viewport centre as of the last camera settle — the origin the search bar
   // ranks its suggestions against (nearest first). Seeded with the national
   // default and replaced with the real centre once the map reports one.
-  const [mapCenter, setMapCenter] = useState<Origin>(DEFAULT_CENTER);
+  const [mapCenter, setMapCenter] = useState<Origin>(
+    restored ? { longitude: restored.longitude, latitude: restored.latitude } : DEFAULT_CENTER,
+  );
   // No city is selected until the user taps one. Until then the map shows no
   // neighborhoods; tapping a city loads + shows that city's neighborhoods.
   const [selectedCity, setSelectedCity] = useState<
@@ -343,11 +372,22 @@ export default function MapScreen() {
       setMapZoom(zoom);
       setMapCenter({ longitude, latitude });
       setCameraReady(true);
+      // Only a real move gets to change what is queried. A settle at the same
+      // centre and zoom is the container resizing, not the user going anywhere
+      // — see `cameraMoved`, and note that a tab transition fires exactly that.
+      const pose = { longitude, latitude, zoom };
+      const moved = cameraMoved(lastPoseRef.current, pose);
+      lastPoseRef.current = pose;
       // A null quantization means the map hasn't laid out yet — keep whatever
       // viewport we already had rather than querying a rectangle that is about
       // to be replaced.
-      const next = bounds ? quantizeBounds(bounds) : null;
-      if (next) setViewport((prev) => (boundsEqual(prev, next) ? prev : next));
+      const next = moved && bounds ? quantizeBounds(bounds) : null;
+      if (next && !boundsEqual(viewportRef.current, next)) {
+        viewportRef.current = next;
+        setViewport(next);
+      }
+      // Every settle, so leaving for another tab needs no goodbye of its own.
+      rememberMapCamera({ longitude, latitude, zoom, viewport: viewportRef.current });
       if (zoom < AUTO_LOAD_AREAS_ZOOM) return;
       selectCityAt({ longitude, latitude }, { deselectListing: false });
     },
@@ -429,6 +469,7 @@ export default function MapScreen() {
         onSelectPolygon={handleSelectPolygon}
         onMapPress={handleMapPress}
         onCameraIdle={handleCameraIdle}
+        initialCamera={restored}
         loadingPolygon={loadingCityPolygon}
         selectedPolygonId={selectedAreaId}
         overlay={overlay}

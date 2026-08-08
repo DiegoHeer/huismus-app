@@ -89,6 +89,45 @@ export function quantizeBounds(bounds: MapBounds): MapBounds | null {
   };
 }
 
+/** A camera report's position, without the bounds it happened to see from there. */
+export interface CameraPose {
+  longitude: number;
+  latitude: number;
+  zoom: number;
+}
+
+/**
+ * Below this, two centres are the same place. ~1e-6° is about 10cm — orders of
+ * magnitude finer than any pan, and coarse enough that float noise in a
+ * round-trip through the native bridge can't read as movement.
+ */
+const SAME_PLACE_DEGREES = 1e-6;
+
+/**
+ * Whether the camera actually moved between two settles.
+ *
+ * The map also reports a settle when its *container* changes size, and a tab
+ * transition is exactly that: the panel collapses on the way out and expands on
+ * the way back, so the map reports the same centre and zoom through a smaller
+ * window. Those bounds are real but they are not a move, and adopting them
+ * re-keys the residence query — which refetches homes the user is still looking
+ * at and animates them back in, for a tab switch that should have changed
+ * nothing.
+ *
+ * The cost is that a genuine resize (a rotated phone, a split window) keeps the
+ * old rectangle until the next real gesture. That is the better trade: the
+ * fetched region is padded well beyond the viewport already, so the new strip is
+ * usually covered anyway.
+ */
+export function cameraMoved(previous: CameraPose | null, next: CameraPose): boolean {
+  if (!previous) return true;
+  return (
+    previous.zoom !== next.zoom ||
+    Math.abs(previous.longitude - next.longitude) > SAME_PLACE_DEGREES ||
+    Math.abs(previous.latitude - next.latitude) > SAME_PLACE_DEGREES
+  );
+}
+
 /** True when both rectangles are the same, treating null as "no viewport yet". */
 export function boundsEqual(a: MapBounds | null, b: MapBounds | null): boolean {
   if (a === b) return true;

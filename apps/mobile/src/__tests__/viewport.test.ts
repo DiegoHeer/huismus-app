@@ -1,6 +1,6 @@
 import type { MapBounds } from '@huismus/types';
 
-import { boundsEqual, quantizeBounds } from '@/lib/viewport';
+import { boundsEqual, cameraMoved, quantizeBounds } from '@/lib/viewport';
 
 // The map turns its visible bounds into the residence query's bbox. Quantizing
 // them is what stops every pixel of pan from becoming a new query key (and so a
@@ -118,6 +118,35 @@ describe('quantizeBounds', () => {
     expect(quantizeBounds({ west: 4.9, south: 52.37, east: 4.9, north: 52.37 })).toBeNull();
     expect(quantizeBounds({ west: 4.75, south: 52.37, east: 5.05, north: 52.37 })).toBeNull();
     expect(quantizeBounds({ west: NaN, south: NaN, east: NaN, north: NaN })).toBeNull();
+  });
+});
+
+describe('cameraMoved', () => {
+  const POSE = { longitude: 4.9041, latitude: 52.3676, zoom: 11 };
+
+  it('treats the first report as a move', () => {
+    expect(cameraMoved(null, POSE)).toBe(true);
+  });
+
+  it('ignores a settle at the same place', () => {
+    // What a tab transition looks like: the container collapses and expands, so
+    // the map re-reports a stationary camera through a different-sized window.
+    // Calling that a move re-keys the residence query and refetches homes the
+    // user never navigated away from.
+    expect(cameraMoved(POSE, { ...POSE })).toBe(false);
+  });
+
+  it('ignores float noise in a centre that did not move', () => {
+    expect(cameraMoved(POSE, { ...POSE, longitude: POSE.longitude + 1e-9 })).toBe(false);
+  });
+
+  it('sees a pan', () => {
+    expect(cameraMoved(POSE, { ...POSE, longitude: 5.4 })).toBe(true);
+    expect(cameraMoved(POSE, { ...POSE, latitude: 52.9 })).toBe(true);
+  });
+
+  it('sees a zoom', () => {
+    expect(cameraMoved(POSE, { ...POSE, zoom: 13 })).toBe(true);
   });
 });
 

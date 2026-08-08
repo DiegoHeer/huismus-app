@@ -219,6 +219,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
     selectedPolygonId,
     onMapPress,
     onCameraIdle,
+    initialCamera,
     loadingPolygon,
     overlay,
     buildings3D,
@@ -292,7 +293,9 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   return (
     <Map
       ref={attachMap}
-      initialViewState={{ ...center, zoom: INITIAL_ZOOM }}
+      // Applied once. `initialCamera` restores the view a tab switch unmounted,
+      // so returning opens where the user left rather than at the default.
+      initialViewState={initialCamera ?? { ...center, zoom: INITIAL_ZOOM }}
       mapStyle={mapStyle}
       // Swap themes with a full style reload, not a diff. Diffing races the
       // runtime-added overlay: it tries to move the overlay layer to the new

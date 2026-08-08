@@ -6,14 +6,18 @@ import { I18nextProvider } from 'react-i18next';
 
 import MapScreen from '@/app/(tabs)/index';
 import { clearLikes, toggleLike } from '@/lib/likes';
+import { clearMapCamera } from '@/lib/map-camera';
 import { clearRecentViews, recordRecentView } from '@/lib/recent-views';
 
 afterEach(() => {
   queryClient.clear();
   // The likes / recent-views stores are module singletons — reset them so each
-  // test starts clean.
+  // test starts clean. So is the remembered camera, which deliberately outlives
+  // the screen: left set, the next test would open on the previous one's
+  // viewport with its query already keyed and answered.
   clearLikes();
   clearRecentViews();
+  clearMapCamera();
 });
 
 // Prices are distinct so each marker's price bubble identifies its listing.
@@ -56,8 +60,14 @@ function settleCamera(
   bounds: [number, number, number, number] = [4.75, 52.3, 5.05, 52.43],
   zoom = 13,
 ) {
+  // The centre is derived from the bounds rather than fixed, because that is
+  // the one relationship a real map guarantees — and the screen leans on it to
+  // tell a pan from the container resizing under a stationary camera. A helper
+  // that reported a constant centre would make every pan here look like a
+  // resize.
+  const [west, south, east, north] = bounds;
   fireEvent(map as never, 'regionDidChange', {
-    nativeEvent: { center: [4.9, 52.37], zoom, bounds },
+    nativeEvent: { center: [(west + east) / 2, (south + north) / 2], zoom, bounds },
   });
 }
 

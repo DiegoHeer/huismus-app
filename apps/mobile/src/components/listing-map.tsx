@@ -182,6 +182,13 @@ export interface ListingMapProps {
     bounds?: MapBounds;
   }) => void;
   /**
+   * Camera to open on, in place of the default framing — the view the user left
+   * when they switched tabs. Applied once, like every other initial framing
+   * here: later camera moves belong to the user's gestures and the imperative
+   * ref. Null opens on the default.
+   */
+  initialCamera?: { longitude: number; latitude: number; zoom: number } | null;
+  /**
    * The tapped city's outline, pulsing while its neighborhoods load. Null hides
    * it (data arrived, or no city is loading).
    */
@@ -217,6 +224,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
     selectedPolygonId,
     onMapPress,
     onCameraIdle,
+    initialCamera,
     loadingPolygon,
     overlay,
     buildings3D,
@@ -346,9 +354,9 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         // gesture. Bounds don't come with this event, so ask the map for them.
         const bounds = await mapViewRef.current?.getBounds?.();
         onCameraIdle?.({
-          longitude: center[0],
-          latitude: center[1],
-          zoom: INITIAL_ZOOM,
+          longitude: initialCamera?.longitude ?? center[0],
+          latitude: initialCamera?.latitude ?? center[1],
+          zoom: initialCamera?.zoom ?? INITIAL_ZOOM,
           bounds: bounds ? boundsFromTuple(bounds) : undefined,
         });
       }}
@@ -359,8 +367,17 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
       {/* Uncontrolled initial framing only: applied once on load. Camera moves
           are then driven solely by the user's gestures and the imperative ref
           (search flyTo) — loading a tapped city's neighborhoods, selecting an
-          area, or toggling 3D buildings must not move it. */}
-      <Camera ref={cameraRef} initialViewState={{ center, zoom: INITIAL_ZOOM }} />
+          area, or toggling 3D buildings must not move it. `initialCamera`
+          restores the view a tab switch unmounted, so returning opens where the
+          user left rather than back at the default framing. */}
+      <Camera
+        ref={cameraRef}
+        initialViewState={
+          initialCamera
+            ? { center: [initialCamera.longitude, initialCamera.latitude], zoom: initialCamera.zoom }
+            : { center, zoom: INITIAL_ZOOM }
+        }
+      />
       {buildings3D && (
         <Layer
           id="buildings-3d"
