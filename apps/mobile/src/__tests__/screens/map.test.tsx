@@ -86,9 +86,14 @@ describe('MapScreen', () => {
     });
   });
 
-  it('hints to zoom in for building-level overlays at the initial zoom', async () => {
+  // The camera can't move here (test-setup renders Camera as null), so this
+  // covers only the below-the-floor half: the strip is a hint, not swatches.
+  // The auto-zoom that closes that gap for the user, and the swatches
+  // appearing once the camera is deep enough, live in
+  // map-overlay-autozoom.test.tsx — that file mocks a camera that reports back.
+  it('hints to zoom in while the camera is below a building-level floor', async () => {
     const { getByText } = await renderScreen();
-    // Energy labels only render around z≥15.5; the map starts at z11.
+    // Energy labels only render around z≥15.5; the map is still at z11.
     fireEvent.press(getByText('Energy labels'));
     await waitFor(() => {
       expect(getByText('Zoom in to see this layer')).toBeTruthy();
