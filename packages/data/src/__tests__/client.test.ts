@@ -68,6 +68,7 @@ describe('client (API mode)', () => {
 
   // Re-import client with mocked env for each test
   let getListingsApi: typeof getListings;
+  let getListingsPageApi: typeof import('../client').getListingsPage;
   let getListingsCountApi: typeof getListingsCount;
   let getListingApi: typeof import('../client').getListing;
   let getAreasApi: typeof getAreas;
@@ -87,6 +88,7 @@ describe('client (API mode)', () => {
     // Re-require after mocking env
     const client = require('../client');
     getListingsApi = client.getListings;
+    getListingsPageApi = client.getListingsPage;
     getListingsCountApi = client.getListingsCount;
     getListingApi = client.getListing;
     getAreasApi = client.getAreas;
@@ -201,6 +203,166 @@ describe('client (API mode)', () => {
     // Only the geocoded residence (id:10) survives.
     expect(listings).toHaveLength(1);
     expect(listings[0]!.id).toBe('10');
+  });
+
+  // ---- Viewport (bbox) + pagination ----
+  // The map scopes its query to the visible rectangle and walks several pages,
+  // because the API caps `limit` at 100 but a city viewport holds more.
+
+  /** A geocoded summary, minimal but complete enough for summaryToListing. */
+  const residence = (id: number) => ({
+    ...mockResidences[0]!,
+    id,
+    slug: `home-${id}`,
+  });
+
+  /** One page of the v2 envelope. */
+  const page = (items: unknown[], total: number, offset: number) => ({
+    ok: true,
+    json: async () => ({ items, total, limit: 100, offset, has_more: offset + items.length < total }),
+  });
+
+  it('getListings sends the map viewport as a bbox param', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(page([], 0, 0));
+
+    await getListingsApi({ bbox: { west: 4.75, south: 52.3, east: 5.05, north: 52.43 } });
+
+    const url = (global.fetch as jest.Mock).mock.calls[0]![0] as string;
+    // The API takes `minLon,minLat,maxLon,maxLat` — i.e. west,south,east,north.
+    expect(decodeURIComponent(url)).toContain('bbox=4.75,52.3,5.05,52.43');
+  });
+
+  /** A viewport, since only a bbox-scoped query walks past the first page. */
+  const VIEWPORT = { west: 4.75, south: 52.3, east: 5.05, north: 52.43 };
+
+  const offsetsRequested = () =>
+    (global.fetch as jest.Mock).mock.calls.map((call) =>
+      new URL(call[0] as string).searchParams.get('offset'),
+    );
+
+  it('getListings walks further pages when the viewport holds more than one', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(page([residence(1)], 250, 0))
+      .mockResolvedValueOnce(page([residence(2)], 250, 100))
+      .mockResolvedValueOnce(page([residence(3)], 250, 200));
+
+    const listings = await getListingsApi({ bbox: VIEWPORT });
+
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    expect(offsetsRequested()).toEqual(['0', '100', '200']);
+    expect(listings.map((l) => l.id)).toEqual(['1', '2', '3']);
+  });
+
+  it('getListings stops at the page cap even when far more match', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(page([residence(1)], 10_000, 0))
+      .mockResolvedValueOnce(page([residence(2)], 10_000, 100))
+      .mockResolvedValueOnce(page([residence(3)], 10_000, 200))
+      .mockResolvedValue(page([residence(4)], 10_000, 300));
+
+    await getListingsApi({ bbox: VIEWPORT });
+
+    // Three pages, not a hundred — the walk is bounded, not exhaustive.
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('getListings stays on one page when the query has no viewport', async () => {
+    // The Listings feed. Pages 2-3 of the whole country are as arbitrary as
+    // page 1, so walking them would triple its requests for nothing — it reads
+    // its count from getListingsCount instead.
+    (global.fetch as jest.Mock).mockResolvedValue(page([residence(1)], 10_000, 0));
+
+    await getListingsApi();
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('getListings requests a single page when one covers the matches', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce(page([residence(1)], 12, 0));
+
+    await getListingsApi({ bbox: VIEWPORT });
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('getListings dedupes an id that appears on two pages', async () => {
+    // Concurrent pages could straddle a write; a repeated id would otherwise
+    // become a duplicate React key on the map.
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(page([residence(1), residence(2)], 150, 0))
+      .mockResolvedValueOnce(page([residence(2), residence(3)], 150, 100));
+
+    const listings = await getListingsApi({ bbox: VIEWPORT });
+
+    expect(listings.map((l) => l.id)).toEqual(['1', '2', '3']);
+  });
+
+  it('getListings keeps the pages that succeeded when one fails', async () => {
+    // Three requests per viewport means three chances to fail. Losing the whole
+    // map to a single bad page would be a worse trade than a short one.
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(page([residence(1)], 250, 0))
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce(page([residence(3)], 250, 200));
+
+    const listings = await getListingsApi({ bbox: VIEWPORT });
+
+    expect(listings.map((l) => l.id)).toEqual(['1', '3']);
+  });
+
+  it('getListings still rejects when the very first page fails', async () => {
+    // Nothing to salvage — this must surface as an error, not an empty map.
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('boom'));
+
+    await expect(getListingsApi({ bbox: VIEWPORT })).rejects.toThrow('boom');
+  });
+
+  it('getListingsPage reports the true match count behind the page cap', async () => {
+    // Without this the map cannot tell "300 homes here" from "300 of 4,000".
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(page([residence(1)], 4000, 0))
+      .mockResolvedValueOnce(page([residence(2)], 4000, 100))
+      .mockResolvedValueOnce(page([residence(3)], 4000, 200));
+
+    const { listings, total } = await getListingsPageApi({ bbox: VIEWPORT });
+
+    expect(listings).toHaveLength(3);
+    expect(total).toBe(4000);
+  });
+
+  it('getListings passes an abort signal to every page', async () => {
+    // React Query only cancels a superseded query if its query function
+    // consumed the signal, so a fast pan otherwise leaves the abandoned
+    // viewports' requests running to completion.
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce(page([residence(1)], 250, 0))
+      .mockResolvedValue(page([residence(2)], 250, 100));
+    const controller = new AbortController();
+
+    await getListingsApi({ bbox: VIEWPORT }, controller.signal);
+
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+    for (const call of (global.fetch as jest.Mock).mock.calls) {
+      expect((call[1] as RequestInit).signal).toBe(controller.signal);
+    }
+  });
+
+  it('getListingsCount scopes the count to the viewport too', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ items: [], total: 697, limit: 0, offset: 0, has_more: true }),
+    });
+
+    const total = await getListingsCountApi({
+      bbox: { west: 4.75, south: 52.3, east: 5.05, north: 52.43 },
+    });
+
+    expect(total).toBe(697);
+    const url = (global.fetch as jest.Mock).mock.calls[0]![0] as string;
+    expect(decodeURIComponent(url)).toContain('bbox=4.75,52.3,5.05,52.43');
+    // Count-only mode: no page of homes is fetched alongside it.
+    expect(url).toContain('limit=0');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
   it('getListing fetches the detail endpoint and maps the full residence', async () => {
@@ -378,6 +540,50 @@ describe('client (API mode)', () => {
     expect(cities).toHaveLength(201);
     expect(cities[0]).toMatchObject({ code: '0000', name: 'City 0', geometry: { type: 'Polygon' } });
     expect(cities[200]).toMatchObject({ code: '9999', geometry: { type: 'MultiPolygon' } });
+  });
+
+  it('getCities requests its pages concurrently', async () => {
+    // Nothing can hit-test a tap to its city — and so nothing can load that
+    // city's neighborhoods — until this resolves, so the pages must not wait on
+    // each other. Both requests have to be out before either has answered.
+    const fullPage = Array.from({ length: 200 }, (_, i) => ({
+      code: String(i).padStart(4, '0'),
+      name: `City ${i}`,
+      geometry: [[[4.3, 52.0], [4.31, 52.0], [4.31, 52.01], [4.3, 52.0]]],
+    }));
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    (global.fetch as jest.Mock).mockImplementation(async () => {
+      await held;
+      return { ok: true, json: async () => fullPage };
+    });
+
+    const pending = getCitiesApi();
+    await Promise.resolve();
+
+    // Neither has answered yet, so a sequential walk would be stuck on one.
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    release();
+    await pending;
+  });
+
+  it('getCities stops when the endpoint ignores offset and repeats itself', async () => {
+    // The live endpoint does exactly this: it returns all 342 municipalities
+    // whatever offset you ask for. A batch must not become a fresh excuse to
+    // keep paging — the second page adds nothing new, so the walk ends there.
+    const everything = Array.from({ length: 342 }, (_, i) => ({
+      code: String(i).padStart(4, '0'),
+      name: `City ${i}`,
+      geometry: [[[4.3, 52.0], [4.31, 52.0], [4.31, 52.01], [4.3, 52.0]]],
+    }));
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => everything });
+
+    const cities = await getCitiesApi();
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(cities).toHaveLength(342);
   });
 
   it('getCityNames fetches the lightweight /v1/cities list', async () => {

@@ -7,8 +7,8 @@ import {
   getCityNames,
   getStats,
   getListing,
-  getListings,
   getListingsCount,
+  getListingsPage,
   type CityName,
 } from './client';
 
@@ -20,10 +20,53 @@ export const listingKeys = {
   detail: (id: string) => ['listings', 'detail', id] as const,
 };
 
-export function useListings(query: ListingQuery = {}) {
+/** Options the map needs and the Listings feed deliberately does not. */
+export interface UseListingsOptions {
+  /**
+   * Defer the first fetch. The map waits for the viewport it reports on load,
+   * rather than fetching the country first and immediately discarding it.
+   */
+  enabled?: boolean;
+  /**
+   * Hold the previous result on screen while the next one loads, so the map
+   * never flashes empty mid-gesture. Callers distinguish the two states via
+   * `isLoading` (first load, nothing to show) vs `isFetching` (refreshing).
+   *
+   * Off by default: a list that changes filters *should* show its loading state.
+   */
+  keepPrevious?: boolean;
+  /** How long a result stays fresh, in ms. Defaults to React Query's 0. */
+  staleTime?: number;
+  /**
+   * Whether mounting refetches a result that is cached but has gone stale.
+   *
+   * The map turns this off. Its screen unmounts on a tab switch, and coming
+   * back should put the user's viewport back exactly as they left it — a
+   * refetch there would spend a request purely because time passed, which is
+   * the opposite of what returning to a tab should cost. A genuine pan is
+   * unaffected: that is a different key, and it fetches.
+   */
+  refetchOnMount?: boolean;
+}
+
+/**
+ * Residences matching `query`, plus the server's total match count (see
+ * {@link getListingsPage} — the map draws at most a few pages, so the two differ
+ * wherever homes are dense). The map passes the visible `bbox`, so every pan or
+ * zoom is a new query key.
+ *
+ * The `signal` is threaded into the fetch on purpose: React Query only aborts a
+ * superseded query if its query function consumed the signal, and a fast pan
+ * otherwise leaves every abandoned viewport's requests running to completion.
+ */
+export function useListings(query: ListingQuery = {}, options: UseListingsOptions = {}) {
   return useQuery({
     queryKey: listingKeys.list(query),
-    queryFn: () => getListings(query),
+    queryFn: ({ signal }) => getListingsPage(query, signal),
+    placeholderData: options.keepPrevious ? keepPreviousData : undefined,
+    enabled: options.enabled ?? true,
+    staleTime: options.staleTime,
+    refetchOnMount: options.refetchOnMount,
   });
 }
 
@@ -35,7 +78,7 @@ export function useListings(query: ListingQuery = {}) {
 export function useListingsCount(query: ListingQuery = {}) {
   return useQuery({
     queryKey: listingKeys.count(query),
-    queryFn: () => getListingsCount(query),
+    queryFn: ({ signal }) => getListingsCount(query, signal),
     placeholderData: keepPreviousData,
   });
 }

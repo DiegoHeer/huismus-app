@@ -6,14 +6,18 @@ import { I18nextProvider } from 'react-i18next';
 
 import MapScreen from '@/app/(tabs)/index';
 import { clearLikes, toggleLike } from '@/lib/likes';
+import { clearMapCamera } from '@/lib/map-camera';
 import { clearRecentViews, recordRecentView } from '@/lib/recent-views';
 
 afterEach(() => {
   queryClient.clear();
   // The likes / recent-views stores are module singletons — reset them so each
-  // test starts clean.
+  // test starts clean. So is the remembered camera, which deliberately outlives
+  // the screen: left set, the next test would open on the previous one's
+  // viewport with its query already keyed and answered.
   clearLikes();
   clearRecentViews();
+  clearMapCamera();
 });
 
 // Prices are distinct so each marker's price bubble identifies its listing.
@@ -43,6 +47,28 @@ async function renderScreen() {
       </DataProvider>
     </I18nextProvider>,
   );
+}
+
+/**
+ * Settle the native camera on a viewport, as the map does once it has loaded and
+ * after every gesture. The screen holds the residence query until the map
+ * reports a camera, so a test that expects a request must fire this first — the
+ * maplibre mock renders an inert View and reports nothing on its own.
+ */
+function settleCamera(
+  map: unknown,
+  bounds: [number, number, number, number] = [4.75, 52.3, 5.05, 52.43],
+  zoom = 13,
+) {
+  // The centre is derived from the bounds rather than fixed, because that is
+  // the one relationship a real map guarantees — and the screen leans on it to
+  // tell a pan from the container resizing under a stationary camera. A helper
+  // that reported a constant centre would make every pan here look like a
+  // resize.
+  const [west, south, east, north] = bounds;
+  fireEvent(map as never, 'regionDidChange', {
+    nativeEvent: { center: [(west + east) / 2, (south + north) / 2], zoom, bounds },
+  });
 }
 
 describe('MapScreen', () => {
@@ -179,9 +205,10 @@ describe('MapScreen sold pill', () => {
       .filter((u) => u.includes('/v1/residences'));
 
   it('requests only sold residences from the API while the Sold pill is active', async () => {
-    const { getByText } = await renderScreen();
+    const { getByText, getByTestId } = await renderScreen();
+    settleCamera(getByTestId('maplibre-map'));
 
-    // The map mounts with the default, unfiltered query — no status constraint.
+    // The map queries with the default, unfiltered query — no status constraint.
     await waitFor(() => expect(residenceUrls().length).toBeGreaterThan(0));
     expect(residenceUrls().some((u) => u.includes('status=sold'))).toBe(false);
 
@@ -192,5 +219,234 @@ describe('MapScreen sold pill', () => {
     await waitFor(() => {
       expect(residenceUrls().some((u) => u.includes('status=sold'))).toBe(true);
     });
+  });
+});
+
+// Panning/zooming the map (and flying to a search result, which settles the
+// camera the same way) reloads the residences for the newly visible rectangle,
+// instead of keeping the fixed first page the screen fetched at mount.
+describe('MapScreen viewport loading', () => {
+  const realFetch = global.fetch;
+
+  beforeEach(() => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ items: [], total: 0, limit: 100, offset: 0, has_more: false }),
+    });
+  });
+
+  afterEach(() => {
+    global.fetch = realFetch;
+  });
+
+  const residenceUrls = () =>
+    (global.fetch as jest.Mock).mock.calls
+      .map((c) => String(c[0]))
+      .filter((u) => u.includes('/v1/residences'));
+
+  // Requests are relative in tests (no API_URL configured), so read the query
+  // string directly rather than through `new URL`.
+  const bboxes = () =>
+    residenceUrls()
+      .map((u) => new URLSearchParams(u.split('?')[1] ?? '').get('bbox'))
+      .filter((b): b is string => b !== null);
+
+  it('makes no request until the map reports a camera', async () => {
+    // Otherwise the screen would spend a nationwide fetch on markers the very
+    // next render replaces with the viewport-scoped ones.
+    await renderScreen();
+    await waitFor(() => expect(residenceUrls().length).toBe(0));
+  });
+
+  it('shows the loading state while waiting for the camera', async () => {
+    // A disabled query is `isPending` with `isFetching` false, so `isLoading` is
+    // false — the screen has to treat "no camera yet" as loading itself, or it
+    // sits on an empty map that reads as "there are no homes here".
+    const { getByTestId, queryByTestId } = await renderScreen();
+    expect(getByTestId('map-initial-loading')).toBeTruthy();
+
+    settleCamera(getByTestId('maplibre-map'));
+    await waitFor(() => expect(queryByTestId('map-initial-loading')).toBeNull());
+  });
+
+  /** One geocoded residence summary, enough for `summaryToListing`. */
+  const residence = (id: number, price: number) => ({
+    id,
+    city: 'Amsterdam',
+    street: 'Teststraat',
+    house_number: id,
+    house_letter: null,
+    house_number_suffix: null,
+    postcode: '1011 AB',
+    slug: `teststraat-${id}`,
+    latitude: 52.37,
+    longitude: 4.89,
+    current_price_eur: price,
+    current_status: 'new',
+  });
+
+  const residencePage = (items: unknown[]) => ({
+    ok: true,
+    json: async () => ({ items, total: items.length, limit: 100, offset: 0, has_more: false }),
+  });
+
+  /** Respond to every residence request with one page holding `items`. */
+  const serveResidences = (items: unknown[]) => {
+    (global.fetch as jest.Mock).mockResolvedValue(residencePage(items));
+  };
+
+  /**
+   * Hold the next request open until `release()`. The mock otherwise resolves
+   * within the same tick, which leaves the in-flight state too brief to observe
+   * — and these tests are entirely about what the screen shows during it.
+   */
+  const holdNextRequest = (items: unknown[]) => {
+    let release!: () => void;
+    const pending = new Promise((resolve) => {
+      release = () => resolve(residencePage(items));
+    });
+    (global.fetch as jest.Mock).mockReturnValueOnce(pending);
+    return { release };
+  };
+
+  /** True once a viewport's request is actually in flight, not merely queued. */
+  const isFetchingAViewport = () =>
+    viewportQueries().some((query) => query.state.fetchStatus === 'fetching');
+
+  it('reloads a new viewport silently while markers are still on the map', async () => {
+    // Panning must not throw a spinner over a map the user is reading. The
+    // previous viewport's pins stay put (keepPrevious) and are simply replaced
+    // when the new ones land.
+    serveResidences([residence(1, 500_000)]);
+    const { getByTestId, getByText, queryByTestId } = await renderScreen();
+    const map = getByTestId('maplibre-map');
+
+    settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(getByText('€500k')).toBeTruthy());
+
+    const next = holdNextRequest([residence(2, 750_000)]);
+    settleCamera(map, [5.35, 52.3, 5.65, 52.43]);
+    await waitFor(() => expect(isFetchingAViewport()).toBe(true));
+
+    // Mid-flight, with the request provably still open: nothing covers the map,
+    // and the outgoing viewport's marker is still the one on screen.
+    expect(queryByTestId('map-initial-loading')).toBeNull();
+    expect(queryByTestId('map-background-loading')).toBeNull();
+    expect(getByText('€500k')).toBeTruthy();
+
+    next.release();
+    await waitFor(() => expect(getByText('€750k')).toBeTruthy());
+    expect(queryByTestId('map-initial-loading')).toBeNull();
+  });
+
+  it('keeps a home that dropped out of the results on the map while it fades', async () => {
+    // React unmounts a marker the frame its listing disappears, which leaves
+    // nothing to animate. The old pin has to outlive its data.
+    serveResidences([residence(1, 500_000)]);
+    const { getByTestId, getByText, queryByText } = await renderScreen();
+    const map = getByTestId('maplibre-map');
+
+    settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(getByText('€500k')).toBeTruthy());
+
+    // A viewport where that home no longer matches.
+    serveResidences([residence(2, 750_000)]);
+    settleCamera(map, [5.35, 52.3, 5.65, 52.43]);
+    await waitFor(() => expect(getByText('€750k')).toBeTruthy());
+
+    // Still mounted, mid-fade, alongside the new arrival.
+    expect(getByText('€500k')).toBeTruthy();
+
+    // And gone once the fade has had its window.
+    await waitFor(() => expect(queryByText('€500k')).toBeNull(), { timeout: 2000 });
+    expect(getByText('€750k')).toBeTruthy();
+  });
+
+  it('shows the spinner when a new viewport loads over an empty map', async () => {
+    // Nothing to look at instead, so the spinner is the only signal that the
+    // map is working rather than simply empty.
+    const { getByTestId, queryByTestId } = await renderScreen();
+    const map = getByTestId('maplibre-map');
+
+    settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(residenceUrls()).toHaveLength(1));
+    // Settled and empty is not loading — no spinner over a map that is simply
+    // showing no homes here.
+    expect(queryByTestId('map-initial-loading')).toBeNull();
+
+    const next = holdNextRequest([]);
+    settleCamera(map, [5.35, 52.3, 5.65, 52.43]);
+
+    await waitFor(() => expect(getByTestId('map-initial-loading')).toBeTruthy());
+    next.release();
+    await waitFor(() => expect(queryByTestId('map-initial-loading')).toBeNull());
+  });
+
+  it('requests the residences inside the viewport once the camera settles', async () => {
+    const { getByTestId } = await renderScreen();
+
+    settleCamera(getByTestId('maplibre-map'), [4.75, 52.3, 5.05, 52.43]);
+
+    await waitFor(() => expect(bboxes().length).toBeGreaterThan(0));
+    // The bbox is on the *first* request — no unscoped fetch precedes it.
+    expect(bboxes().length).toBe(residenceUrls().length);
+
+    // The requested rectangle must cover everything the user can see — the
+    // query is padded and snapped outward, never cropped.
+    const [west, south, east, north] = bboxes().at(-1)!.split(',').map(Number) as number[];
+    expect(west!).toBeLessThanOrEqual(4.75);
+    expect(south!).toBeLessThanOrEqual(52.3);
+    expect(east!).toBeGreaterThanOrEqual(5.05);
+    expect(north!).toBeGreaterThanOrEqual(52.43);
+  });
+
+  /**
+   * The distinct *viewport-scoped* residence queries the screen has asked for.
+   * A cache entry appears the moment a settle produces a new query key, so
+   * counting these says whether a settle was a new rectangle or the same one —
+   * without racing whatever the fetch scheduler is doing.
+   *
+   * The unscoped entry React Query keys before the camera reports is filtered
+   * out: it is disabled and never fetched, so it is not a viewport.
+   */
+  const viewportQueries = () =>
+    queryClient
+      .getQueryCache()
+      .findAll({ queryKey: ['listings', 'list'] })
+      .filter((query) => query.queryHash.includes('bbox'));
+
+  it('re-requests for a real pan but not for a nudge', async () => {
+    const { getByTestId } = await renderScreen();
+    const map = getByTestId('maplibre-map');
+
+    settleCamera(map, [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(residenceUrls()).toHaveLength(1));
+
+    // A few pixels of drift must not refetch — it snaps to the same rectangle,
+    // so the query key is unchanged and React Query serves the cache. The
+    // settle renders synchronously, so a rectangle that had missed the grid
+    // would already have keyed its own cache entry by the time this runs.
+    settleCamera(map, [4.751, 52.301, 5.051, 52.431]);
+    await waitFor(() => expect(viewportQueries()).toHaveLength(1));
+
+    // Panning a viewport's width away is a different rectangle, so it reloads.
+    settleCamera(map, [5.35, 52.3, 5.65, 52.43]);
+    await waitFor(() => expect(residenceUrls()).toHaveLength(2));
+
+    // Two rectangles, two requests — the nudge cost nothing.
+    expect(viewportQueries()).toHaveLength(2);
+    expect(new Set(bboxes()).size).toBe(2);
+  });
+
+  it('keeps a fetched viewport fresh, so panning back to it is free', async () => {
+    // Quantizing only makes a *nudge* free. Without a staleTime React Query
+    // marks every result stale the moment it lands, so panning to and fro
+    // around a city — an ordinary gesture — would pay the round trip each way.
+    const { getByTestId } = await renderScreen();
+
+    settleCamera(getByTestId('maplibre-map'), [4.75, 52.3, 5.05, 52.43]);
+    await waitFor(() => expect(residenceUrls()).toHaveLength(1));
+
+    expect(viewportQueries()[0]!.isStale()).toBe(false);
   });
 });

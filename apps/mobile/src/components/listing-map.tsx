@@ -1,17 +1,26 @@
-import type { AreaPolygon, Listing } from '@huismus/types';
+import type { AreaPolygon, Listing, MapBounds } from '@huismus/types';
 import {
   Camera,
   type CameraRef,
   GeoJSONSource,
   Layer,
   Map,
+  type MapRef,
   Marker,
   RasterSource,
   VectorSource,
 } from '@maplibre/maplibre-react-native';
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import { StyleSheet, View, type ViewProps } from 'react-native';
 import { MaxFontScale, Text } from '@huismus/ui';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -27,18 +36,27 @@ import {
 import { useMapStyle } from './map-style';
 import {
   BUILDINGS_3D_MIN_ZOOM,
+  boundsFromTuple,
   buildings3DPaint,
   DEFAULT_CENTER,
+  INITIAL_ZOOM,
+  PIN_TAIL,
   priceLabel,
-  VIEWED_PIN_ALPHA,
+  viewedPinFill,
 } from './map-shared';
+import {
+  MARKER_ENTER_MS,
+  MARKER_EXIT_MS,
+  MARKER_JUMP_PX,
+  useMarkerTransitions,
+  type MarkerPhase,
+} from './marker-transitions';
 import { usePulseOpacity } from './use-pulse-opacity';
 import { buildAreaIndex, findAreaAt } from '../lib/area-hit-test';
 import { outlineColorFor } from '../lib/area-choropleth';
 import { hides3DBuildings, type MapOverlay } from '../lib/map-overlays';
 import { useRecentViews } from '../lib/recent-views';
 import { useBrand } from '@/hooks/use-theme';
-import { withAlpha } from '@/constants/theme';
 
 // The search bar overlays the top of the map, so park the compass in the
 // bottom-left corner instead — clear of both the search field and the listing
@@ -51,6 +69,62 @@ const COMPASS_MARGIN = 16;
 // same gesture and ignore it, so tapping a marker selects the listing without
 // also switching municipality. (The web map stops the click from propagating.)
 const MARKER_TAP_GRACE_MS = 300;
+
+/**
+ * A marker's bubble plus its arrival / departure animation (web mirror: the
+ * `hm-marker-in` / `hm-marker-out` keyframes in listing-map.web.tsx).
+ *
+ * Arriving is a ballistic jump: the pin springs off its anchor, decelerates to
+ * the top of the arc, then accelerates back down under "gravity" — which is why
+ * the two halves are eased in opposite directions rather than sharing one
+ * curve. Opacity runs linearly across the whole hop so the fade lands with it.
+ * Leaving is the fade alone; the pin holds its place while it goes.
+ */
+function MarkerPin({
+  phase,
+  delay,
+  children,
+}: {
+  phase: MarkerPhase;
+  delay: number;
+  children: ViewProps['children'];
+}) {
+  // An arriving pin must be invisible from its very first frame, through the
+  // stagger, until its turn comes — otherwise it flashes at full opacity first.
+  const opacity = useSharedValue(phase === 'entering' ? 0 : 1);
+  const lift = useSharedValue(0);
+
+  useEffect(() => {
+    if (phase === 'entering') {
+      opacity.value = withDelay(
+        delay,
+        withTiming(1, { duration: MARKER_ENTER_MS, easing: Easing.linear }),
+      );
+      lift.value = withDelay(
+        delay,
+        withSequence(
+          withTiming(-MARKER_JUMP_PX, {
+            duration: MARKER_ENTER_MS / 2,
+            easing: Easing.out(Easing.quad),
+          }),
+          withTiming(0, { duration: MARKER_ENTER_MS / 2, easing: Easing.in(Easing.quad) }),
+        ),
+      );
+    } else if (phase === 'leaving') {
+      opacity.value = withDelay(
+        delay,
+        withTiming(0, { duration: MARKER_EXIT_MS, easing: Easing.linear }),
+      );
+    }
+  }, [phase, delay, opacity, lift]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: lift.value }],
+  }));
+
+  return <Animated.View style={[styles.markerWrap, animatedStyle]}>{children}</Animated.View>;
+}
 
 /**
  * The tapped city's own outline, pulsing in opacity while its neighborhoods
@@ -95,11 +169,25 @@ export interface ListingMapProps {
    */
   onMapPress?: (coord: { longitude: number; latitude: number }) => void;
   /**
-   * Fired once the camera settles after a pan/zoom, with the viewport centre
-   * and zoom. Lets the screen auto-load a city's neighborhoods once the user
-   * has zoomed in far enough — as if they'd tapped the middle of the map.
+   * Fired once the camera settles after a pan/zoom, with the viewport centre,
+   * zoom and visible bounds. Lets the screen auto-load a city's neighborhoods
+   * once the user has zoomed in far enough — as if they'd tapped the middle of
+   * the map — and reload the residences that fall inside the new viewport.
+   * `bounds` is omitted only if the map cannot report them yet.
    */
-  onCameraIdle?: (state: { longitude: number; latitude: number; zoom: number }) => void;
+  onCameraIdle?: (state: {
+    longitude: number;
+    latitude: number;
+    zoom: number;
+    bounds?: MapBounds;
+  }) => void;
+  /**
+   * Camera to open on, in place of the default framing — the view the user left
+   * when they switched tabs. Applied once, like every other initial framing
+   * here: later camera moves belong to the user's gestures and the imperative
+   * ref. Null opens on the default.
+   */
+  initialCamera?: { longitude: number; latitude: number; zoom: number } | null;
   /**
    * The tapped city's outline, pulsing while its neighborhoods load. Null hides
    * it (data arrived, or no city is loading).
@@ -140,6 +228,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
     selectedPolygonId,
     onMapPress,
     onCameraIdle,
+    initialCamera,
     loadingPolygon,
     overlay,
     buildings3D,
@@ -147,13 +236,11 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   ref,
 ) {
   const brand = useBrand();
-  // Already-seen listings fade their fill only. Putting the alpha in the colour
-  // rather than `opacity` on the marker keeps the white outline and the price
-  // label at full strength — they are what make a pin readable over arbitrary
-  // tiles — and stops the bubble and its tail double-blending where they
-  // overlap, which `markerArrow`'s -1px tuck exists to hide.
-  const viewedFill = withAlpha(brand.accent, VIEWED_PIN_ALPHA);
   const cameraRef = useRef<CameraRef>(null);
+  // The region-change event carries the visible bounds, but the initial framing
+  // arrives via onDidFinishLoadingMap, which doesn't — so hold a map ref to ask
+  // for them once on load.
+  const mapViewRef = useRef<MapRef>(null);
   // A flyTo can arrive before the native map has finished loading — the
   // boot-time preferred-city focus fires as soon as the cached city shapes
   // hydrate — and the camera may drop it. Until the map reports loaded, keep
@@ -167,11 +254,22 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
   const markerTapAtRef = useRef(0);
   const insets = useSafeAreaInsets();
   const { mapStyle, polygonsBeforeId, overlayBeforeId, scheme } = useMapStyle();
+  // Already-seen listings swap fill colour — never opacity, and never a
+  // translucent fill. Both would let the basemap through, which changes what
+  // "seen" looks like from one tile to the next; a solid taupe reads the same
+  // everywhere. Keeping it off `opacity` also leaves the white outline and the
+  // price label at full strength — they are what make a pin readable over
+  // arbitrary tiles — and stops the bubble and its tail double-blending where
+  // they overlap, which `markerArrow`'s -1px tuck exists to hide.
+  const viewedFill = viewedPinFill(scheme);
   const { recentViews } = useRecentViews();
   const viewedIds = useMemo(
     () => new Set(recentViews.map((listing) => listing.id)),
     [recentViews],
   );
+  // Homes gained and lost since the last set, so each pin knows how to arrive or
+  // leave. Includes pins already gone from the data but still fading out.
+  const markers = useMarkerTransitions(listings);
 
   useImperativeHandle(ref, () => ({
     flyTo: (target) => {
@@ -223,29 +321,48 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
         if (withinMarkerGrace()) return;
         pressMap(e.nativeEvent.lngLat);
       }}
-      // Once a pan/zoom settles, report the viewport centre + zoom so the
-      // screen can auto-load a city's neighborhoods when zoomed in far enough.
+      ref={mapViewRef}
+      // Once a pan/zoom settles, report the viewport centre, zoom and bounds so
+      // the screen can auto-load a city's neighborhoods when zoomed in far
+      // enough, and reload the residences inside the new viewport.
       onRegionDidChange={(e) => {
-        const [longitude, latitude] = e.nativeEvent.center;
-        onCameraIdle?.({ longitude, latitude, zoom: e.nativeEvent.zoom });
+        const { center: regionCenter, zoom, bounds } = e.nativeEvent;
+        const [longitude, latitude] = regionCenter;
+        onCameraIdle?.({
+          longitude,
+          latitude,
+          zoom,
+          bounds: bounds ? boundsFromTuple(bounds) : undefined,
+        });
       }}
-      onDidFinishLoadingMap={() => {
+      onDidFinishLoadingMap={async () => {
         mapLoadedRef.current = true;
         const target = pendingFlyToRef.current;
-        // Report the initial framing so the search bar has a centre to rank
-        // suggestions against before the user moves the map — the pending
-        // boot-time focus target if there is one, else the mount framing.
-        if (!target) {
-          onCameraIdle?.({ longitude: center[0], latitude: center[1], zoom: 11 });
+        pendingFlyToRef.current = null;
+        // Apply the pending boot-time focus target, if there is one. That jump
+        // is itself a camera move, so it fires `onRegionDidChange` with the
+        // settled bounds — reporting here as well would only add a query for
+        // the pre-jump framing, thrown away a moment later. Let the region
+        // change be the first report instead.
+        if (target) {
+          cameraRef.current?.flyTo({
+            center: [target.longitude, target.latitude],
+            zoom: target.zoom,
+            duration: 0,
+          });
           return;
         }
-        pendingFlyToRef.current = null;
-        cameraRef.current?.flyTo({
-          center: [target.longitude, target.latitude],
-          zoom: target.zoom,
-          duration: 0,
+        // No jump pending, so this is the framing the user will actually see:
+        // report it, giving the search bar a centre to rank suggestions against
+        // and the screen a viewport to load residences for before the first
+        // gesture. Bounds don't come with this event, so ask the map for them.
+        const bounds = await mapViewRef.current?.getBounds?.();
+        onCameraIdle?.({
+          longitude: initialCamera?.longitude ?? center[0],
+          latitude: initialCamera?.latitude ?? center[1],
+          zoom: initialCamera?.zoom ?? INITIAL_ZOOM,
+          bounds: bounds ? boundsFromTuple(bounds) : undefined,
         });
-        onCameraIdle?.({ longitude: target.longitude, latitude: target.latitude, zoom: target.zoom ?? 11 });
       }}
       compassPosition={{
         bottom: insets.bottom + COMPASS_MARGIN,
@@ -254,8 +371,17 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
       {/* Uncontrolled initial framing only: applied once on load. Camera moves
           are then driven solely by the user's gestures and the imperative ref
           (search flyTo) — loading a tapped city's neighborhoods, selecting an
-          area, or toggling 3D buildings must not move it. */}
-      <Camera ref={cameraRef} initialViewState={{ center, zoom: 11 }} />
+          area, or toggling 3D buildings must not move it. `initialCamera`
+          restores the view a tab switch unmounted, so returning opens where the
+          user left rather than back at the default framing. */}
+      <Camera
+        ref={cameraRef}
+        initialViewState={
+          initialCamera
+            ? { center: [initialCamera.longitude, initialCamera.latitude], zoom: initialCamera.zoom }
+            : { center, zoom: INITIAL_ZOOM }
+        }
+      />
       {buildings3D && !hides3DBuildings(overlay) && (
         <Layer
           id="buildings-3d"
@@ -350,7 +476,7 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
           )}
         </GeoJSONSource>
       )}
-      {listings.map((listing) => {
+      {markers.map(({ listing, phase, delay }) => {
         const fill = viewedIds.has(listing.id) ? viewedFill : brand.accent;
         return (
           <Marker
@@ -364,10 +490,12 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
             // Pressable inside a Marker (MarkerView) does not fire onPress
             // reliably on Android. https://github.com/maplibre/maplibre-react-native/issues/1018
             onPress={() => {
+              // A pin on its way out is a leftover, not a target.
+              if (phase === 'leaving') return;
               markerTapAtRef.current = Date.now();
               onSelect?.(listing.id);
             }}>
-            <View style={styles.markerWrap}>
+            <MarkerPin phase={phase} delay={delay}>
               <View style={[styles.marker, { backgroundColor: fill }]}>
                 <Text
                   style={styles.markerText}
@@ -378,8 +506,11 @@ export const ListingMap = forwardRef<ListingMapRef, ListingMapProps>(function Li
                   {priceLabel(listing)}
                 </Text>
               </View>
-              <View style={[styles.markerArrow, { borderTopColor: fill }]} />
-            </View>
+              <View style={styles.markerArrowWrap}>
+                <View style={styles.markerArrowOutline} />
+                <View style={[styles.markerArrowFill, { borderTopColor: fill }]} />
+              </View>
+            </MarkerPin>
           </Marker>
         );
       })}
@@ -400,15 +531,39 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ffffff',
   },
-  // Downward triangle tail that turns the bubble into a pin. Pulled up 1px so it
-  // tucks under the bubble's white border, leaving no seam between the two.
-  markerArrow: {
+  // Downward triangle tail that turns the bubble into a pin, drawn as a white
+  // triangle with the fill laid over it so the bubble's outline carries on
+  // around the point (see PIN_TAIL). Sized to the white one, since that is the
+  // larger. Pulled up 1px so it tucks under the bubble's white border: the
+  // outline meets white-on-white, leaving no seam between the two.
+  markerArrowWrap: {
+    width: (PIN_TAIL.halfWidth + PIN_TAIL.border) * 2,
+    height: PIN_TAIL.height + PIN_TAIL.border,
+    marginTop: -1,
+  },
+  markerArrowOutline: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
     width: 0,
     height: 0,
-    marginTop: -1,
-    borderLeftWidth: 5,
-    borderRightWidth: 5,
-    borderTopWidth: 6,
+    borderLeftWidth: PIN_TAIL.halfWidth + PIN_TAIL.border,
+    borderRightWidth: PIN_TAIL.halfWidth + PIN_TAIL.border,
+    borderTopWidth: PIN_TAIL.height + PIN_TAIL.border,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#ffffff',
+  },
+  // Inset by the outline's width, so the white shows evenly down both slopes.
+  markerArrowFill: {
+    position: 'absolute',
+    top: 0,
+    left: PIN_TAIL.border,
+    width: 0,
+    height: 0,
+    borderLeftWidth: PIN_TAIL.halfWidth,
+    borderRightWidth: PIN_TAIL.halfWidth,
+    borderTopWidth: PIN_TAIL.height,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
   },
