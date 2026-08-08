@@ -28,10 +28,22 @@ Don't use SecureStore/SQLite/MMKV/filesystem. React Query (`packages/data`) is i
 ### Commands
 
 ```bash
-bun test                        # Run all Jest tests across all packages
+bun run test                    # Run all Jest tests across all packages
+bun run export:web              # Build the web export the Playwright tests serve
 bun run test:e2e                # Run Playwright visual regression tests
 bun run test:update-snapshots   # Regenerate Playwright screenshot baselines
 ```
+
+`bun run test`, not `bun test` — the latter uses Bun's own runner, which doesn't
+understand the Jest setup and reports dozens of false failures.
+
+**Build the export before running Playwright.** The Playwright `webServer` only
+*serves* `apps/mobile/dist`; nothing rebuilds it, so without an export you are
+testing whatever code was exported last. A stale `dist` looks exactly like
+broken baselines — every screenshot "fails", and the tempting next step,
+`test:update-snapshots`, would overwrite correct baselines with the old build's
+render. If screenshots fail, re-export first and check the `-actual.png` in
+`test-results/` before touching a baseline.
 
 ### Test file convention
 
