@@ -104,14 +104,6 @@ export default function MapScreen() {
   // The active map overlay (noise, air quality, …) — one at a time: tapping an
   // overlay pill swaps to it, tapping the active one turns it off.
   const [overlayId, setOverlayId] = useState<OverlayId | null>(null);
-  const toggleOverlay = useCallback(
-    (id: OverlayId) => {
-      const enabling = overlayId !== id;
-      setOverlayId(enabling ? id : null);
-      if (enabling) trackOverlayEnabled(id);
-    },
-    [overlayId],
-  );
   const overlay = overlayById(overlayId);
   // Viewport zoom as of the last camera settle — drives the legend's "zoom in"
   // hint for overlays that only render at building-level zooms.
@@ -120,6 +112,26 @@ export default function MapScreen() {
   // ranks its suggestions against (nearest first). Seeded with the national
   // default and replaced with the real centre once the map reports one.
   const [mapCenter, setMapCenter] = useState<Origin>(DEFAULT_CENTER);
+  // Declared after the camera state it reads: the dependency array below is
+  // evaluated during render, so `mapZoom`/`mapCenter` must already exist.
+  const toggleOverlay = useCallback(
+    (id: OverlayId) => {
+      const enabling = overlayId !== id;
+      setOverlayId(enabling ? id : null);
+      if (!enabling) return;
+      trackOverlayEnabled(id);
+      // Building-level layers draw nothing when the camera is too far out.
+      // Rather than hand the user an empty map behind a "zoom in" hint, close
+      // the gap for them — straight down onto the centre they are already
+      // looking at, so the data appears over the place they were studying
+      // rather than somewhere else.
+      const floor = overlayById(id)?.visibleFromZoom;
+      if (floor != null && mapZoom < floor) {
+        mapRef.current?.flyTo({ ...mapCenter, zoom: floor });
+      }
+    },
+    [overlayId, mapZoom, mapCenter],
+  );
   // No city is selected until the user taps one. Until then the map shows no
   // neighborhoods; tapping a city loads + shows that city's neighborhoods.
   const [selectedCity, setSelectedCity] = useState<

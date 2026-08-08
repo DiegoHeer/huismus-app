@@ -83,7 +83,7 @@
   "mapSettingsPage": {
     "title": "Map",
     "buildings3D": "3D buildings",
-    "buildings3DDescription": "Show buildings in 3D on the map.",
+    "buildings3DDescription": "Show buildings in 3D on the map. Layers that colour the buildings themselves, like WOZ value, pause it so their colours stay visible.",
     "basemapTitle": "Map style",
     "basemapDescription": "Sets how the map itself is drawn. Light or dark follows your appearance setting.",
     "basemap": {

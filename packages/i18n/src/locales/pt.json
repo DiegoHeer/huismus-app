@@ -83,7 +83,7 @@
   "mapSettingsPage": {
     "title": "Mapa",
     "buildings3D": "Edifícios em 3D",
-    "buildings3DDescription": "Mostrar edifícios em 3D no mapa.",
+    "buildings3DDescription": "Mostrar edifícios em 3D no mapa. As camadas que colorem os próprios edifícios, como o valor WOZ, pausam-no para as suas cores continuarem visíveis.",
     "basemapTitle": "Estilo do mapa",
     "basemapDescription": "Define como o mapa é desenhado. Claro ou escuro segue a sua definição de aparência.",
     "basemap": {

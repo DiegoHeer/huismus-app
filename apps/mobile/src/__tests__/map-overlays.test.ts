@@ -1,4 +1,4 @@
-import { MAP_OVERLAYS, overlayById, type OverlayId } from '@/lib/map-overlays';
+import { hides3DBuildings, MAP_OVERLAYS, overlayById, type OverlayId } from '@/lib/map-overlays';
 
 /** Every '#rrggbb' literal inside a (possibly nested) style expression. */
 const expressionColors = (expr: unknown): string[] =>
@@ -56,5 +56,37 @@ describe('MAP_OVERLAYS registry', () => {
     expect(overlayById('noise')?.id).toBe('noise');
     expect(overlayById(null)).toBeNull();
     expect(overlayById('nope' as OverlayId)).toBeNull();
+  });
+
+  describe('hides3DBuildings', () => {
+    // Every overlay that colors the footprints themselves — whether it does so
+    // client-side (WOZ, bouwjaar) or server-side (energy labels) — must stand
+    // the extrusion down, or the layer is invisible under it.
+    const perBuilding: OverlayId[] = ['energyLabels', 'buildingAge', 'wozValue'];
+
+    it.each(perBuilding)('hides the extrusion for %s', (id) => {
+      expect(hides3DBuildings(overlayById(id))).toBe(true);
+    });
+
+    it('keeps the extrusion for the ground-level overlays', () => {
+      const ground = MAP_OVERLAYS.filter((o) => !perBuilding.includes(o.id));
+      expect(ground.length).toBeGreaterThan(0);
+      for (const overlay of ground) {
+        expect(hides3DBuildings(overlay)).toBe(false);
+      }
+    });
+
+    it('keeps the extrusion when no overlay is active', () => {
+      expect(hides3DBuildings(null)).toBe(false);
+      expect(hides3DBuildings(undefined)).toBe(false);
+    });
+
+    // A `buildings` overlay always paints footprints, so it can never be left
+    // off the per-building set — the raster ones are the ones to keep honest.
+    it('flags every client-side buildings overlay', () => {
+      for (const overlay of MAP_OVERLAYS.filter((o) => o.kind === 'buildings')) {
+        expect(hides3DBuildings(overlay)).toBe(true);
+      }
+    });
   });
 });
