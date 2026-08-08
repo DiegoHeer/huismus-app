@@ -8,6 +8,14 @@ This project implements i18n for all texts visible to user (except for data fiel
 - push the branch in the worktree to GitHub with `gh`, even when the work is not finished.
 - Front-end changes → spawn `bun run web -p <PORT>` and share the URL so the owner can see it live.
 
+## Releases
+
+- **App Store submission** → read `docs/app-store-release.md` first. The `production` EAS profile
+  builds against the **staging** API, so backend config gaps on `api-staging` become App Review
+  rejections. It also records the guideline 4.8 / 2.1(b) rejections and what not to reintroduce.
+- The `ios-release` / `android-release` skills build **device-scoped development** builds for
+  local testing — neither is uploadable to a store.
+
 ## Storage
 
 Persistent storage is AsyncStorage only, wrapped in `apps/mobile/src/lib/storage.ts`. All reads/writes are best-effort (failures resolve to a safe default, never throw). Keys live under the `huismus:` namespace — add new ones to `StorageKeys`.

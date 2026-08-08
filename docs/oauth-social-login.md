@@ -7,6 +7,11 @@
 backend specs under [`./backend/`](./backend/); it follows the JWT-identity and
 validation/error conventions of [`residences-search-api.md`](./backend/residences-search-api.md).
 
+> **That scope line is out of date.** Native iOS Sign in with Apple was pulled forward by App
+> Store guideline 4.8 and is documented in
+> [§12](#12-sign-in-with-apple--native-ios--as-built-2026-08-08), which supersedes §6 and the
+> Apple half of §4.2. Google is as described in the status note below.
+
 > **Status (as built, 2026-07-04): Google is implemented end to end via the _token_ flow —
 > "Path A" (redirect) was dropped.** The §3 spike was resolved against the django-allauth
 > 65.18 source: for `app` clients the redirect flow is a dead end — the kickoff view runs in a
@@ -144,6 +149,11 @@ The headless socialaccount URLs mount automatically once the app is installed �
 
 ### 4.2 `SOCIALACCOUNT_PROVIDERS` (drop-in)
 
+> ⚠️ **The `apple` block below is wrong for the native iOS flow we shipped.** It sets
+> `client_id` to the Services ID, which is correct only for the browser flow. A native id_token's
+> audience is the **bundle id**, so a Services ID here fails every sign-in. See
+> [§12.1](#121-the-audience-rule--the-thing-that-breaks-first) for what was actually deployed.
+
 ```python
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -215,6 +225,10 @@ and the backend, not the device.
 ---
 
 ## 6. Apple Developer  *(paid membership required, even for the web/Android flow)*
+
+> **Superseded for the native iOS flow — see [§12](#12-sign-in-with-apple--native-ios--as-built-2026-08-08).**
+> The Services ID and Return URL below belong to the *browser* flow, which we did not build.
+> Configuring a Services ID as the allauth `client_id` breaks native sign-in outright.
 
 - **App ID** with the "Sign in with Apple" capability (bundle id — see [§8](#8-decisions-to-make-now)).
 - **Services ID** — this is the OAuth `client_id` for the web/Android browser flow. Configure its
@@ -289,3 +303,71 @@ failure strings **in all three locales** and map them in `authErrorKey` (`auth-u
   Renaming the Android `package` later is disruptive, so treat it as fixed from here on.
 - **Apple Developer membership** ($99/yr) is required even for the web/Android Apple flow. Confirm
   it's available, or ship Google-first and add Apple later.
+
+---
+
+## 12. Sign in with Apple — native iOS  *(as built, 2026-08-08)*
+
+Driven by App Store **guideline 4.8**: offering Google sign-in on iOS obliges us to offer an
+equivalent privacy-preserving login. Scope is **native iOS only** — 4.8 applies nowhere else,
+so there is no Services ID, no browser redirect, and no Apple option on web or Android.
+
+**Backend: merged** ([realty-alerts#241](https://github.com/DiegoHeer/realty-alerts/pull/241)).
+**Client: not built yet.**
+
+### 12.1 The audience rule — the thing that breaks first
+
+A native Apple id_token is issued to the **bundle id**, `com.fastvibes.huismus`. allauth checks
+it in two independent places, and both must agree:
+
+1. `allauth/headless/socialaccount/inputs.py` compares the posted `token.client_id` to
+   `app.client_id` by **exact string equality**;
+2. `AppleProvider.get_auds()` then validates the token's `aud` against that same value
+   (comma-splitting it, which is Apple-specific — Google instead uses one `APPS` entry per id).
+
+So the allauth `client_id` is the **bundle id**, not a Services ID — the opposite of §4.2 and of
+most published guides. Getting this wrong fails every native sign-in with `client_id_mismatch`
+or an audience error. Pinned by `test_client_id_other_than_the_bundle_id_is_rejected`.
+
+### 12.2 What the id_token doesn't carry
+
+Apple discloses the user's **name** and an **authorization code** only in the first
+authorization response on a device, and never again — not after a reinstall. Neither is in the
+id_token, and `/auth/provider/token` has no slot for them.
+
+They matter because Apple **requires token revocation when an account is deleted**, and
+`AppleProvider.verify_token` builds the login from the id_token alone without persisting a
+`SocialToken` — leaving nothing to revoke with. The refresh token can only be obtained by
+exchanging the authorization code.
+
+Hence `POST /v1/me/apple-identity`, which the app calls immediately after a successful Apple
+login with `{authorization_code, full_name}`. It is a best-effort follow-up: a rejected code
+(what a client retry looks like) still returns 204, because the login already succeeded.
+
+### 12.3 Config
+
+| Setting | Value |
+|---|---|
+| `APPLE_BUNDLE_ID` | `com.fastvibes.huismus` |
+| `APPLE_TEAM_ID` | `5W85L569QN` (allauth's `key`) |
+| `APPLE_KEY_ID` | `NK2L63DZVG` (allauth's `secret`) |
+| `APPLE_PRIVATE_KEY` | the `.p8`; `\n`-escaped is accepted and unescaped in `settings/base.py` |
+
+All four or none — a partial config raises `ImproperlyConfigured`; unset leaves the feature
+silently off, which on iOS is a 4.8 rejection. The `.p8` lives at
+`~/.config/realty-ai/apple-signin/` and **never** in a repo. Deployment prerequisites are in
+[`app-store-release.md`](./app-store-release.md).
+
+Apple's **Private Email Relay** registration must cover the exact `DEFAULT_FROM_EMAIL` sender
+(`noreply@huismusapp.com`), not just the domain, or mail to Hide-My-Email users bounces.
+
+### 12.4 Client work still outstanding
+
+`expo-apple-authentication` + prebuild (it supplies the `com.apple.developer.applesignin`
+entitlement); `lib/apple-auth.ts` mirroring `google-auth.ts`; widen `providerTokenLogin`'s
+provider union; `signInWithApple` in `use-auth.ts`; split `OAuthButton` into a Google button
+plus an iOS-gated `AppleAuthenticationButton`; and the `/v1/me/apple-identity` follow-up call.
+
+Two traps for whoever builds it: the name is **one-shot** (forward it on that first exchange or
+it is gone permanently), and the email may be a `@privaterelay.appleid.com` relay address, so
+nothing downstream may assume it is real or reachable.

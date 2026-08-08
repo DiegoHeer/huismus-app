@@ -7,7 +7,8 @@ description: >-
   real device. Covers the expo-prebuild regen, the signing-team injection, the
   `expo run:ios` provisioning gap (must drive raw xcodebuild), the two provisioning flags,
   the codesign keychain prompt, the device-side gates (Developer Mode, unlock, trust), and
-  the devicectl install + launch flow.
+  the devicectl install + launch flow. This produces a DEVICE-SCOPED DEVELOPMENT build — for
+  an App Store / TestFlight submission read docs/app-store-release.md instead.
 ---
 
 # iOS Release build + on-device install
@@ -170,3 +171,29 @@ device-scoped. App Store / TestFlight / ad-hoc distribution is a different signi
 (Apple Distribution cert + a distribution provisioning profile / `xcodebuild archive` +
 `-exportArchive`). To watch the running app's logs/behavior, use the `verifier-android`
 analogue for iOS or Xcode's device console.
+
+**Shipping to the App Store is a different job** — EAS `production` profile, remote build
+numbers, and a set of backend prerequisites that turn into review rejections when unmet. See
+[`docs/app-store-release.md`](../../../docs/app-store-release.md) before submitting anything.
+
+## Auth features need the backend configured — the device build can't fake it
+
+There are no mocks: sign-in talks to `EXPO_PUBLIC_API_URL` (staging by default). A device build
+will happily install and run while every sign-in fails, because the failure is server-side
+config, not a build problem. Before concluding "Sign in with Apple is broken", check that
+`api-staging` actually has the config:
+
+| Feature | Required on the API |
+|---|---|
+| Continue with Google | `GOOGLE_OAUTH_CLIENT_ID` / `_SECRET`, plus `GOOGLE_OAUTH_IOS_CLIENT_ID` (native id_tokens carry the **iOS** client id as their audience) |
+| Sign in with Apple | `APPLE_BUNDLE_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` — all four or none; unset means the feature is silently off |
+
+Sign in with Apple also needs the `com.apple.developer.applesignin` entitlement, which comes
+from the `expo-apple-authentication` config plugin — so it only exists **after** a prebuild
+(step 2). If the capability is missing on the device, check `ios/*/…​.entitlements` was
+regenerated rather than re-running the build.
+
+Testing the deletion round trip (required by Apple, and by review): sign in, delete the
+account in-app, then confirm the app is gone from **Settings → Apple ID → Sign in with Apple**
+on the device. Re-signing in afterwards is how you get a *fresh* first-authorization — Apple
+sends the user's name only on that first consent, so it's the only way to re-test name capture.
