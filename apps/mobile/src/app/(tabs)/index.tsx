@@ -391,7 +391,7 @@ export default function MapScreen() {
           />
         </View>
         {/* Legend for the active overlay, explaining the colors it paints. */}
-        {overlay && <OverlayLegend overlay={overlay} zoom={mapZoom} buildings3D={buildings3D} />}
+        {overlay && <OverlayLegend overlay={overlay} zoom={mapZoom} />}
         {/* While a tapped city's neighborhoods download, show a spinner centered
             below the pills. Cached cities resolve instantly, so it rarely shows. */}
         {selectedCity && areasFetching && (

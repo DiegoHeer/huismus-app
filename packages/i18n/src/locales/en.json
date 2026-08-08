@@ -223,7 +223,6 @@
     "zoning": "Zoning",
     "treeHeight": "Sparrows",
     "zoomHint": "Zoom in to see this layer",
-    "flat3DHint": "3D paused so this layer stays visible",
     "legend": {
       "residential": "Residential",
       "centre": "Centre",
