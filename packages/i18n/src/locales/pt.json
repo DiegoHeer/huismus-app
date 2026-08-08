@@ -28,7 +28,6 @@
     "appearance_dark": "Escuro",
     "account": "Conta",
     "notifications": "Notificações",
-    "subscription": "Subscrição",
     "support": "Apoio",
     "privacy": "Privacidade e segurança",
     "help": "Ajuda e apoio",
@@ -78,16 +77,13 @@
       }
     }
   },
-  "subscriptionPage": {
-    "comingSoon": "Subscrição e métodos de pagamento em breve."
-  },
   "notificationsPage": {
     "comingSoon": "Definições de notificações em breve."
   },
   "mapSettingsPage": {
     "title": "Mapa",
     "buildings3D": "Edifícios em 3D",
-    "buildings3DDescription": "Mostrar edifícios em 3D no mapa.",
+    "buildings3DDescription": "Mostrar edifícios em 3D no mapa. As camadas que colorem os próprios edifícios, como o valor WOZ, pausam-no para as suas cores continuarem visíveis.",
     "basemapTitle": "Estilo do mapa",
     "basemapDescription": "Define como o mapa é desenhado. Claro ou escuro segue a sua definição de aparência.",
     "basemap": {

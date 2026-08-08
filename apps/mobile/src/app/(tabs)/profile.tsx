@@ -44,19 +44,6 @@ function BellIcon({ size, color }: IconProps) {
   );
 }
 
-function CreditCardIcon({ size, color }: IconProps) {
-  return (
-    <StrokeSvg size={size}>
-      <Path
-        d="M22 7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7z"
-        stroke={color}
-        {...STROKE}
-      />
-      <Path d="M2 10h20" stroke={color} {...STROKE} />
-    </StrokeSvg>
-  );
-}
-
 function LockIcon({ size, color }: IconProps) {
   return (
     <StrokeSvg size={size}>
@@ -284,11 +271,6 @@ function AccountCard() {
         icon={BellIcon}
         label={t('profile.notifications')}
         onPress={() => router.push('/settings/notifications')}
-      />
-      <MenuRow
-        icon={CreditCardIcon}
-        label={t('profile.subscription')}
-        onPress={() => router.push('/settings/subscription')}
       />
       <MenuRow
         icon={MapIcon}

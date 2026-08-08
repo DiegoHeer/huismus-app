@@ -28,7 +28,6 @@
     "appearance_dark": "Donker",
     "account": "Account",
     "notifications": "Meldingen",
-    "subscription": "Abonnement",
     "support": "Ondersteuning",
     "privacy": "Privacy en beveiliging",
     "help": "Help en ondersteuning",
@@ -78,16 +77,13 @@
       }
     }
   },
-  "subscriptionPage": {
-    "comingSoon": "Abonnement en betaalmethoden komen binnenkort."
-  },
   "notificationsPage": {
     "comingSoon": "Meldingsinstellingen komen binnenkort."
   },
   "mapSettingsPage": {
     "title": "Kaart",
     "buildings3D": "3D-gebouwen",
-    "buildings3DDescription": "Toon gebouwen in 3D op de kaart.",
+    "buildings3DDescription": "Toon gebouwen in 3D op de kaart. Lagen die de gebouwen zelf inkleuren, zoals WOZ-waarde, pauzeren dit zodat hun kleuren zichtbaar blijven.",
     "basemapTitle": "Kaartstijl",
     "basemapDescription": "Bepaalt hoe de kaart zelf getekend wordt. Licht of donker volgt je weergave-instelling.",
     "basemap": {

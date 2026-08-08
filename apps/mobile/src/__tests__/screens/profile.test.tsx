@@ -39,9 +39,13 @@ describe('ProfileScreen', () => {
     expect(getByText('Beheer je account en voorkeuren')).toBeTruthy();
   });
 
-  it('shows Subscription and drops the removed account rows', async () => {
-    const { getByText, queryByText } = await renderScreen('en');
-    expect(getByText('Subscription')).toBeTruthy();
+  // The Subscription row was an empty "coming soon" placeholder. It advertised a
+  // purchase path the app doesn't have, which tripped App Store review guideline
+  // 2.1(b) (paid content outside In-App Purchase). Keep it out until billing
+  // actually ships — through IAP.
+  it('drops the removed account rows', async () => {
+    const { queryByText } = await renderScreen('en');
+    expect(queryByText('Subscription')).toBeNull();
     expect(queryByText('Saved homes')).toBeNull();
     expect(queryByText('Saved searches')).toBeNull();
     expect(queryByText('Payment methods')).toBeNull();
@@ -50,7 +54,6 @@ describe('ProfileScreen', () => {
   it('navigates to the matching settings page from each row', async () => {
     const cases: [label: string, path: string][] = [
       ['Notifications', '/settings/notifications'],
-      ['Subscription', '/settings/subscription'],
       ['Privacy & security', '/settings/privacy'],
       ['Help & support', '/settings/help'],
       ['About', '/settings/about'],

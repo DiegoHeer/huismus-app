@@ -43,8 +43,8 @@ export function Paragraph({ children }: { children: ReactNode }) {
 
 /**
  * Full-screen centered placeholder for pages whose feature isn't built yet
- * (Subscription, Notifications). Keeps the row tappable with a real destination
- * instead of a dead end.
+ * (Notifications). Keeps the row tappable with a real destination instead of a
+ * dead end.
  */
 export function ComingSoon({ message }: { message: string }) {
   return (

@@ -42,6 +42,12 @@ interface OverlayBase {
    * only render zoomed in) — the legend shows a "zoom in" hint below it.
    */
   visibleFromZoom?: number;
+  /**
+   * The layer paints individual building footprints (rather than the ground
+   * around them), so a 3D extrusion of those same buildings would hide it
+   * completely — see {@link hides3DBuildings}.
+   */
+  perBuilding?: boolean;
   /** Swatches explaining the layer's colors, in display order. */
   legend: OverlayLegendEntry[];
   /** Unit the legend values are in (dB, µg/m³), shown after the swatches. */
@@ -180,6 +186,7 @@ export const MAP_OVERLAYS: MapOverlay[] = [
     minzoom: 15,
     opacity: 0.8,
     visibleFromZoom: 15.5,
+    perBuilding: true,
     legend: [
       { color: '#1A9641', label: 'A+' },
       { color: '#6ABD58', label: 'A' },
@@ -205,6 +212,7 @@ export const MAP_OVERLAYS: MapOverlay[] = [
     maxzoom: 18,
     opacity: 0.8,
     visibleFromZoom: 12,
+    perBuilding: true,
     legend: [
       { color: '#440154', label: '<1900' },
       { color: '#414487', label: '1900–1944' },
@@ -227,6 +235,7 @@ export const MAP_OVERLAYS: MapOverlay[] = [
     maxzoom: 18,
     opacity: 0.8,
     visibleFromZoom: 12,
+    perBuilding: true,
     legend: [
       { color: '#FFFFB2', label: '<€300k' },
       { color: '#FECC5C', label: '€300–500k' },
@@ -283,3 +292,20 @@ export const MAP_OVERLAYS: MapOverlay[] = [
 
 export const overlayById = (id: OverlayId | null | undefined): MapOverlay | null =>
   (id && MAP_OVERLAYS.find((o) => o.id === id)) || null;
+
+/**
+ * Whether this overlay forces the 3D buildings off while it is active.
+ *
+ * A per-building overlay (WOZ, energy labels, bouwjaar) paints the very
+ * footprints the extrusion lifts, so leaving 3D on hides the data entirely —
+ * and no amount of layer ordering helps, since the extruded roof sits above
+ * the fill in 3D space. The buildings can't be colored by the overlay instead:
+ * the values live in a different vector source than the basemap's heights, and
+ * MapLibre has no cross-source join.
+ *
+ * Ground overlays (noise, air quality, tree height, zoning) keep 3D — they only
+ * lose the sliver under each footprint, which reads as buildings standing in
+ * the data rather than as missing data.
+ */
+export const hides3DBuildings = (overlay: MapOverlay | null | undefined): boolean =>
+  overlay?.perBuilding === true;
