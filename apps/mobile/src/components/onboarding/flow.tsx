@@ -6,7 +6,7 @@ import { Animated, Dimensions, Platform, Pressable, View, type GestureResponderE
 import { Text } from '@huismus/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { FilterSection, SelectPills } from '@/components/filter-controls';
+import { ModePills, PriceRangeField, type PriceRange } from '@/components/filter-controls';
 import { CitiesPage } from '@/components/onboarding/cities-page';
 import {
   AccountGlyph,
@@ -20,18 +20,11 @@ import {
   SlidersGlyph,
   TextButton,
 } from '@/components/onboarding/shared';
-import { RangeSlider } from '@/components/range-slider';
 import { useSliderDragLock } from '@/hooks/use-slider-drag-lock';
 import { trackOnboardingCompleted, trackOnboardingStep } from '@/lib/analytics';
 import { cityDisplayName } from '@/lib/city-search';
-import {
-  nearestPriceIndex,
-  PRICE_DISTRIBUTION_BUY,
-  PRICE_DISTRIBUTION_RENT,
-  priceSteps,
-  useFilters,
-  type ListingMode,
-} from '@/lib/filters';
+import { useFilters, type ListingMode } from '@/lib/filters';
+import { openLegalDocument } from '@/lib/legal-links';
 import { setMapFocus } from '@/lib/map-focus';
 import { useOnboarding } from '@/lib/onboarding';
 import { getPreferredCities, setPreferredCities } from '@/lib/preferred-cities';
@@ -53,13 +46,6 @@ const TAP_THROTTLE_MS = 350;
 const webSnapStopMarker =
   Platform.OS === 'web' ? ({ dataSet: { pagesnap: 'always' } } as Record<string, unknown>) : null;
 
-/** Compact euro label for the price summary: €1450 / €675k / €1.2M. */
-function compactEuro(v: number): string {
-  if (v >= 1_000_000) return `€${(v / 1_000_000).toFixed(v % 1_000_000 === 0 ? 0 : 1)}M`;
-  if (v >= 10_000) return `€${Math.round(v / 1000)}k`;
-  return `€${v}`;
-}
-
 /**
  * The intro tour: five pages laid out side-by-side in one horizontal, paging
  * ScrollView, a "Skip tour" shortcut on top, and a bottom bar holding Back and
@@ -77,7 +63,7 @@ function compactEuro(v: number): string {
  * Skipping (or finishing) marks the tour done so it never auto-shows again.
  */
 export function OnboardingFlow() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { lastPage, setOnboardingPage, completeOnboarding } = useOnboarding();
   const { filters, setFilters } = useFilters();
@@ -104,10 +90,7 @@ export function OnboardingFlow() {
 
   // Staged filter choices (committed to the live store only on finish).
   const [mode, setMode] = useState<ListingMode>(filters.mode);
-  const [price, setPrice] = useState<[number | null, number | null]>([
-    filters.minPrice,
-    filters.maxPrice,
-  ]);
+  const [price, setPrice] = useState<PriceRange>([filters.minPrice, filters.maxPrice]);
   // Seeded from the saved preferred cities, so replaying the tour starts from
   // the current preference instead of silently wiping it on finish.
   const [cityCodes, setCityCodes] = useState<string[]>(() =>
@@ -338,22 +321,6 @@ export function OnboardingFlow() {
     leaveToApp();
   }
 
-  // Price slider stops + summary track the (currently buy-only) mode. The
-  // slider runs on the indices of a log-ish ladder — fine steps low, big leaps
-  // high — whose topmost stop is the open-ended "€5M+" (no max constraint).
-  const steps = priceSteps(mode);
-  const topIndex = steps.length - 1;
-  const priceIndices = [
-    price[0] === null ? 0 : nearestPriceIndex(steps, price[0]),
-    price[1] === null ? topIndex : nearestPriceIndex(steps, price[1]),
-  ];
-  const priceLabel =
-    price[0] === null && price[1] === null
-      ? t('filtersPage.any')
-      : `${compactEuro(steps[priceIndices[0]])} – ${compactEuro(steps[priceIndices[1]])}${
-          price[1] === null ? '+' : ''
-        }`;
-
   const pages = [
     <OnboardingPage key="welcome">
       <View className="flex-1 justify-between">
@@ -365,8 +332,8 @@ export function OnboardingFlow() {
         <LegalLinksRow
           privacyLabel={t('onboarding.privacyLink')}
           termsLabel={t('onboarding.termsLink')}
-          onPrivacyPress={() => router.push('/settings/legal/privacy-policy')}
-          onTermsPress={() => router.push('/settings/legal/terms-of-use')}
+          onPrivacyPress={() => openLegalDocument('privacy-policy', i18n.language)}
+          onTermsPress={() => openLegalDocument('terms-of-use', i18n.language)}
         />
       </View>
     </OnboardingPage>,
@@ -400,49 +367,30 @@ export function OnboardingFlow() {
         title={t('onboarding.filtersStep.title')}
         subtitle={t('onboarding.filtersStep.subtitle')}
       />
-      <View className="gap-2">
-        <SelectPills
-          stretch
-          // Rent is a placeholder until the backend supports it; keep Buy the
-          // only selectable option, mirroring the filters page.
-          disabledKeys={['rent']}
-          options={[
-            { key: 'buy', label: t('filtersPage.buy') },
-            { key: 'rent', label: t('filtersPage.rent') },
-          ]}
-          selected={[mode]}
-          onToggle={(key) => {
-            setMode(key as ListingMode);
-            setPrice([null, null]);
-          }}
-        />
-        <Text className="text-center text-sm text-ink-2">
-          {t('filtersPage.rentComingSoon')}
-        </Text>
-      </View>
-      <FilterSection title={t('filtersPage.price')} value={priceLabel}>
-        <RangeSlider
-          min={0}
-          max={topIndex}
-          step={1}
-          values={priceIndices}
-          distribution={mode === 'rent' ? PRICE_DISTRIBUTION_RENT : PRICE_DISTRIBUTION_BUY}
-          onChange={([lo, hi]) =>
-            setPrice([lo <= 0 ? null : steps[lo], hi >= topIndex ? null : steps[hi]])
-          }
-          onDragStart={() => {
-            cancelPeek();
-            sliderDrag.onDragStart();
-            // A grab of a thumb also emits a click on web — swallow it so
-            // fiddling with the slider can't tap-navigate the pager.
-            lastTapAt.current = Date.now();
-          }}
-          onDragEnd={() => {
-            sliderDrag.onDragEnd();
-            lastTapAt.current = Date.now();
-          }}
-        />
-      </FilterSection>
+      <ModePills
+        mode={mode}
+        onChange={(next) => {
+          setMode(next);
+          // The price ladders differ per mode, so a staged range can't carry over.
+          setPrice([null, null]);
+        }}
+      />
+      <PriceRangeField
+        mode={mode}
+        value={price}
+        onChange={setPrice}
+        onDragStart={() => {
+          cancelPeek();
+          sliderDrag.onDragStart();
+          // A grab of a thumb also emits a click on web — swallow it so
+          // fiddling with the slider can't tap-navigate the pager.
+          lastTapAt.current = Date.now();
+        }}
+        onDragEnd={() => {
+          sliderDrag.onDragEnd();
+          lastTapAt.current = Date.now();
+        }}
+      />
     </OnboardingPage>,
 
     <CitiesPage

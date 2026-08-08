@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { DataProvider, queryClient } from '@huismus/data';
 import { initI18n } from '@huismus/i18n';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import { I18nextProvider } from 'react-i18next';
 import type { ReactTestInstance } from 'react-test-renderer';
 
 import FiltersScreen from '@/app/settings/filters';
 import { resetFilters } from '@/lib/filters';
+
+import { measureTrack, responderEvent } from '../support/slider-gestures';
 
 const { setOptions } = require('expo-router').useNavigation() as { setOptions: jest.Mock };
 
@@ -15,32 +17,6 @@ afterEach(() => {
   resetFilters();
   setOptions.mockClear();
 });
-
-// See range-slider.test.tsx — PanResponder needs a full single-touch bank.
-function responderEvent() {
-  return {
-    nativeEvent: { touches: [{ pageX: 0, pageY: 0 }], changedTouches: [], pageX: 0, pageY: 0 },
-    touchHistory: {
-      touchBank: [
-        {
-          touchActive: true,
-          startPageX: 0,
-          startPageY: 0,
-          startTimeStamp: 0,
-          currentPageX: 0,
-          currentPageY: 0,
-          currentTimeStamp: 1,
-          previousPageX: 0,
-          previousPageY: 0,
-          previousTimeStamp: 0,
-        },
-      ],
-      numberActiveTouches: 1,
-      indexOfSingleActiveTouch: 0,
-      mostRecentTimeStamp: 1,
-    },
-  };
-}
 
 async function renderScreen() {
   const i18n = initI18n('en');
@@ -54,17 +30,9 @@ async function renderScreen() {
   return view;
 }
 
-/**
- * Measures the first slider's track so its thumbs mount (layout events never fire
- * under Jest) and returns the price slider's low thumb.
- */
+/** The price slider's low thumb, its track measured so the thumbs mount. */
 async function grabFirstThumb(view: Awaited<ReturnType<typeof renderScreen>>) {
-  await act(async () => {
-    fireEvent(view.getAllByTestId('range-slider-track')[0], 'layout', {
-      nativeEvent: { layout: { width: 240, height: 24 } },
-    });
-  });
-  return view.getAllByRole('adjustable')[0] as ReactTestInstance;
+  return (await measureTrack(view))[0] as ReactTestInstance;
 }
 
 describe('FiltersScreen slider drags', () => {

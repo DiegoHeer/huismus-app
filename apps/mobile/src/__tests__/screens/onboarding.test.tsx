@@ -14,6 +14,9 @@ import { clearMapFocus, useMapFocus } from '@/lib/map-focus';
 import { resetOnboarding, useOnboarding } from '@/lib/onboarding';
 import { getPreferredCities, setPreferredCities } from '@/lib/preferred-cities';
 
+import { mockOpenBrowserAsync } from '../../../test-setup';
+import { measureTrack, responderEvent } from '../support/slider-gestures';
+
 async function renderScreen(language: 'en' | 'nl' = 'en') {
   const i18n = initI18n(language);
   await i18n.changeLanguage(language);
@@ -164,6 +167,20 @@ describe('OnboardingScreen', () => {
     expect(router.push).toHaveBeenCalledWith('/auth/login');
   });
 
+  it('opens the hosted legal documents from the welcome page footer', async () => {
+    const { getByText } = await renderScreen('en');
+
+    await tap(getByText('Privacy'));
+    expect(mockOpenBrowserAsync).toHaveBeenLastCalledWith(
+      'https://huismusapp.com/en/privacy-policy/',
+    );
+
+    await tap(getByText('Terms'));
+    expect(mockOpenBrowserAsync).toHaveBeenLastCalledWith(
+      'https://huismusapp.com/en/terms-of-use/',
+    );
+  });
+
   it('finishing saves the preferred cities, focuses the map and marks the tour done', async () => {
     // The city list is fetched from the API (mocks were removed); seed the query
     // cache so the picker has a deterministic set to search. useCityNames pins
@@ -239,42 +256,10 @@ describe('OnboardingScreen', () => {
   // iOS steals the touch for either scroll view unless they are disabled outright
   // (Android blocks them via the JS responder) — see hooks/use-slider-drag-lock.
   describe('price slider drags', () => {
-    // Thumbs only mount once the track has been measured, and layout events
-    // never fire under Jest. Every page is mounted in the pager, so the filters
-    // page's slider is reachable without navigating to it.
+    // Every page is mounted in the pager, so the filters page's slider is
+    // reachable without navigating to it.
     async function grabThumb(view: Awaited<ReturnType<typeof renderScreen>>) {
-      await act(async () => {
-        fireEvent(view.getByTestId('range-slider-track'), 'layout', {
-          nativeEvent: { layout: { width: 240, height: 24 } },
-        });
-      });
-      return view.getAllByRole('adjustable')[0];
-    }
-
-    // See range-slider.test.tsx — PanResponder needs a full single-touch bank.
-    function responderEvent() {
-      return {
-        nativeEvent: { touches: [{ pageX: 0, pageY: 0 }], changedTouches: [], pageX: 0, pageY: 0 },
-        touchHistory: {
-          touchBank: [
-            {
-              touchActive: true,
-              startPageX: 0,
-              startPageY: 0,
-              startTimeStamp: 0,
-              currentPageX: 0,
-              currentPageY: 0,
-              currentTimeStamp: 1,
-              previousPageX: 0,
-              previousPageY: 0,
-              previousTimeStamp: 0,
-            },
-          ],
-          numberActiveTouches: 1,
-          indexOfSingleActiveTouch: 0,
-          mostRecentTimeStamp: 1,
-        },
-      };
+      return (await measureTrack(view))[0];
     }
 
     it('freezes both the pager and the page body for the duration of the drag', async () => {

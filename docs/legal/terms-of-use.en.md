@@ -14,7 +14,7 @@ You must be at least 16 years old to create an account. When you create an accou
 
 ## 3. Account and security
 
-You can sign in with Google or with an email address and password. You're responsible for all activity under your account. You can delete your account at any time via **Settings**; doing so also deletes the associated data, as described in our [Privacy Policy](/settings/legal/privacy-policy).
+You can sign in with Google or with an email address and password. You're responsible for all activity under your account. You can delete your account at any time via **Settings**; doing so also deletes the associated data, as described in our [Privacy Policy](https://huismusapp.com/en/privacy-policy/).
 
 ## 4. Acceptable use
 
@@ -62,7 +62,7 @@ These terms are governed by Dutch law. We'd prefer to resolve any dispute togeth
 
 ## 13. Other provisions
 
-If any provision of these terms is found invalid, the remaining provisions stay in effect. Together with our [Privacy Policy](/settings/legal/privacy-policy), these terms form the entire agreement between you and us regarding use of the Service.
+If any provision of these terms is found invalid, the remaining provisions stay in effect. Together with our [Privacy Policy](https://huismusapp.com/en/privacy-policy/), these terms form the entire agreement between you and us regarding use of the Service.
 
 ## 14. Contact
 

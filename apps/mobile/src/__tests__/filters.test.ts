@@ -1,4 +1,6 @@
 import {
+  boundedRangeLabel,
+  compactEuro,
   DEFAULT_FILTERS,
   filtersToQuery,
   nearestPriceIndex,
@@ -83,5 +85,51 @@ describe('price ladders', () => {
     expect(PRICE_STEPS_BUY[nearestPriceIndex(PRICE_STEPS_BUY, 2_975_000)]).toBe(3_000_000);
     // Values beyond the ladder clamp to the top stop.
     expect(nearestPriceIndex(PRICE_STEPS_BUY, 9_000_000)).toBe(PRICE_STEPS_BUY.length - 1);
+  });
+});
+
+describe('boundedRangeLabel', () => {
+  const any = 'Any';
+
+  it('collapses to the "any" label when neither end is constrained', () => {
+    expect(boundedRangeLabel(null, null, compactEuro, any)).toBe('Any');
+  });
+
+  it('drops an open low end rather than printing it as €0', () => {
+    expect(boundedRangeLabel(null, 450_000, compactEuro, any)).toBe('≤ €450k');
+  });
+
+  it('drops an open high end rather than printing the top stop with a +', () => {
+    expect(boundedRangeLabel(300_000, null, compactEuro, any)).toBe('≥ €300k');
+  });
+
+  it('prints both bounds when both are constrained', () => {
+    expect(boundedRangeLabel(300_000, 450_000, compactEuro, any)).toBe('€300k – €450k');
+  });
+
+  it('shares a trailing unit across the range instead of repeating it', () => {
+    expect(boundedRangeLabel(null, 250, String, any, 'm²')).toBe('≤ 250 m²');
+    expect(boundedRangeLabel(80, null, String, any, 'm²')).toBe('≥ 80 m²');
+    expect(boundedRangeLabel(80, 250, String, any, 'm²')).toBe('80 – 250 m²');
+  });
+
+  it('never appends the unit to the "any" label', () => {
+    expect(boundedRangeLabel(null, null, String, any, 'm²')).toBe('Any');
+  });
+
+  it('treats a genuine 0 bound as a constraint, not as "open"', () => {
+    // Only `null` means unconstrained; a 0 that the caller chose to pass through
+    // still prints, so the helper never silently swallows a real zero bound.
+    expect(boundedRangeLabel(0, 450_000, compactEuro, any)).toBe('€0 – €450k');
+  });
+});
+
+describe('compactEuro', () => {
+  it('scales the unit to the magnitude', () => {
+    expect(compactEuro(0)).toBe('€0');
+    expect(compactEuro(1450)).toBe('€1450');
+    expect(compactEuro(675_000)).toBe('€675k');
+    expect(compactEuro(1_200_000)).toBe('€1.2M');
+    expect(compactEuro(5_000_000)).toBe('€5M');
   });
 });

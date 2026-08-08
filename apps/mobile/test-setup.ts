@@ -65,7 +65,10 @@ jest.mock('expo-image', () => {
 });
 
 // --- expo-web-browser mock ---
-const mockOpenBrowserAsync = jest.fn();
+// Resolves rather than returning undefined: the real openBrowserAsync is a
+// promise, and callers attach a .catch() to it. Tests use mockClear(), which
+// keeps this implementation.
+const mockOpenBrowserAsync = jest.fn().mockResolvedValue({ type: 'opened' });
 const mockMaybeCompleteAuthSession = jest.fn();
 jest.mock('expo-web-browser', () => ({
   openBrowserAsync: mockOpenBrowserAsync,
